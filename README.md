@@ -255,3 +255,22 @@ fmt.Sprintf()
 - Stores output on a character buffer
 - Doesn't print to stdout console
 - Returns the string
+
+## Types
+
+| Name        | Type Name                                                                   | Examples                                  |
+| ----------- | --------------------------------------------------------------------------- | ----------------------------------------- |
+| **INTEGER** | int, int8, int16, int32, int64<br/>unint, unint8, unint16, unint32, unint64 | var age int = 20<br/>var count unint = -5 |
+| **FLOAT**   | float32, float64                                                            | var gpa float64 = 3.4                     |
+| **STRING**  | string                                                                      | var fruit string = "mango"                |
+| **BOOLEAN** | bool<br/>&& <code>&#124;&#124;</code> ! < <= > >= == !=                     | true false<br/>var adult bool = age > 18  |
+
+#### Identify and convert type
+
+```go
+	// identify type
+	reflect.TypeOf(6) // int
+
+	// convert type
+	float(10) + 5.5 // 15.5
+```
