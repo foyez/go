@@ -258,6 +258,8 @@ fmt.Sprintf()
 
 ## Types
 
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/types)**
+
 | Name        | Type Name                                                                   | Examples                                  |
 | ----------- | --------------------------------------------------------------------------- | ----------------------------------------- |
 | **INTEGER** | int, int8, int16, int32, int64<br/>unint, unint8, unint16, unint32, unint64 | var age int = 20<br/>var count unint = -5 |
@@ -273,4 +275,37 @@ fmt.Sprintf()
 
 	// convert type
 	float(10) + 5.5 // 15.5
+```
+
+## Variables
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/variables)**
+
+```go
+package main
+
+import "fmt"
+
+// var variableName type = value
+// can declare outside and inside of a function
+var name string = "Zayan"
+
+func main() {
+	// Infer variable type
+	var age = 20
+
+	// variables without assinging value return default value
+	// int: 0, float: 0.0, string: "", bool: false
+	var salary int
+
+	// variables in only function
+	funcVar := "can't declare outside of a function"
+
+	// multiple variables
+	one, two := 1, "two"
+
+	fmt.Println(name, age, salary)
+	fmt.Println(funcVar)
+	fmt.Println(one, two)
+}
 ```
