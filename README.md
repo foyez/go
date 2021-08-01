@@ -5,6 +5,7 @@
 1. Fast compile times
 2. Ease to development
 3. Fast execution
+4. Automatic garbage collection
 
 ## Go vs JS
 
@@ -215,3 +216,42 @@ run `go test -v`
 === RUN   ExampleHello
 --- PASS: ExampleHello (0.00s)
 ```
+
+## Printing with fmt
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/printing)**
+
+#### **Print**
+
+```
+fmt.Print()
+fmt.Println()
+fmt.Printf()
+```
+
+- Prints output to the stdout console
+- Returns number of bytes and an error
+- (The error is generally not worried about)
+
+#### Fprint
+
+```
+fmt.Fprint()
+fmt.Fprintln()
+fmt.Fprintf()
+```
+
+- Prints the output to an external source (not in stdout console) (file, browser)
+- Returns number of bytes, and any write error
+
+#### Sprint
+
+```
+fmt.Sprint()
+fmt.Sprintln()
+fmt.Sprintf()
+```
+
+- Stores output on a character buffer
+- Doesn't print to stdout console
+- Returns the string
