@@ -294,7 +294,8 @@ func main() {
 	// Infer variable type
 	var age = 20
 
-	// variables without assinging value return default value
+	// variables without assigning value
+	// return default value
 	// int: 0, float: 0.0, string: "", bool: false
 	var salary int
 
@@ -308,4 +309,40 @@ func main() {
 	fmt.Println(funcVar)
 	fmt.Println(one, two)
 }
+```
+
+## Control Structures: If & Else
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/control)**
+
+```go
+package main
+
+import (
+	"fmt"
+)
+
+func main() {
+	var age = 10
+
+	if age < 18 {
+		fmt.Println("younger")
+	} else if age == 18 {
+		fmt.Println("adult")
+	} else {
+		fmt.Println("elder")
+	}
+
+	if name := "Farah"; name != "Farhan" {
+		fmt.Println("She is Farah")
+	}
+}
+```
+
+## Control Structures: switch
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/control)**
+
+```go
+
 ```
