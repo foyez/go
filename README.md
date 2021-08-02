@@ -2,12 +2,20 @@
 
 ## Why Go
 
+<details>
+<summary>View contents</summary>
+
 1. Fast compile times
 2. Ease to development
 3. Fast execution
 4. Automatic garbage collection
 
+</details>
+
 ## Go vs JS
+
+<details>
+<summary>View contents</summary>
 
 1. TYPING
 
@@ -34,7 +42,12 @@
 - Go: Strong Opinions (Convention, built-in tooling and linters)
 - JS: Fluid Opinions (Subjective to the mood that day)
 
+</details>
+
 ## Anatomy of a go file
+
+<details>
+<summary>View contents</summary>
 
 ```go
 // package name
@@ -52,7 +65,12 @@ func main() {
 }
 ```
 
+</details>
+
 ## Create a go project
+
+<details>
+<summary>View contents</summary>
 
 ```bash
 # created a directory called "hello"
@@ -68,7 +86,12 @@ $ go mod init hello
 $ touch hello.go
 ```
 
+</details>
+
 ## TDD with Go
+
+<details>
+<summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/tddWithGo)**
 
@@ -217,7 +240,12 @@ run `go test -v`
 --- PASS: ExampleHello (0.00s)
 ```
 
+</details>
+
 ## Printing with fmt
+
+<details>
+<summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/printing)**
 
@@ -256,7 +284,12 @@ fmt.Sprintf()
 - Doesn't print to stdout console
 - Returns the string
 
+</details>
+
 ## Types
+
+<details>
+<summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/types)**
 
@@ -277,7 +310,12 @@ fmt.Sprintf()
 	float(10) + 5.5 // 15.5
 ```
 
+</details>
+
 ## Variables
+
+<details>
+<summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/variables)**
 
@@ -311,7 +349,12 @@ func main() {
 }
 ```
 
+</details>
+
 ## Control Structures: If & Else
+
+<details>
+<summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/control)**
 
@@ -339,7 +382,12 @@ func main() {
 }
 ```
 
+</details>
+
 ## Control Structures: switch
+
+<details>
+<summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/control)**
 
@@ -386,7 +434,12 @@ func main() {
 }
 ```
 
+</details>
+
 ## Loops
+
+<details>
+<summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/loops)**
 
@@ -503,7 +556,12 @@ func main() {
 
 _[Loop guide](https://yourbasic.org/golang/for-loop-range-array-slice-map-channel/)_
 
+</details>
+
 ## Functions
+
+<details>
+<summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/funtions)**
 
@@ -562,3 +620,36 @@ func main() {
 	fmt.Println(average(10, 20, 32))
 }
 ```
+
+</details>
+
+## Arrays
+
+<details>
+<summary>View contents</summary>
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/arrays)**
+
+```go
+// declare array
+var arr [3]float64
+fmt.Println(arr) // [0 0 0]
+
+arr[1] = 23               // set element
+element := arr[1]         // read element
+fmt.Println(arr, element) // [0 23 0] 23
+
+// declare and initialize
+scores := [3]float64{9, 1.5, 2.2}
+fmt.Println(scores)
+
+// compiler figure out array length
+arrNotMax := [...]int{2, 3, 4}
+fmt.Println(arrNotMax, len(arrNotMax)) // [2 3 4] 3
+
+// multidimensional array
+multi := [2][3]int{{1, 2, 3}, {5, 6, 7}}
+fmt.Println(multi) // [[1 2 3] [5 6 7]]
+```
+
+</details>
