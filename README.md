@@ -70,7 +70,7 @@ $ touch hello.go
 
 ## TDD with Go
 
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/tddWithGo)**
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/tddWithGo)**
 
 1 **Write the test first**
 
@@ -219,7 +219,7 @@ run `go test -v`
 
 ## Printing with fmt
 
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/printing)**
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/printing)**
 
 #### **Print**
 
@@ -258,7 +258,7 @@ fmt.Sprintf()
 
 ## Types
 
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/types)**
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/types)**
 
 | Name        | Type Name                                                                   | Examples                                  |
 | ----------- | --------------------------------------------------------------------------- | ----------------------------------------- |
@@ -279,7 +279,7 @@ fmt.Sprintf()
 
 ## Variables
 
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/variables)**
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/variables)**
 
 ```go
 package main
@@ -313,7 +313,7 @@ func main() {
 
 ## Control Structures: If & Else
 
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/control)**
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/control)**
 
 ```go
 package main
@@ -341,7 +341,7 @@ func main() {
 
 ## Control Structures: switch
 
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/control)**
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/control)**
 
 ```go
 package main
@@ -388,7 +388,7 @@ func main() {
 
 ## Loops
 
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/loops)**
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/loops)**
 
 ```go
 package main
@@ -451,10 +451,12 @@ func main() {
 	// STRING ITERATION
 	// *****************************************
 	fmt.Println("\nString iteration")
-	var myCity = "Cumilla"
+	var myCity = "কুমিল্লা"
 
 	for index, letter := range myCity {
-		fmt.Printf("Index: %d, Letter:%#U\n", index, letter)
+		if index % 2 == 0 {
+			fmt.Printf("Index: %d, Letter:%#U\n", index, letter)
+		}
 	}
 
 	// *****************************************

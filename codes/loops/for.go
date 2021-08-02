@@ -58,10 +58,12 @@ func main() {
 	// STRING ITERATION
 	// *****************************************
 	fmt.Println("\nString iteration")
-	var myCity = "Cumilla"
+	var myCity = "কুমিল্লা"
 
 	for index, letter := range myCity {
-		fmt.Printf("Index: %d, Letter:%#U\n", index, letter)
+		if index%2 == 0 {
+			fmt.Printf("Index: %d, Letter:%#U\n", index, letter)
+		}
 	}
 
 	// *****************************************
