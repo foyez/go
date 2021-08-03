@@ -1,5 +1,7 @@
 # Golang
 
+**[Go Playground](https://play.golang.org/)**
+
 ## Why Go
 
 <details>
@@ -698,6 +700,19 @@ fmt.Println(cap(sliceWithMake)) // 5
 ```
 
 **Make**: make function "Initialize and allocates space in memory for a slice, map, or channel."
+
+```go
+var fruits = []string{"apple", "mango"}
+
+// varArg
+func addFruits(fruitsToAdd ...string) []string {
+	// unpack or spread
+	updatedFruits := append(fruits, fruitsToAdd...)
+	return updatedFruits
+}
+
+addFruits("banana", "pineapple") // [apple mango banana pineapple]
+```
 
 </details>
 
