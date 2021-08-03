@@ -672,6 +672,7 @@ fmt.Println(multi) // [[1 2 3] [5 6 7]]
 
 ## Slices
 
+<details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/slices)**
@@ -697,5 +698,46 @@ fmt.Println(cap(sliceWithMake)) // 5
 ```
 
 **Make**: make function "Initialize and allocates space in memory for a slice, map, or channel."
+
+</details>
+
+## Maps / Object / Dictionary
+
+<details>
+<summary>View contents</summary>
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/maps)**
+
+```go
+var results map[string]float64 = make(map[string]float64)
+
+results["foyez"] = 3.4
+results["mithu"] = 3.5
+
+fmt.Println(results) // map[foyez:3.4 mithu:3.5]
+
+// ***********************************************
+userEmails := map[int]string{
+	1: "user1@email.com",
+	2: "user2@email.com",
+}
+
+userEmails[1] = "user12@email.com"
+emailOfSecondUser, ok := userEmails[2]
+emailOfFourthUser, ok2 := userEmails[4]
+
+fmt.Println(userEmails)             // map[1:user12@email.com 2:user2@email.com]
+fmt.Println(emailOfSecondUser, ok)  // user2@email.com true
+fmt.Println(emailOfFourthUser, ok2) // false
+
+if email, ok := userEmails[2]; ok {
+	fmt.Printf("%s exists\n", email)
+} else {
+	fmt.Printf("%s doesn't exists\n", email)
+}
+
+delete(userEmails, 1)
+fmt.Println(userEmails) // [2:user2@email.com]
+```
 
 </details>
