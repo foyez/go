@@ -756,3 +756,82 @@ fmt.Println(userEmails) // [2:user2@email.com]
 ```
 
 </details>
+
+## Strings
+
+<details>
+<summary>View contents</summary>
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/strings)**
+
+```go
+package main
+
+import (
+	"fmt"
+	s "strings"
+)
+
+var p = fmt.Println
+
+func main() {
+	p(s.Contains("test", "es"))        // true
+	p(s.Count("test", "t"))            // 2
+	p(s.HasPrefix("test", "te"))       // true
+	p(s.HasSuffix("test", "st"))       // true
+	p(s.Index("test", "t"))            // 0
+	p(s.LastIndex("test", "t"))        // 3
+	p(s.Join([]string{"a", "b"}, "-")) // a-b
+	p(s.Repeat("a", 5))                // aaaaa
+	p(s.Replace("fooo", "o", "O", -1)) // fOOO
+	p(s.Replace("fooo", "o", "O", 2))  // fOOo
+	p(s.Split("a-b-c", "-"))           // [a b c]
+	p(s.ToLower("TEST"))               // test
+	p(s.ToUpper("test"))               // TEST
+	p(len("hello"))                    // 5
+	p("hello"[1])                      // 1
+}
+```
+
+</details>
+
+## Tools & Commands
+
+<details>
+<summary>View contents</summary>
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/toolkit)**
+
+**Go Commands**
+
+```bash
+# run a go program
+$ go run hello.go
+
+# install go packages
+$ go install
+
+# create a binary file from go codes
+$ go build
+
+# format unindent go code
+$ go fmt hello.go
+
+# shows go package directory tree
+$ go list
+
+# identify unused variables & errors
+$ go vet
+
+# show go documentation
+go doc fmt.Println
+
+# install third party library
+$ go get golang.org/x/lint/golint
+
+# linting go code
+golint
+```
+
+**PACKAGES**
+
+</details>
