@@ -761,6 +761,7 @@ fmt.Println(userEmails) // [2:user2@email.com]
 
 <details>
 <summary>View contents</summary>
+
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/strings)**
 
 ```go
@@ -833,5 +834,27 @@ golint
 ```
 
 **PACKAGES**
+
+</details>
+
+## Structs
+
+<details>
+<summary>View contents</summary>
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/structs)**
+
+```go
+type User struct {
+	ID        int
+	FirstName string
+	LastName  string
+	Email     string
+}
+
+user := User{ID: 1, FirstName: "Foyez", LastName: "Ahmed", Email: "foyez@email.com"}
+
+fmt.Println(user.FirstName) // Foyez
+```
 
 </details>
