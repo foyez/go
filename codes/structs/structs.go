@@ -25,7 +25,7 @@ func describeUser(user User) string {
 	return desc
 }
 
-func describeGroup(g Group) string {
+func describeGroup(g *Group) string {
 	if len(g.users) > 2 {
 		g.isSpaceAvailable = false
 	}
@@ -47,6 +47,6 @@ func main() {
 	}
 
 	fmt.Println(describeUser(user2))
-	fmt.Println(describeGroup(group))
-	fmt.Println(group)
+	fmt.Println(describeGroup(&group))
+	fmt.Println(group) // {admin [{1 Foyez Ahmed foyez@email.com} {2 Manam Ahmed manam@email.com} {3 Zayan Ahmed zayan@email.com}] {2 Manam Ahmed manam@email.com} false}
 }
