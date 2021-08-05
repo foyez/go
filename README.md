@@ -869,13 +869,6 @@ fmt.Println(user.FirstName) // Foyez
 **Pointer:** a variable that holds the **memory location** of a variable instead of a copy of its value.
 
 ```go
-package main
-
-import (
-	"fmt"
-	"strings"
-)
-
 type Coordinates struct {
 	X, Y float64
 }
@@ -925,6 +918,83 @@ func main() {
 	updateCoordinatesWithPtr(&c)
 	fmt.Println(c) // {200 20}
 }
+```
+
+</details>
+
+## Error Handling
+
+<details>
+<summary>View contents</summary>
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/errors)**
+
+#### Error
+
+- indicates that something bad happened, but it might be possible to continue running the program.
+- i.e: A function that intentionally returns an error if something goes wrong
+
+#### Panic
+
+- happen at run time
+- something happened that was fatal to the program and program stops execution
+- ex: Trying to open a file that doesn't exist
+
+```go
+type error interface {
+	Error() string
+}
+
+err := funcReturnError()
+fmt.Println(err.Error())
+panic(err.Error())
+```
+
+#### Defer
+
+A defer statement defers the execution of a function until the surrounding function returns.
+
+```go
+func main(){
+	defer fmt.Println("Bangladesh")
+	defer fmt.Println("love")
+	fmt.Println("I")
+}
+
+// I
+// love
+// Bangladesh
+```
+
+#### Recover
+
+- **Panic** is called during a run time error and fatally kill the program
+- **Recover** tells Go what to do when a panic happens (returns what was passed to panic)
+- Recover must be paired with **defer**, which will fire even after a panic
+
+```go
+func recoverFromPanic() {
+	if r := recover(); r != nil {
+		fmt.Println(r)
+	}
+}
+
+func main() {
+	defer recoverFromPanic()
+
+	for i := 0; i < 5; i++ {
+		fmt.Println(i)
+
+		if i == 2 {
+			panic("PANIC!")
+		}
+	}
+}
+
+// 0
+// 1
+// 2
+// PANIC!
 ```
 
 </details>
