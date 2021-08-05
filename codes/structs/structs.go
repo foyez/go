@@ -20,12 +20,26 @@ type Group struct {
 	isSpaceAvailable bool
 }
 
-func describeUser(user User) string {
+// func describeUser(user User) string {
+// 	desc := fmt.Sprintf("Name: %s %s, Email: %s", user.FirstName, user.LastName, user.Email)
+// 	return desc
+// }
+
+func (user User) Describe() string {
 	desc := fmt.Sprintf("Name: %s %s, Email: %s", user.FirstName, user.LastName, user.Email)
 	return desc
 }
 
-func describeGroup(g *Group) string {
+// func describeGroup(g *Group) string {
+// 	if len(g.users) > 2 {
+// 		g.isSpaceAvailable = false
+// 	}
+
+// 	desc := fmt.Sprintf("Users: %d, Newest User: %s %s, Accepting New User: %t", len(g.users), g.newestUser.FirstName, g.newestUser.LastName, g.isSpaceAvailable)
+// 	return desc
+// }
+
+func (g *Group) Describe() string {
 	if len(g.users) > 2 {
 		g.isSpaceAvailable = false
 	}
@@ -46,7 +60,11 @@ func main() {
 		isSpaceAvailable: true,
 	}
 
-	fmt.Println(describeUser(user2))
-	fmt.Println(describeGroup(&group))
+	// fmt.Println(describeUser(user2))
+	fmt.Println(user2.Describe())
+
+	// fmt.Println(describeGroup(&group))
+	fmt.Println(group.Describe())
+
 	fmt.Println(group) // {admin [{1 Foyez Ahmed foyez@email.com} {2 Manam Ahmed manam@email.com} {3 Zayan Ahmed zayan@email.com}] {2 Manam Ahmed manam@email.com} false}
 }

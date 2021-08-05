@@ -998,3 +998,33 @@ func main() {
 ```
 
 </details>
+
+## Methods
+
+<details>
+<summary>View contents</summary>
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/methods)**
+
+#### Methods vs Functions
+
+- The difference between a method and a function is that instead of accepting an argument as struct, we're calling a method on an instance of that struct.
+
+```go
+user := User{ID: 1, FirstName: "Manam", LastName: "Ahmed", Email: "manam@email.com"}
+
+func describeUser(u *User) string {
+	desc := fmt.Sprintf("Name: %s %s, Email: %s, ID: %d", u.FirstName, u.LastName, u.Email, u.ID)
+	return desc
+}
+describeUser(&user)
+
+// func (receiverName ReceiverType) MethodName(args)
+func (u *User) Describe() string {
+	desc := fmt.Sprintf("Name: %s %s, Email: %s, ID: %d", u.FirstName, u.LastName, u.Email, u.ID)
+	return desc
+}
+user.Describe()
+```
+
+</details>
