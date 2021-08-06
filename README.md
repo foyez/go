@@ -835,6 +835,33 @@ golint
 
 **PACKAGES**
 
+`utils/greeting.go`
+
+```go
+package utils
+
+import "fmt"
+
+// Greeting - greet a user
+func Greeting(name string){
+	fmt.Printf("Hello %s\n", name)
+}
+```
+
+```go
+package main
+
+import (
+	"fmt" // Built-in package
+
+	"github.com/foyez/golang/codes/toolkit/utils" // custom package
+)
+
+func main() {
+	utils.Greeting("Mithu")
+}
+```
+
 </details>
 
 ## Structs
@@ -1020,11 +1047,97 @@ func describeUser(u *User) string {
 describeUser(&user)
 
 // func (receiverName ReceiverType) MethodName(args)
+// When a method is called on a variable of that type,
+// we get the reference to its data via the receiverName variable.
 func (u *User) Describe() string {
 	desc := fmt.Sprintf("Name: %s %s, Email: %s, ID: %d", u.FirstName, u.LastName, u.Email, u.ID)
 	return desc
 }
 user.Describe()
+```
+
+</details>
+
+## Interfaces
+
+<details>
+<summary>View contents</summary>
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/interfaces)**
+
+**Structs:** define a set of attributes on a type, e.g.: a user has a `FirstName` and a `LastName`, it is the type of User.
+
+**Interfaces:** describe a set of behaviors that also define a type, e.g. a user can change the `FirstName` is a type of that interface.
+
+```go
+// Describer has a Describe method
+type Human interface {
+	Describe() string
+}
+
+// Any struct that has a method called describe is also a type of Describer
+
+type User struct {
+	ID                         int
+	FirstName, LastName, Email string
+}
+
+type Group struct {
+	role           string
+	users          []User
+	newestUser     User
+	spaceAvailable bool
+}
+
+func (u User) Describe() string {
+	desc := fmt.Sprintf("Name: %s %s, Email: %s", u.FirstName, u.LastName, u.Email)
+	return desc
+}
+
+func (g *Group) Describe() string {
+	if len(g.users) > 2 {
+		g.spaceAvailable = false
+	}
+
+	desc := fmt.Sprintf("Users: %d, Newest User: %s %s, Accepting New User: %t", len(g.users), g.newestUser.FirstName, g.newestUser.LastName, g.spaceAvailable)
+	return desc
+}
+
+func main() {
+	user := User{ID: 1, FirstName: "Foyez", LastName: "Ahmed", Email: "foyez@email.com"}
+	user2 := User{ID: 2, FirstName: "Manam", LastName: "Ahmed", Email: "manam@email.com"}
+
+	group := Group{
+		role:           "admin",
+		users:          []User{user, user2},
+		newestUser:     user2,
+		spaceAvailable: true,
+	}
+
+	describeSomething := func(human Human) {
+		desc := human.Describe()
+		fmt.Println(desc)
+	}
+
+	describeSomething(user) // Name: Foyez Ahmed, Email: foyez@email.com
+	describeSomething(&group) // Users: 2, Newest User: Manam Ahmed, Accepting New User: true
+}
+```
+
+#### Empty Interface
+
+```go
+interface{}
+```
+
+- Specifies zero methods
+- An empty interface may hold values of any type
+- Like _any_ type in Typescript
+
+```go
+var people map[string]interface{}
+people["name"] = "Foyez"
+people["age"] = 28
 ```
 
 </details>
