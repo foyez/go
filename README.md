@@ -1135,9 +1135,44 @@ interface{}
 - Like _any_ type in Typescript
 
 ```go
-var people map[string]interface{}
+var people map[string]interface{} = make(map[string]interface{})
+
 people["name"] = "Foyez"
 people["age"] = 28
+
+fmt.Printf("%#v %T\n", people["name"], people["name"]) // "Foyez" string
+fmt.Printf("%#v %T", people["age"], people["age"])     // 28 int
+```
+
+</details>
+
+## Web Servers
+
+<details>
+<summary>View contents</summary>
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/webServers)**
+
+```go
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+)
+
+func home(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("Home!")
+	fmt.Fprint(w, "Home!")
+}
+
+func main() {
+	http.HandleFunc("/", home)
+
+	fmt.Println("Server is running on port :8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
 ```
 
 </details>
