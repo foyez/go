@@ -1,0 +1,28 @@
+<html>
+  <head>
+    <title>Simple web app</title>
+  </head>
+
+  <body>
+    <form action="/register" method="post">
+      Username: <input type="text" name="username" /><br>
+      Age: <input type="number" name="age" /><br>
+      City: <select name="city">
+        <option value="dhaka">Dhaka</option>
+        <option value="cumilla">Cumilla</option>
+        <option value="feni">Feni</option>
+      </select><br>
+      Gender: 
+      <input type="radio" name="gender" value="male"> Male
+      <input type="radio" name="gender" value="female"> Female
+      <br>
+      Interest:
+      <input type="checkbox" name="interest" value="football"> Football
+      <input type="checkbox" name="interest" value="cricket"> Cricket
+      <input type="checkbox" name="interest" value="tennis"> Tennis
+      <br>
+      Password: <input type="password" name="password" /><br>
+      <input type="submit" value="Register" />
+    </form>
+  </body>
+</html>

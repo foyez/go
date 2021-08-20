@@ -1146,6 +1146,25 @@ fmt.Printf("%#v %T", people["age"], people["age"])     // 28 int
 
 </details>
 
+## Concurrency
+
+<details>
+<summary>View contents</summary>
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/concurrency)**
+
+#### Goroutines
+
+- A **Goroutine** is a lightweight thread manged by the Go runtime
+- Implemented by adding the `go` keyword before executing a function
+- Tells go to spin up a new thread to do that thing
+
+```go
+
+```
+
+</details>
+
 ## Web Servers
 
 <details>
