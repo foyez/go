@@ -1032,6 +1032,12 @@ func main() {
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/methods)**
+	
+Syntax of method
+	
+```go
+func (r ReceiverType) funcName(parameters) (results)
+```
 
 #### Methods vs Functions
 
