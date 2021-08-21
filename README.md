@@ -80,12 +80,12 @@ $ mkdir hello
 
 # change directory to "hello
 $ cd hello
+	
+# create "main.go" file
+$ touch main.go
 
 # generate "go.mod" file
-$ go mod init github.com/foyez/go
-
-# create "hello.go" file
-$ touch main.go
+$ go mod init github.com/foyez/go/hello # directory path from $GOPATH
 ```
 
 </details>
