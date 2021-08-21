@@ -82,10 +82,10 @@ $ mkdir hello
 $ cd hello
 
 # generate "go.mod" file
-$ go mod init hello
+$ go mod init github.com/foyez/go
 
 # create "hello.go" file
-$ touch hello.go
+$ touch main.go
 ```
 
 </details>
