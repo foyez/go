@@ -87,6 +87,18 @@ $ mkdir -p $GOPATH $GOPATH/src $GOPATH/pkg $GOPATH/bin
 # $GOPATH/bin : The compiled binaries home
 ```
 	
+4. Install godoc & run godoc
+	
+```bash
+$ go install golang.org/x/tools/cmd/godoc@latest
+	
+# run godoc
+$ godoc -http :8000
+	
+# go to: localhost:8000/pkg
+# go to personal project: localhost:8000/pkg/project-name
+```
+	
 </details>
 
 ## Create a go project
