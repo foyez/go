@@ -220,14 +220,41 @@ git commit --amend
 - Run the test, see that it fails and check the error message is meaningful
 - Write enough code to make the test pass
 - Refactor
+	
+7. **Add Benchmark test**
+	
+```go
+func BenchmarkHello(b *testing.B) {
+	if testing.Short() {
+		b.Skip("skipping benchmark in short mode.")
+	}
+	for i := 0; i < b.N; i++ {
+		Hello("Zayan")
+	}
+}
+```
+			    
+run `go test -v --bench . --benchmem`
+			    
+```
+BenchmarkHello   	2000000000	         0.46 ns/op
 
-7. **Add test examples**
+// This means that the loop ran 2000000000 times at a speed of 0.46 ns per loop.
+```
+
+8. **Add example tests**
 
 ```go
 func ExampleHello() {
 	greeting := Hello("Zayan")
 	fmt.Println(greeting)
 	// Output: Hello, Zayan
+}
+	
+func ExampleHello() {
+	greeting := Hello("Farah")
+	fmt.Println(greeting)
+	// Output: Hello, Farah
 }
 ```
 
@@ -240,6 +267,8 @@ run `go test -v`
     --- PASS: TestHello/saying_hello_to_people (0.00s)
 === RUN   ExampleHello
 --- PASS: ExampleHello (0.00s)
+=== RUN   ExampleHello_second
+--- PASS: ExampleHello_second (0.00s)
 ```
 
 </details>
