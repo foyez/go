@@ -46,27 +46,47 @@
 
 </details>
 
-## Anatomy of a go file
+## Setup go
 
 <details>
 <summary>View contents</summary>
+	
+1. Download go installer & install it. link: [go installer](https://go.dev/doc/install)
+2. Add environment variables into shell config
 
-```go
-// package name
-// Every go program needs at least one package main
-package main
+Bash shell
+	
+```bash
+# ~/.bash_profile
 
-// import built-in packages
-import "fmt"
+# set the workspace path
+export GOPATH=$HOME/go-workspace # change your path correctly!
 
-// Every go program needs one main function
-// It's the entry point for the program where
-// go starts executing the code
-func main() {
-  fmt.Println("Hello, World")
-}
+# add the go bin path to be able to execute our programs
+export PATH=$PATH:$GOPATH/bin
 ```
 
+Fish shell
+	
+```bash
+# ~/.config/fish/config.fish
+
+# set the workspace path
+set -x GOPATH $HOME/go-workspace # change your path correctly!
+
+# add the go bin path to be able to execute our programs
+set -x PATH $PATH /usr/local/go/bin $GOPATH/bin
+```
+3. Create workspace
+	
+```bash
+$ mkdir -p $GOPATH $GOPATH/src $GOPATH/pkg $GOPATH/bin
+	
+# $GOPATH/src : Where your Go projects / programs are located
+# $GOPATH/pkg : contains every package objects
+# $GOPATH/bin : The compiled binaries home
+```
+	
 </details>
 
 ## Create a go project
@@ -86,6 +106,29 @@ $ touch main.go
 
 # generate "go.mod" file
 $ go mod init github.com/foyez/go/hello # directory path from $GOPATH
+```
+
+</details>
+
+## Anatomy of a go file
+
+<details>
+<summary>View contents</summary>
+
+```go
+// package name
+// Every go program needs at least one package main
+package main
+
+// import built-in packages
+import "fmt"
+
+// Every go program needs one main function
+// It's the entry point for the program where
+// go starts executing the code
+func main() {
+  fmt.Println("Hello, World")
+}
 ```
 
 </details>
