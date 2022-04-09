@@ -49,13 +49,14 @@
 ## Setup go
 
 <details>
+
 <summary>View contents</summary>
-	
+
 1. Download go installer & install it. link: [go installer](https://go.dev/doc/install)
 2. Add environment variables into shell config
 
 Bash shell
-	
+
 ```bash
 # ~/.bash_profile
 
@@ -67,7 +68,7 @@ export PATH=$PATH:$GOPATH/bin
 ```
 
 Fish shell
-	
+
 ```bash
 # ~/.config/fish/config.fish
 
@@ -77,6 +78,7 @@ set -x GOPATH $HOME/go-workspace # change your path correctly!
 # add the go bin path to be able to execute our programs
 set -x PATH $PATH /usr/local/go/bin $GOPATH/bin
 ```
+
 3. Create workspace
 	
 ```bash
@@ -99,6 +101,30 @@ $ godoc -http :8000
 # go to personal project: localhost:8000/pkg/project-name
 ```
 	
+</details>
+
+## Go Directory Structure
+
+<details>
+<summary>View contents</summary>
+
+```txt
+$GOPATH
+│
+└───bin
+│
+└───pkg
+│   
+└───src
+    │
+    │
+    └───github.com
+        │
+        └───github_username
+            │
+            └───repo_name
+```
+
 </details>
 
 ## Create a go project
