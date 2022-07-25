@@ -1311,3 +1311,12 @@ func main() {
 ```
 
 </details>
+
+## Learning Resources
+
+<details>
+<summary>View contents</summary>
+
+- [Golang Tutorial for Beginners](https://www.youtube.com/watch?v=yyUHQIec83I) - `TechWorld with Nana`
+
+</details>
