@@ -16,9 +16,9 @@
 4. Fast execution
 5. Automatic garbage collection
 
-**In Parallel:** Downloading, Uploading, Navigating at the same time
-**Multi-Threading:** Do multiple things at once, e.g., Watching, commenting in Youtube
-**Concurrency:** Dealing with lots of things at once but necessarily run at the same time, e.g., Multiple users booking at the same time, Multiple users editing the same document
+- **In Parallel:** Downloading, Uploading, Navigating at the same time
+- **Multi-Threading:** Do multiple things at once, e.g., Watching, commenting in Youtube
+- **Concurrency:** Dealing with lots of things at once but not necessarily run at the same time, e.g., Multiple users booking at the same time, Multiple users editing the same document
 
 </details>
 
@@ -521,6 +521,9 @@ func main() {
 	// int: 0, float: 0.0, string: "", bool: false
 	var salary int
 
+	// value cannot be changed/re-assigned
+	const birthPlace = "Bangladesh"
+
 	// variables in only function
 	funcVar := "can't declare outside of a function"
 
@@ -528,6 +531,7 @@ func main() {
 	one, two := 1, "two"
 
 	fmt.Println(name, age, salary)
+	fmt.Println(birthPlace)
 	fmt.Println(funcVar)
 	fmt.Println(one, two)
 }
