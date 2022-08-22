@@ -143,7 +143,7 @@ $ cd hello
 $ touch main.go
 
 # generate "go.mod" file
-$ go mod init github.com/foyez/go/hello # directory path from $GOPATH
+$ go mod init github.com/foyez/hello # directory path from $GOPATH
 ```
 
 </details>
@@ -153,19 +153,35 @@ $ go mod init github.com/foyez/go/hello # directory path from $GOPATH
 <details>
 <summary>View contents</summary>
 
+`main.go`
+	
 ```go
 // package name
 // Every go program needs at least one package main
 package main
 
-// import built-in packages
-import "fmt"
+import (
+	"fmt" // import built-in packages
+	
+	"github.com/foyez/hello/utils" // import custom packages
+)
 
 // Every go program needs one main function
 // It's the entry point for the program where
 // go starts executing the code
 func main() {
   fmt.Println("Hello, World")
+  fmt.Print(utils.Add(10, 20))
+}
+```
+	
+`utils/utils.go`
+	
+```go
+package utils
+	
+func Add(a int64, b int64) int64 {
+  return a + b
 }
 ```
 
