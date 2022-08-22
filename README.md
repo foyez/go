@@ -2,15 +2,23 @@
 
 **[Go Playground](https://play.golang.org/)**
 
+- Programming Language developed by Google in 2007
+- Open-sourced in 2009
+
 ## Why Go
 
 <details>
 <summary>View contents</summary>
 
-1. Fast compile times
-2. Ease to development
-3. Fast execution
-4. Automatic garbage collection
+1. Run on multiple cores and builtin to support concurrency
+2. Fast compile times
+3. Ease to development
+4. Fast execution
+5. Automatic garbage collection
+
+**In Parallel:** Downloading, Uploading, Navigating at the same time
+**Multi-Threading:** Do multiple things at once, e.g., Watching, commenting in Youtube
+**Concurrency:** Dealing with lots of things at once but necessarily run at the same time, e.g., Multiple users booking at the same time, Multiple users editing the same document
 
 </details>
 
@@ -80,27 +88,27 @@ set -x PATH $PATH /usr/local/go/bin $GOPATH/bin
 ```
 
 3. Create workspace
-	
+
 ```bash
 $ mkdir -p $GOPATH $GOPATH/src $GOPATH/pkg $GOPATH/bin
-	
+
 # $GOPATH/src : Where your Go projects / programs are located
 # $GOPATH/pkg : contains every package objects
 # $GOPATH/bin : The compiled binaries home
 ```
-	
+
 4. Install godoc & run godoc
-	
+
 ```bash
 $ go install golang.org/x/tools/cmd/godoc@latest
-	
+
 # run godoc
 $ godoc -http :8000
-	
+
 # go to: localhost:8000/pkg
 # go to personal project: localhost:8000/pkg/project-name
 ```
-	
+
 </details>
 
 ## Go Directory Structure
@@ -114,7 +122,7 @@ $GOPATH
 └───bin
 │
 └───pkg
-│   
+│
 └───src
     │
     │
@@ -138,12 +146,20 @@ $ mkdir hello
 
 # change directory to "hello
 $ cd hello
-	
+
 # create "main.go" file
 $ touch main.go
 
 # generate "go.mod" file
-$ go mod init github.com/foyez/hello # directory path from $GOPATH
+$ go mod init github.com/foyez/hello # module path can be repository you want to publish
+```
+
+`go.mod`
+
+```go
+module github.com/foyez/hello // name or module path
+
+go 1.18 // go version
 ```
 
 </details>
@@ -154,16 +170,18 @@ $ go mod init github.com/foyez/hello # directory path from $GOPATH
 <summary>View contents</summary>
 
 `main.go`
-	
+
 ```go
 // package name
 // Every go program needs at least one package main
+// Go programs are organized into packages
+// A package is a collection of source files
 package main
 
 import (
-	"fmt" // import built-in packages
-	
-	"github.com/foyez/hello/utils" // import custom packages
+  "fmt" // import built-in packages
+
+  "github.com/foyez/hello/utils" // import custom packages
 )
 
 // Every go program needs one main function
@@ -174,12 +192,12 @@ func main() {
   fmt.Print(utils.Add(10, 20))
 }
 ```
-	
+
 `utils/utils.go`
-	
+
 ```go
 package utils
-	
+
 func Add(a int64, b int64) int64 {
   return a + b
 }
@@ -317,9 +335,9 @@ git commit --amend
 - Run the test, see that it fails and check the error message is meaningful
 - Write enough code to make the test pass
 - Refactor
-	
+
 7. **Add Benchmark test**
-	
+
 ```go
 func BenchmarkHello(b *testing.B) {
 	if testing.Short() {
@@ -330,9 +348,9 @@ func BenchmarkHello(b *testing.B) {
 	}
 }
 ```
-			    
+
 run `go test -v --bench . --benchmem`
-			    
+
 ```
 BenchmarkHello   	2000000000	         0.46 ns/op
 
@@ -347,7 +365,7 @@ func ExampleHello() {
 	fmt.Println(greeting)
 	// Output: Hello, Zayan
 }
-	
+
 func ExampleHello() {
 	greeting := Hello("Farah")
 	fmt.Println(greeting)
@@ -1158,9 +1176,8 @@ func main() {
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/methods)**
-	
 Syntax of method
-	
+
 ```go
 func (r ReceiverType) funcName(parameters) (results)
 ```
