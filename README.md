@@ -208,6 +208,42 @@ func Add(a int64, b int64) int64 {
 
 </details>
 
+## Go Commands
+
+<details>
+<summary>View contents</summary>
+
+```bash
+# run a go program
+$ go run main.go # go run <file_name>
+
+# install go packages
+$ go install
+
+# create a binary file from go codes
+$ go build
+
+# format unindent go code
+$ go fmt main.go
+
+# shows go package directory tree
+$ go list
+
+# identify unused variables & errors
+$ go vet
+
+# show go documentation
+go doc fmt.Println
+
+# install third party library
+$ go get golang.org/x/lint/golint
+
+# linting go code
+golint
+```
+
+</details>
+
 ## List of keywords
 
 <details>
@@ -976,75 +1012,6 @@ func main() {
 	p(s.ToUpper("test"))               // TEST
 	p(len("hello"))                    // 5
 	p("hello"[1])                      // 1
-}
-```
-
-</details>
-
-## Tools & Commands
-
-<details>
-<summary>View contents</summary>
-
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/toolkit)**
-
-**Go Commands**
-
-```bash
-# run a go program
-$ go run hello.go
-
-# install go packages
-$ go install
-
-# create a binary file from go codes
-$ go build
-
-# format unindent go code
-$ go fmt hello.go
-
-# shows go package directory tree
-$ go list
-
-# identify unused variables & errors
-$ go vet
-
-# show go documentation
-go doc fmt.Println
-
-# install third party library
-$ go get golang.org/x/lint/golint
-
-# linting go code
-golint
-```
-
-**PACKAGES**
-
-`utils/greeting.go`
-
-```go
-package utils
-
-import "fmt"
-
-// Greeting - greet a user
-func Greeting(name string){
-	fmt.Printf("Hello %s\n", name)
-}
-```
-
-```go
-package main
-
-import (
-	"fmt" // Built-in package
-
-	"github.com/foyez/golang/codes/toolkit/utils" // custom package
-)
-
-func main() {
-	utils.Greeting("Mithu")
 }
 ```
 
