@@ -203,6 +203,44 @@ func Add(a int64, b int64) int64 {
 }
 ```
 
+- compiles and runs the code: `go run <file_name>`
+- build the code: `go build main.go`
+
+</details>
+
+## List of keywords
+
+<details>
+<summary>View contents</summary>
+
+The list of all **25** keywords of Go language:
+
+1. `break`
+2. `case`
+3. `chan`
+4. `const`
+5. `continue`
+6. `default`
+7. `defer`
+8. `else`
+9. `fallthrough`
+10. `for`
+11. `func`
+12. `go`
+13. `goto`
+14. `if`
+15. `import`
+16. `interface`
+17. `map`
+18. `package`
+19. `range`
+20. `return`
+21. `select`
+22. `struct`
+23. `switch`
+24. `type`
+25. `var`
+
 </details>
 
 ## TDD with Go
