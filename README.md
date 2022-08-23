@@ -213,7 +213,7 @@ func Add(a int64, b int64) int64 {
 <details>
 <summary>View contents</summary>
 
-```bash
+```sh
 # run a go program
 $ go run main.go # go run <file_name>
 
@@ -960,7 +960,7 @@ addFruits("banana", "pineapple") // [apple mango banana pineapple]
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/maps)**
 
 ```go
-var results map[string]float64 = make(map[string]float64)
+var results map[string]float64 = make(map[string]float64) // create empty map
 
 results["foyez"] = 3.4
 results["mithu"] = 3.5
