@@ -1384,6 +1384,7 @@ func main() {
 - [Go Doc](https://golang.org/doc/)
 - [Go Blog](https://blog.golang.org/)
 - [Clean Go Article](https://github.com/Pungyeon/clean-go-article)
+- [How To Code in Go](https://www.digitalocean.com/community/tutorial_series/how-to-code-in-go)
 
 ### Video Tutorials
 
