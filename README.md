@@ -481,6 +481,20 @@ fmt.Printf()
 - Returns number of bytes and an error
 - (The error is generally not worried about)
 
+```go
+name := "Zohan"
+
+fmt.Print("Hello, ", name, "\n")
+fmt.Println("Hello,", name)
+fmt.Printf("Hello, %v\n", name)
+```
+
+```sh
+Hello, Zohan
+Hello, Zohan
+Hello, Zohan
+```
+
 #### Fprint
 
 ```
