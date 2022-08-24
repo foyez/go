@@ -869,6 +869,9 @@ func main() {
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/arrays)**
 
 ```go
+// ARRAY
+// [number]T
+// A slice type has a specific length
 // declare array
 var arr [3]float64
 fmt.Println(arr) // [0 0 0]
@@ -936,6 +939,23 @@ fmt.Println(cap(sliceWithMake)) // 5
 ```
 
 **Make**: make function "Initialize and allocates space in memory for a slice, map, or channel."
+	
+```go
+s := make([]int, 0, 3)
+	
+for i := 0; i < 5; i++ {
+    s = append(s, i)
+    fmt.Printf("cap %v, len %v, %p\n", cap(s), len(s), s)
+}
+```
+		  
+```sh
+cap 3, len 1, 0xc0000b2000
+cap 3, len 2, 0xc0000b2000
+cap 3, len 3, 0xc0000b2000
+cap 6, len 4, 0xc0000b8000 # larger capacity and a new pointer address
+cap 6, len 5, 0xc0000b8000
+```
 
 ```go
 var fruits = []string{"apple", "mango"}
