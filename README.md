@@ -1406,6 +1406,7 @@ func main() {
 	names := names{"Sohel", "Mithu", "Rupom"}
 	names.saveToFile("my_names")
 	fmt.Println(readNamesFromFiles("my_names"))
+	removeFile("my_names")
 }
 
 func (n names) toString() string {
@@ -1424,6 +1425,13 @@ func readNamesFromFile(filename string) names {
 	}
 	
 	return strings.Split(string(bs), ",")
+}
+
+func removeFile(filename string) {
+	err := os.Remove(filename)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
 }
 ```
 
