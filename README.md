@@ -1388,6 +1388,47 @@ func main() {
 
 </details>
 
+## Working with files
+
+<details>
+<summary>View contents</summary>
+
+```go
+import (
+	"fmt"
+	"os"
+	"strings"
+)
+
+type names string[]
+
+func main() {
+	names := names{"Sohel", "Mithu", "Rupom"}
+	names.saveToFile("my_names")
+	fmt.Println(readNamesFromFiles("my_names"))
+}
+
+func (n names) toString() string {
+	return strings.Join(n, ",")
+}
+
+func (n names) saveToFile(filename string) error {
+	return os.WriteFile(filename, []bytes(n.toString()), 0666)
+}
+
+func readNamesFromFile(filename string) names {
+	bs, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(1)
+	}
+	
+	return strings.Split(string(bs), ",")
+}
+```
+
+</details>
+
 ## Learning Resources
 
 <details>
