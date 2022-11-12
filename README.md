@@ -1428,6 +1428,26 @@ func readNamesFromFile(filename string) names {
 ```
 
 </details>
+	
+## Generate random numbers
+	
+<details>
+<summary>View contents</summary>
+	
+```go
+import (
+	"math/rand"
+	"time"
+)
+	
+source := rand.NewSource(time.Now().UnixNano())
+r := rand.New(source)
+	
+// genrate random number from 0 to n
+r.Intn(8) // n = 8
+```
+	
+</details>
 
 ## Learning Resources
 
