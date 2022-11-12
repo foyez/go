@@ -1094,54 +1094,28 @@ var variableName *type
 ```
 
 ```go
-type Coordinates struct {
-	X, Y float64
-}
-
-func upperName(name *string) {
-	*name = strings.ToUpper(*name)
-}
-
-func updateCoordinates(c Coordinates) {
-	c.X = 200
-}
-
-func updateCoordinatesWithPtr(c *Coordinates) {
-	c.X = 200
+type person struct {
+	firstName string
+	lastName  string
 }
 
 func main() {
-	var name string
-	var namePtr *string // var pointerVar *type
+	person := person{
+		firstName: "Foyez",
+		lastName:  "Ahmed",
+	}
+	
+	updateFirstName(&person, "Rumon")
+	fmt.Println(person) // {Rumon Ahmed}
+}
+	
+func updateFirstName(p *person, newFirstName string) {
+	fmt.Println(p)  // &{Foyez Ahmed}
+	fmt.Println(&p) // 0xc00000e028
+	fmt.Println(*p) // {Foyez Ahmed}
 
-	fmt.Println(name)    // ""
-	fmt.Println(namePtr) // <nil>
-
-	name = "Cumilla"
-	namePtr = &name          // read variable address - &pointerVar
-	var nameValue = *namePtr // read variable value - *pointerVar
-
-	fmt.Println(name)      // Cumilla
-	fmt.Println(namePtr)   // 0xc00009c050
-	fmt.Println(nameValue) // Cumilla
-
-	// ******************************************
-	// Pass by Reference
-	// ******************************************
-	n := "Chayon"
-	upperName(&n)
-	fmt.Println(n)
-
-	// ******************************************
-	// Pointer with Structs
-	// ******************************************
-	var c = Coordinates{X: 10, Y: 20}
-
-	updateCoordinates(c)
-	fmt.Println(c) // {10 20}
-
-	updateCoordinatesWithPtr(&c)
-	fmt.Println(c) // {200 20}
+	// (*p).firstName = newFirstName
+	p.firstName = newFirstName
 }
 ```
 
