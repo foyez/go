@@ -1230,22 +1230,44 @@ func (r ReceiverType) funcName(parameters) (results)
 - The difference between a method and a function is that instead of accepting an argument as struct, we're calling a method on an instance of that struct.
 
 ```go
-user := User{ID: 1, FirstName: "Manam", LastName: "Ahmed", Email: "manam@email.com"}
-
-func describeUser(u *User) string {
-	desc := fmt.Sprintf("Name: %s %s, Email: %s, ID: %d", u.FirstName, u.LastName, u.Email, u.ID)
-	return desc
+type address struct {
+	email   string
+	zipCode int
 }
-describeUser(&user)
+	
+type User struct {
+	name string
+	age  int
+	address
+}
+	
+func main() {
+	user := User{
+		name: "Manam", 
+		age: 25,
+		address: address{
+			email: "manam@email.com",
+			zipCode: 34000
+		},
+	}
+	
+	updateUserName(&user, "Chayon")
+	
+	// (&user).UpdateName("Chayon")
+	user.UpdateName("Chayon")
+}
+
+func updateUserName(u *User, name string) {
+	u.name = name
+}
 
 // func (receiverName ReceiverType) MethodName(args)
 // When a method is called on a variable of that type,
 // we get the reference to its data via the receiverName variable.
-func (u *User) Describe() string {
-	desc := fmt.Sprintf("Name: %s %s, Email: %s, ID: %d", u.FirstName, u.LastName, u.Email, u.ID)
-	return desc
+func (u *User) UpdateName(name string) {
+	// (*u).name = name
+	u.name = name
 }
-user.Describe()
 ```
 
 </details>
