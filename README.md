@@ -1081,6 +1081,17 @@ fmt.Println(user.FirstName) // Foyez
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/pointers)**
 
 **Pointer:** a variable that holds the **memory location** of a variable instead of a copy of its value.
+	
+```go
+// Declare a pointer variable
+var variableName *type
+	
+// Access to the variable address
+&variableName
+	
+// Access to the variable value
+*variableName
+```
 
 ```go
 type Coordinates struct {
