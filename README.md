@@ -1095,29 +1095,43 @@ var variableName *type
 
 ```go
 type person struct {
-	firstName string
-	lastName  string
+	firstName      string
+	lastName       string
+	faboriteSports []string
 }
 
 func main() {
 	person := person{
 		firstName: "Foyez",
 		lastName:  "Ahmed",
+		faboriteSports: []string{"Cricket"}
 	}
 	
 	updateFirstName(&person, "Rumon")
-	fmt.Println(person) // {Rumon Ahmed}
+	fmt.Println(person) // {Foyez Ahmed [Cricket]}
+	updateFavoriteSports(person, "Football")
+	fmt.Println(person) // {Foyez Ahmed [Football]}
 }
 	
 func updateFirstName(p *person, newFirstName string) {
-	fmt.Println(p)  // &{Foyez Ahmed}
+	fmt.Println(p)  // &{Foyez Ahmed [Cricket]}
 	fmt.Println(&p) // 0xc00000e028
-	fmt.Println(*p) // {Foyez Ahmed}
+	fmt.Println(*p) // {Foyez Ahmed [Cricket]}
 
 	// (*p).firstName = newFirstName
 	p.firstName = newFirstName
 }
+	
+func updateFavoriteSports(p person, sportName string) {
+	p.favoriteSports[0] = sportName
+}
 ```
+	
+**Value Types:** `int`, `float`, `string`, `bool`, `structs`
+> Have to use pointer to update these types of variables
+	
+**Reference Types:** `slices`, `maps`, `channels`, `pointers`, `functions`
+> Don't need to use pointer to update these types of variables
 
 </details>
 
