@@ -1274,6 +1274,10 @@ func (u *User) UpdateName(name string) {
 	u.name = name
 }
 ```
+	
+Good practices:
+1. All methods of a type should have pointer receivers, or
+2. All methods of a type should have non-pointer receivers
 
 </details>
 
