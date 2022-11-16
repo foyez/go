@@ -1274,8 +1274,12 @@ func (u *User) UpdateName(name string) {
 	u.name = name
 }
 ```
+
+**When should we make the pointer receiver type of a method?**
+1. When the receiver type uses a large amount of memory, otherwise the receiver will be copied with a large amount of data which is costly.
+2. When the method must modify the data in the object of the receiver type.
 	
-Good practices:
+**Good practices:**
 1. All methods of a type should have pointer receivers, or
 2. All methods of a type should have non-pointer receivers
 
