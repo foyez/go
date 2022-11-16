@@ -198,6 +198,12 @@ func main() {
 ```go
 package utils
 
+// private variable - start with lowercase
+// Can't be accessed from other packages
+var s = "Hello"
+
+// Public function - starting with capital letter
+// Can be accessed from other packages
 func Add(a int64, b int64) int64 {
   return a + b
 }
