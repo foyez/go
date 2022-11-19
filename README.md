@@ -1142,6 +1142,7 @@ var variableName *type
 // Access to the variable value
 *variableName
 ```
+	
 
 ```go
 type person struct {
@@ -1182,6 +1183,70 @@ func updateFavoriteSports(p person, sportName string) {
 	
 **Reference Types:** `slices`, `maps`, `channels`, `pointers`, `functions`
 > Don't need to use pointer to update these types of variables
+	
+**Call by Value:**
+	
+- Passed arguments or receiver are copied to parameters
+- Modifying parameters or receiver has no effect outside of the function or the method
+	
+```go
+type Person struct {
+	name string
+	age  int
+}
+
+func updateAge(p Person) {
+	p.age = 20
+	fmt.Println(p) // {Mithu 20}
+}
+	
+func (p Person) updateAge() {
+	p.age = 30
+	fmt.Println(p) // {Mithu 30}
+}
+	
+func main() {
+	mithu := Person{name: "Mithu", age: 10}
+	
+	updateAge(mithu)
+	fmt.Println(mithu) // {Mithu 10}
+	
+	mithu.updateAge()
+	fmt.Println(mithu) // {Mithu 10}
+}
+```
+	
+**Call by Reference:**
+	
+- Pass pointer (memory location) as arguments or receiver
+- Modifying parameters or receiver has effect outside of the function or the method
+	
+```go
+type Person struct {
+	name string
+	age  int
+}
+
+func updateAge(p *Person) {
+	p.age = 20
+	fmt.Println(*p) // {Mithu 20}
+}
+	
+func (p *Person) updateAge() {
+	p.age = 30
+	fmt.Println(*p) // {Mithu 30}
+}
+	
+func main() {
+	mithu := Person{name: "Mithu", age: 10}
+	
+	updateAge(&mithu)
+	fmt.Println(mithu) // {Mithu 20}
+	
+	mithu.updateAge()
+	fmt.Println(mithu) // {Mithu 30}
+}
+```
 
 </details>
 
