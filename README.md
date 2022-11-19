@@ -853,6 +853,7 @@ func printAge(age1, age2 int) (ageOfBob, ageOfSally int) {
 func average(ages ...int) float64 {
 	total := 0
 
+	// ages - treated as slice
 	for _, age := range ages {
 		total += age
 	}
@@ -862,8 +863,51 @@ func average(ages ...int) float64 {
 
 func main() {
 	fmt.Println(average(10, 20, 32))
+	
+	nums := []int{10, 20, 32}
+	// unpack or spread
+	fmt.Println(average(nums...))
 }
 ```
+
+- go functions are `lexically scoped` means variables are accessible from the functions in the same block where the functions are defined
+
+```go
+var n1 = 5
+
+func foo(n2 int) {
+	n3 := 8
+	fmt.Println(n1, n2, n3)
+}
+```
+
+- function as first-class value (assigning as variable, pass as argument, return as value, etc.)
+
+```go
+func print(n int, fn func(int)) {
+	fn(n)
+}
+
+print(6, func(val int) {
+	fmt.Println(val) // 6
+})
+```
+
+```go
+func add(n1 int) func(int) int {
+	fn := func(n2 int) int {
+		return n1 + n2
+	}
+	return fn
+}
+// n1 is in the closure of fn()
+
+sum := add(1)
+fmt.Println(sum(5)) // 6
+fmt.Println(sum(2)) // 3
+```
+
+When functions are passed/returned, their environment comes with them.
 
 </details>
 
@@ -1171,12 +1215,16 @@ panic(err.Error())
 
 #### Defer
 
-A defer statement defers the execution of a function until the surrounding function returns.
+A defer statement defers the execution of a function until the surrounding function completes. Typically used for cleanup activities. Arguments of a deffered call are evaluted immediately.
 
 ```go
 func main(){
-	defer fmt.Println("Bangladesh")
+	let country := "Bangladesh"
+	
+	defer fmt.Println(country)
 	defer fmt.Println("love")
+	country = "Australia"
+	
 	fmt.Println("I")
 }
 
