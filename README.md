@@ -1285,6 +1285,30 @@ func (u *User) UpdateName(name string) {
 
 </details>
 
+## Type Assertions
+
+<details>
+<summary>View contents</summary>
+
+> Type assertions is used to assert the type of a given variable. It provides access to an interface value's underlying concrete value.
+
+```go
+// assertedVariable, ok := variable.(Type)
+
+var foo interface{} = "Hello"
+
+str := foo.(string)
+fmt.Println(str) // "Hello"
+
+num := foo.(int) // panic
+fmt.Println(num)
+
+num2, ok := foo.(int)
+fmt.Println(num2, ok) // 0, false
+```
+
+</details>
+
 ## Interfaces
 
 <details>
@@ -1294,60 +1318,61 @@ func (u *User) UpdateName(name string) {
 
 **Structs:** define a set of attributes on a type, e.g.: a user has a `FirstName` and a `LastName`, it is the type of User.
 
-**Interfaces:** describe a set of behaviors that also define a type, e.g. a user can change the `FirstName` is a type of that interface.
+**Interfaces:** define a set of method signatures (name, parameters & return types), NOT the implementation.
 
 ```go
-// Describer has a Describe method
-type Human interface {
-	Describe() string
+type Shape2D interface {
+	Area() float64
+	Perimeter() float64
 }
 
-// Any struct that has a method called describe is also a type of Describer
-
-type User struct {
-	ID                         int
-	FirstName, LastName, Email string
+type Rectangle struct {
+	Width  float64
+	Height float64
 }
 
-type Group struct {
-	role           string
-	users          []User
-	newestUser     User
-	spaceAvailable bool
+func (r Rectangle) Area() float64 {
+	return r.Width * r.Height
 }
 
-func (u User) Describe() string {
-	desc := fmt.Sprintf("Name: %s %s, Email: %s", u.FirstName, u.LastName, u.Email)
-	return desc
+func (r Rectangle) Perimeter() float64 {
+	return 2 * (r.Width + r.Height)
 }
 
-func (g *Group) Describe() string {
-	if len(g.users) > 2 {
-		g.spaceAvailable = false
+type Circle struct {
+	Radius float64
+}
+
+func (c Circle) Area() float64 {
+	return math.Pi * c.Radius * c.Radius
+}
+
+func (c Circle) Perimeter() float64 {
+	return 2 * math.Pi * c.Radius
+}
+
+func fitInYard(s Shape2D) bool {
+	return s.Area() > 200 && s.Perimeter() > 200
+}
+
+func printShapeProps(s Shape2D) {
+	if rect, ok := s.(Rectangle); ok {
+		fmt.Printf("Height: %.2f, Width: %.2f\n", rect.Height, rect.Width)
 	}
-
-	desc := fmt.Sprintf("Users: %d, Newest User: %s %s, Accepting New User: %t", len(g.users), g.newestUser.FirstName, g.newestUser.LastName, g.spaceAvailable)
-	return desc
+	if circle, ok := s.(Circle); ok {
+		fmt.Printf("Radius: %.2f\n", circle.Radius)
+	}
 }
 
 func main() {
-	user := User{ID: 1, FirstName: "Foyez", LastName: "Ahmed", Email: "foyez@email.com"}
-	user2 := User{ID: 2, FirstName: "Manam", LastName: "Ahmed", Email: "manam@email.com"}
+	circle := Circle{10}
+	rectangle := Rectangle{10, 20}
 
-	group := Group{
-		role:           "admin",
-		users:          []User{user, user2},
-		newestUser:     user2,
-		spaceAvailable: true,
-	}
-
-	describeSomething := func(human Human) {
-		desc := human.Describe()
-		fmt.Println(desc)
-	}
-
-	describeSomething(user) // Name: Foyez Ahmed, Email: foyez@email.com
-	describeSomething(&group) // Users: 2, Newest User: Manam Ahmed, Accepting New User: true
+	fmt.Println(fitInYard(circle))
+	fmt.Println(fitInYard(rectangle))
+	
+	printShapeProps(rectangle) // Height: 20.00, Width: 10.00
+	printShapeProps(circle) // Radius: 10.00
 }
 ```
 
