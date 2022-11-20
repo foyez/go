@@ -1603,6 +1603,8 @@ func Map[A, B any](items []A, modify func(A) B) []B {
 	return modifiedItems
 }
 ```
+
+Reference: [Golang Generics Are Here! - Golang Beyond the Basics](https://www.youtube.com/watch?v=P2CQWeZZ--4)
 	
 </details>
 
