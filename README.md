@@ -978,20 +978,36 @@ var mySlice []int
 fmt.Println(mySlice) // []
 
 // mySlice[0] = 1 // occurs an error, since size is unknown
-
-// create a slice using make function
-// dynamically-sized arrays
-// make([]T, len, cap)
-sliceWithMake := make([]int, 3, 10)
-fmt.Println(sliceWithMake)      // [0 0 0]
-fmt.Println(len(sliceWithMake)) // 3
-fmt.Println(cap(sliceWithMake)) // 5
 ```
-
-**Make**: make function "Initialize and allocates space in memory for a slice, map, or channel."
+	
+A slice has 3 properties:
+									
+- `ptr` - a pointer to the underlying array
+- `len` - length of the slice - number of elements in the slice
+- `cap` - capacity of the slice - length of the underlying array, which is also the maximum length the slice can take (until it grows)
+									
+![image](https://user-images.githubusercontent.com/11992095/202870508-0739d792-8747-4e20-8cd2-0ffa888d5c08.png)
+									
+source: https://gosamples.dev/capacity-and-length/
+	
+When we copy a slice it creates a new memeory location where it holds the same memory address of the underlying array, length & capacity. That's why, when modify the new copy of the slice, it also modify the old slice.
 	
 ```go
+var s = []int{1, 2, 3}
+var s2 = s
+	
+s2[0] = 5
+	
+fmt.Println(s, s2) // [5 2 3], [5 2 3]
+```
+
+**Make**: make function "Initializes and allocates space in memory for a `slice`, `map`, or `channel`."
+	
+```go
+// make([]T, len, cap)
 s := make([]int, 0, 3)
+sliceWithMake[0] = 1
+fmt.Println(sliceWithMake)      // [1 0 0]
 	
 for i := 0; i < 5; i++ {
     s = append(s, i)
@@ -1007,10 +1023,11 @@ cap 6, len 4, 0xc0000b8000 # larger capacity and a new pointer address
 cap 6, len 5, 0xc0000b8000
 ```
 
+- unpack/spread a slice
 ```go
 var fruits = []string{"apple", "mango"}
 
-// varArg
+// variable argument/vardiac function
 func addFruits(fruitsToAdd ...string) []string {
 	// unpack or spread
 	updatedFruits := append(fruits, fruitsToAdd...)
@@ -1178,7 +1195,7 @@ func updateFavoriteSports(p person, sportName string) {
 }
 ```
 	
-**Value Types:** `int`, `float`, `string`, `bool`, `structs`
+**Value Types:** `int`, `float`, `string`, `bool`, `structs`, `array`
 > Have to use pointer to update these types of variables
 	
 **Reference Types:** `slices`, `maps`, `channels`, `pointers`, `functions`
@@ -1389,10 +1406,12 @@ func (u *User) UpdateName(name string) {
 ```
 
 **When should we make the pointer receiver type of a method?**
+	
 1. When the receiver type uses a large amount of memory, otherwise the receiver will be copied with a large amount of data which is costly.
 2. When the method must modify the data in the object of the receiver type.
 	
 **Good practices:**
+	
 1. All methods of a type should have pointer receivers, or
 2. All methods of a type should have non-pointer receivers
 
@@ -1509,6 +1528,82 @@ fmt.Printf("%#v %T\n", people["name"], people["name"]) // "Foyez" string
 fmt.Printf("%#v %T", people["age"], people["age"])     // 28 int
 ```
 
+</details>
+	
+## Generics
+	
+<details>
+<summary>View contents</summary>
+	
+Suppose, we write a function that accepts string or integer as arguments
+	
+```go
+func isEqual(a, b interface{}) bool {
+	return a == b
+}
+
+func main() {
+	fmt.Println(isEqual(1, 1)) // true
+	fmt.Println(isEqual(1, "1")) // true
+}
+```
+	
+Here, though the empty interface `interface{}` gives us the flexibility to pass string or integer type, it don't provide us type-safety. Because we can't compare a number with a string. This means the compiler can't help us and we're instead more likely to have runtime errors.
+	
+To solve this issue, we can use generics which give us flexibility and type-safety at the same time.
+	
+```go
+func isEqual[T comparable](a, b T) bool {
+	return a == b
+}
+
+func main() {
+	fmt.Println(isEqual(1, 1))   // true
+	fmt.Println(isEqual(1, "1")) // default type string of "1" does not match inferred type int for T
+}
+```
+	
+**Implementation of `reduce()`, `find()`, `filter()` & `map()`:**
+	
+```go
+func Reduce[A, B any](collection []A, accumulator func(B, A) B, initialValue B) B {
+	var result = initialValue
+	for _, x := range collection {
+		result = accumulator(result, x)
+	}
+	return result
+}
+
+func Find[A any](items []A, predict func(A) bool) (value A, found bool) {
+	for _, v := range items {
+		if predict(v) {
+			return v, true
+		}
+	}
+	return
+}
+
+func Filter[A any](items []A, predict func(A) bool) []A {
+	var founds []A
+
+	for _, v := range items {
+		if predict(v) {
+			founds = append(founds, v)
+		}
+	}
+
+	return founds
+}
+
+func Map[A, B any](items []A, modify func(A) B) []B {
+	var modifiedItems []B
+	for _, v := range items {
+		modifiedItems = append(modifiedItems, modify(v))
+	}
+	return modifiedItems
+}
+```
+	
 </details>
 
 ## Concurrency
@@ -1643,6 +1738,7 @@ r.Intn(8) // n = 8
 - [Go Tour](https://tour.golang.org/list)
 - [Effective Go](https://golang.org/doc/effective_go.html)
 - [Go by Example](https://gobyexample.com/)
+- [GOSAMPLES](https://gosamples.dev/)
 - [Go Doc](https://golang.org/doc/)
 - [Go Blog](https://blog.golang.org/)
 - [Clean Go Article](https://github.com/Pungyeon/clean-go-article)
