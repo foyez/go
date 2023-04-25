@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/foyez/golang/codes/toolkit/utils"
+	"github.com/foyez/go101/codes/toolkit/utils"
 )
 
 func main() {
