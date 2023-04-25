@@ -198,6 +198,12 @@ func main() {
 ```go
 package utils
 
+// private variable - start with lowercase
+// Can't be accessed from other packages
+var s = "Hello"
+
+// Public function - starting with capital letter
+// Can be accessed from other packages
 func Add(a int64, b int64) int64 {
   return a + b
 }
@@ -213,7 +219,7 @@ func Add(a int64, b int64) int64 {
 <details>
 <summary>View contents</summary>
 
-```bash
+```sh
 # run a go program
 $ go run main.go # go run <file_name>
 
@@ -480,6 +486,20 @@ fmt.Printf()
 - Prints output to the stdout console
 - Returns number of bytes and an error
 - (The error is generally not worried about)
+
+```go
+name := "Zohan"
+
+fmt.Print("Hello, ", name, "\n")
+fmt.Println("Hello,", name)
+fmt.Printf("Hello, %v\n", name)
+```
+
+```sh
+Hello, Zohan
+Hello, Zohan
+Hello, Zohan
+```
 
 #### Fprint
 
@@ -833,6 +853,7 @@ func printAge(age1, age2 int) (ageOfBob, ageOfSally int) {
 func average(ages ...int) float64 {
 	total := 0
 
+	// ages - treated as slice
 	for _, age := range ages {
 		total += age
 	}
@@ -842,8 +863,51 @@ func average(ages ...int) float64 {
 
 func main() {
 	fmt.Println(average(10, 20, 32))
+	
+	nums := []int{10, 20, 32}
+	// unpack or spread
+	fmt.Println(average(nums...))
 }
 ```
+
+- go functions are `lexically scoped` means variables are accessible from the functions in the same block where the functions are defined
+
+```go
+var n1 = 5
+
+func foo(n2 int) {
+	n3 := 8
+	fmt.Println(n1, n2, n3)
+}
+```
+
+- function as first-class value (assigning as variable, pass as argument, return as value, etc.)
+
+```go
+func print(n int, fn func(int)) {
+	fn(n)
+}
+
+print(6, func(val int) {
+	fmt.Println(val) // 6
+})
+```
+
+```go
+func add(n1 int) func(int) int {
+	fn := func(n2 int) int {
+		return n1 + n2
+	}
+	return fn
+}
+// n1 is in the closure of fn()
+
+sum := add(1)
+fmt.Println(sum(5)) // 6
+fmt.Println(sum(2)) // 3
+```
+
+When functions are passed/returned, their environment comes with them.
 
 </details>
 
@@ -855,6 +919,9 @@ func main() {
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/arrays)**
 
 ```go
+// ARRAY
+// [number]T
+// A slice type has a specific length
 // declare array
 var arr [3]float64
 fmt.Println(arr) // [0 0 0]
@@ -911,22 +978,56 @@ var mySlice []int
 fmt.Println(mySlice) // []
 
 // mySlice[0] = 1 // occurs an error, since size is unknown
-
-// create a slice using make function
-// dynamically-sized arrays
-// make([]T, len, cap)
-sliceWithMake := make([]int, 3, 10)
-fmt.Println(sliceWithMake)      // [0 0 0]
-fmt.Println(len(sliceWithMake)) // 3
-fmt.Println(cap(sliceWithMake)) // 5
+```
+	
+A slice has 3 properties:
+									
+- `ptr` - a pointer to the underlying array
+- `len` - length of the slice - number of elements in the slice
+- `cap` - capacity of the slice - length of the underlying array, which is also the maximum length the slice can take (until it grows)
+									
+![image](https://user-images.githubusercontent.com/11992095/202870508-0739d792-8747-4e20-8cd2-0ffa888d5c08.png)
+									
+source: https://gosamples.dev/capacity-and-length/
+	
+When we copy a slice it creates a new memeory location where it holds the same memory address of the underlying array, length & capacity. That's why, when modify the new copy of the slice, it also modify the old slice.
+	
+```go
+var s = []int{1, 2, 3}
+var s2 = s
+	
+s2[0] = 5
+	
+fmt.Println(s, s2) // [5 2 3], [5 2 3]
 ```
 
-**Make**: make function "Initialize and allocates space in memory for a slice, map, or channel."
+**Make**: make function "Initializes and allocates space in memory for a `slice`, `map`, or `channel`."
+	
+```go
+// make([]T, len, cap)
+s := make([]int, 0, 3)
+sliceWithMake[0] = 1
+fmt.Println(sliceWithMake)      // [1 0 0]
+	
+for i := 0; i < 5; i++ {
+    s = append(s, i)
+    fmt.Printf("cap %v, len %v, %p\n", cap(s), len(s), s)
+}
+```
+		  
+```sh
+cap 3, len 1, 0xc0000b2000
+cap 3, len 2, 0xc0000b2000
+cap 3, len 3, 0xc0000b2000
+cap 6, len 4, 0xc0000b8000 # larger capacity and a new pointer address
+cap 6, len 5, 0xc0000b8000
+```
 
+- unpack/spread a slice
 ```go
 var fruits = []string{"apple", "mango"}
 
-// varArg
+// variable argument/vardiac function
 func addFruits(fruitsToAdd ...string) []string {
 	// unpack or spread
 	updatedFruits := append(fruits, fruitsToAdd...)
@@ -946,7 +1047,7 @@ addFruits("banana", "pineapple") // [apple mango banana pineapple]
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/maps)**
 
 ```go
-var results map[string]float64 = make(map[string]float64)
+var results map[string]float64 = make(map[string]float64) // create empty map
 
 results["foyez"] = 3.4
 results["mithu"] = 3.5
@@ -1047,56 +1148,120 @@ fmt.Println(user.FirstName) // Foyez
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/pointers)**
 
 **Pointer:** a variable that holds the **memory location** of a variable instead of a copy of its value.
+	
+```go
+// Declare a pointer variable
+var variableName *type
+	
+// Access to the variable address
+&variableName
+	
+// Access to the variable value
+*variableName
+```
+	
 
 ```go
-type Coordinates struct {
-	X, Y float64
-}
-
-func upperName(name *string) {
-	*name = strings.ToUpper(*name)
-}
-
-func updateCoordinates(c Coordinates) {
-	c.X = 200
-}
-
-func updateCoordinatesWithPtr(c *Coordinates) {
-	c.X = 200
+type person struct {
+	firstName      string
+	lastName       string
+	faboriteSports []string
 }
 
 func main() {
-	var name string
-	var namePtr *string // var pointerVar *type
+	person := person{
+		firstName: "Foyez",
+		lastName:  "Ahmed",
+		faboriteSports: []string{"Cricket"}
+	}
+	
+	updateFirstName(&person, "Rumon")
+	fmt.Println(person) // {Foyez Ahmed [Cricket]}
+	updateFavoriteSports(person, "Football")
+	fmt.Println(person) // {Foyez Ahmed [Football]}
+}
+	
+func updateFirstName(p *person, newFirstName string) {
+	fmt.Println(p)  // &{Foyez Ahmed [Cricket]}
+	fmt.Println(&p) // 0xc00000e028
+	fmt.Println(*p) // {Foyez Ahmed [Cricket]}
 
-	fmt.Println(name)    // ""
-	fmt.Println(namePtr) // <nil>
+	// (*p).firstName = newFirstName
+	p.firstName = newFirstName
+}
+	
+func updateFavoriteSports(p person, sportName string) {
+	p.favoriteSports[0] = sportName
+}
+```
+	
+**Value Types:** `int`, `float`, `string`, `bool`, `structs`, `array`
+> Have to use pointer to update these types of variables
+	
+**Reference Types:** `slices`, `maps`, `channels`, `pointers`, `functions`
+> Don't need to use pointer to update these types of variables
+	
+**Call by Value:**
+	
+- Passed arguments or receiver are copied to parameters
+- Modifying parameters or receiver has no effect outside of the function or the method
+	
+```go
+type Person struct {
+	name string
+	age  int
+}
 
-	name = "Cumilla"
-	namePtr = &name          // read variable address - &pointerVar
-	var nameValue = *namePtr // read variable value - *pointerVar
+func updateAge(p Person) {
+	p.age = 20
+	fmt.Println(p) // {Mithu 20}
+}
+	
+func (p Person) updateAge() {
+	p.age = 30
+	fmt.Println(p) // {Mithu 30}
+}
+	
+func main() {
+	mithu := Person{name: "Mithu", age: 10}
+	
+	updateAge(mithu)
+	fmt.Println(mithu) // {Mithu 10}
+	
+	mithu.updateAge()
+	fmt.Println(mithu) // {Mithu 10}
+}
+```
+	
+**Call by Reference:**
+	
+- Pass pointer (memory location) as arguments or receiver
+- Modifying parameters or receiver has effect outside of the function or the method
+	
+```go
+type Person struct {
+	name string
+	age  int
+}
 
-	fmt.Println(name)      // Cumilla
-	fmt.Println(namePtr)   // 0xc00009c050
-	fmt.Println(nameValue) // Cumilla
-
-	// ******************************************
-	// Pass by Reference
-	// ******************************************
-	n := "Chayon"
-	upperName(&n)
-	fmt.Println(n)
-
-	// ******************************************
-	// Pointer with Structs
-	// ******************************************
-	var c = Coordinates{X: 10, Y: 20}
-
-	updateCoordinates(c)
-	fmt.Println(c) // {10 20}
-
-	updateCoordinatesWithPtr(&c)
-	fmt.Println(c) // {200 20}
+func updateAge(p *Person) {
+	p.age = 20
+	fmt.Println(*p) // {Mithu 20}
+}
+	
+func (p *Person) updateAge() {
+	p.age = 30
+	fmt.Println(*p) // {Mithu 30}
+}
+	
+func main() {
+	mithu := Person{name: "Mithu", age: 10}
+	
+	updateAge(&mithu)
+	fmt.Println(mithu) // {Mithu 20}
+	
+	mithu.updateAge()
+	fmt.Println(mithu) // {Mithu 30}
 }
 ```
 
@@ -1132,12 +1297,16 @@ panic(err.Error())
 
 #### Defer
 
-A defer statement defers the execution of a function until the surrounding function returns.
+A defer statement defers the execution of a function until the surrounding function completes. Typically used for cleanup activities. Arguments of a deffered call are evaluted immediately.
 
 ```go
 func main(){
-	defer fmt.Println("Bangladesh")
+	let country := "Bangladesh"
+	
+	defer fmt.Println(country)
 	defer fmt.Println("love")
+	country = "Australia"
+	
 	fmt.Println("I")
 }
 
@@ -1196,22 +1365,78 @@ func (r ReceiverType) funcName(parameters) (results)
 - The difference between a method and a function is that instead of accepting an argument as struct, we're calling a method on an instance of that struct.
 
 ```go
-user := User{ID: 1, FirstName: "Manam", LastName: "Ahmed", Email: "manam@email.com"}
-
-func describeUser(u *User) string {
-	desc := fmt.Sprintf("Name: %s %s, Email: %s, ID: %d", u.FirstName, u.LastName, u.Email, u.ID)
-	return desc
+type address struct {
+	email   string
+	zipCode int
 }
-describeUser(&user)
+	
+type User struct {
+	name string
+	age  int
+	address
+}
+	
+func main() {
+	user := User{
+		name: "Manam", 
+		age: 25,
+		address: address{
+			email: "manam@email.com",
+			zipCode: 34000
+		},
+	}
+	
+	updateUserName(&user, "Chayon")
+	
+	// (&user).UpdateName("Chayon")
+	user.UpdateName("Chayon")
+}
+
+func updateUserName(u *User, name string) {
+	u.name = name
+}
 
 // func (receiverName ReceiverType) MethodName(args)
 // When a method is called on a variable of that type,
 // we get the reference to its data via the receiverName variable.
-func (u *User) Describe() string {
-	desc := fmt.Sprintf("Name: %s %s, Email: %s, ID: %d", u.FirstName, u.LastName, u.Email, u.ID)
-	return desc
+func (u *User) UpdateName(name string) {
+	// (*u).name = name
+	u.name = name
 }
-user.Describe()
+```
+
+**When should we make the pointer receiver type of a method?**
+	
+1. When the receiver type uses a large amount of memory, otherwise the receiver will be copied with a large amount of data which is costly.
+2. When the method must modify the data in the object of the receiver type.
+	
+**Good practices:**
+	
+1. All methods of a type should have pointer receivers, or
+2. All methods of a type should have non-pointer receivers
+
+</details>
+
+## Type Assertions
+
+<details>
+<summary>View contents</summary>
+
+> Type assertions is used to assert the type of a given variable. It provides access to an interface value's underlying concrete value.
+
+```go
+// assertedVariable, ok := variable.(Type)
+
+var foo interface{} = "Hello"
+
+str := foo.(string)
+fmt.Println(str) // "Hello"
+
+num := foo.(int) // panic
+fmt.Println(num)
+
+num2, ok := foo.(int)
+fmt.Println(num2, ok) // 0, false
 ```
 
 </details>
@@ -1225,60 +1450,61 @@ user.Describe()
 
 **Structs:** define a set of attributes on a type, e.g.: a user has a `FirstName` and a `LastName`, it is the type of User.
 
-**Interfaces:** describe a set of behaviors that also define a type, e.g. a user can change the `FirstName` is a type of that interface.
+**Interfaces:** define a set of method signatures (name, parameters & return types), NOT the implementation.
 
 ```go
-// Describer has a Describe method
-type Human interface {
-	Describe() string
+type Shape2D interface {
+	Area() float64
+	Perimeter() float64
 }
 
-// Any struct that has a method called describe is also a type of Describer
-
-type User struct {
-	ID                         int
-	FirstName, LastName, Email string
+type Rectangle struct {
+	Width  float64
+	Height float64
 }
 
-type Group struct {
-	role           string
-	users          []User
-	newestUser     User
-	spaceAvailable bool
+func (r Rectangle) Area() float64 {
+	return r.Width * r.Height
 }
 
-func (u User) Describe() string {
-	desc := fmt.Sprintf("Name: %s %s, Email: %s", u.FirstName, u.LastName, u.Email)
-	return desc
+func (r Rectangle) Perimeter() float64 {
+	return 2 * (r.Width + r.Height)
 }
 
-func (g *Group) Describe() string {
-	if len(g.users) > 2 {
-		g.spaceAvailable = false
+type Circle struct {
+	Radius float64
+}
+
+func (c Circle) Area() float64 {
+	return math.Pi * c.Radius * c.Radius
+}
+
+func (c Circle) Perimeter() float64 {
+	return 2 * math.Pi * c.Radius
+}
+
+func fitInYard(s Shape2D) bool {
+	return s.Area() > 200 && s.Perimeter() > 200
+}
+
+func printShapeProps(s Shape2D) {
+	if rect, ok := s.(Rectangle); ok {
+		fmt.Printf("Height: %.2f, Width: %.2f\n", rect.Height, rect.Width)
 	}
-
-	desc := fmt.Sprintf("Users: %d, Newest User: %s %s, Accepting New User: %t", len(g.users), g.newestUser.FirstName, g.newestUser.LastName, g.spaceAvailable)
-	return desc
+	if circle, ok := s.(Circle); ok {
+		fmt.Printf("Radius: %.2f\n", circle.Radius)
+	}
 }
 
 func main() {
-	user := User{ID: 1, FirstName: "Foyez", LastName: "Ahmed", Email: "foyez@email.com"}
-	user2 := User{ID: 2, FirstName: "Manam", LastName: "Ahmed", Email: "manam@email.com"}
+	circle := Circle{10}
+	rectangle := Rectangle{10, 20}
 
-	group := Group{
-		role:           "admin",
-		users:          []User{user, user2},
-		newestUser:     user2,
-		spaceAvailable: true,
-	}
-
-	describeSomething := func(human Human) {
-		desc := human.Describe()
-		fmt.Println(desc)
-	}
-
-	describeSomething(user) // Name: Foyez Ahmed, Email: foyez@email.com
-	describeSomething(&group) // Users: 2, Newest User: Manam Ahmed, Accepting New User: true
+	fmt.Println(fitInYard(circle))
+	fmt.Println(fitInYard(rectangle))
+	
+	printShapeProps(rectangle) // Height: 20.00, Width: 10.00
+	printShapeProps(circle) // Radius: 10.00
 }
 ```
 
@@ -1302,6 +1528,84 @@ fmt.Printf("%#v %T\n", people["name"], people["name"]) // "Foyez" string
 fmt.Printf("%#v %T", people["age"], people["age"])     // 28 int
 ```
 
+</details>
+	
+## Generics
+	
+<details>
+<summary>View contents</summary>
+	
+Suppose, we write a function that accepts string or integer as arguments
+	
+```go
+func isEqual(a, b interface{}) bool {
+	return a == b
+}
+
+func main() {
+	fmt.Println(isEqual(1, 1)) // true
+	fmt.Println(isEqual(1, "1")) // true
+}
+```
+	
+Here, though the empty interface `interface{}` gives us the flexibility to pass string or integer type, it don't provide us type-safety. Because we can't compare a number with a string. This means the compiler can't help us and we're instead more likely to have runtime errors.
+	
+To solve this issue, we can use generics which give us flexibility and type-safety at the same time.
+	
+```go
+func isEqual[T comparable](a, b T) bool {
+	return a == b
+}
+
+func main() {
+	fmt.Println(isEqual(1, 1))   // true
+	fmt.Println(isEqual(1, "1")) // default type string of "1" does not match inferred type int for T
+}
+```
+	
+**Implementation of `reduce()`, `find()`, `filter()` & `map()`:**
+	
+```go
+func Reduce[A, B any](collection []A, accumulator func(B, A) B, initialValue B) B {
+	var result = initialValue
+	for _, x := range collection {
+		result = accumulator(result, x)
+	}
+	return result
+}
+
+func Find[A any](items []A, predict func(A) bool) (value A, found bool) {
+	for _, v := range items {
+		if predict(v) {
+			return v, true
+		}
+	}
+	return
+}
+
+func Filter[A any](items []A, predict func(A) bool) []A {
+	var founds []A
+
+	for _, v := range items {
+		if predict(v) {
+			founds = append(founds, v)
+		}
+	}
+
+	return founds
+}
+
+func Map[A, B any](items []A, modify func(A) B) []B {
+	var modifiedItems []B
+	for _, v := range items {
+		modifiedItems = append(modifiedItems, modify(v))
+	}
+	return modifiedItems
+}
+```
+
+Reference: [Golang Generics Are Here! - Golang Beyond the Basics](https://www.youtube.com/watch?v=P2CQWeZZ--4)
+	
 </details>
 
 ## Concurrency
@@ -1354,12 +1658,81 @@ func main() {
 
 </details>
 
+## Working with files
+
+<details>
+<summary>View contents</summary>
+
+```go
+import (
+	"fmt"
+	"os"
+	"strings"
+)
+
+type names string[]
+
+func main() {
+	names := names{"Sohel", "Mithu", "Rupom"}
+	names.saveToFile("my_names")
+	fmt.Println(readNamesFromFiles("my_names"))
+	removeFile("my_names")
+}
+
+func (n names) toString() string {
+	return strings.Join(n, ",")
+}
+
+func (n names) saveToFile(filename string) error {
+	return os.WriteFile(filename, []bytes(n.toString()), 0666)
+}
+
+func readNamesFromFile(filename string) names {
+	bs, err := os.ReadFile(filename)
+	if err != nil {
+		fmt.Println("Error:", err)
+		os.Exit(1)
+	}
+	
+	return strings.Split(string(bs), ",")
+}
+
+func removeFile(filename string) {
+	err := os.Remove(filename)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+}
+```
+
+</details>
+	
+## Generate random numbers
+	
+<details>
+<summary>View contents</summary>
+	
+```go
+import (
+	"math/rand"
+	"time"
+)
+	
+source := rand.NewSource(time.Now().UnixNano())
+r := rand.New(source)
+	
+// genrate random number from 0 to n
+r.Intn(8) // n = 8
+```
+	
+</details>
+
 ## Learning Resources
 
 <details>
 <summary>View contents</summary>
 
-- [Build web application with goland](https://github.com/astaxie/build-web-application-with-golang) - `A golang ebook intro how to build a web with golang`
+- [Build web application with golang](https://github.com/astaxie/build-web-application-with-golang) - `A golang ebook intro how to build a web with golang`
 - [Go Patterns](https://github.com/tmrts/go-patterns) - `Curated list of Go design patterns, recipes and idioms`
 - [Learn Go with Tests](https://github.com/quii/learn-go-with-tests) - `Learn Go with test-driven development`
 - [Go for Javascript Developers](https://www.pazams.com/Go-for-Javascript-Developers/)
@@ -1367,9 +1740,11 @@ func main() {
 - [Go Tour](https://tour.golang.org/list)
 - [Effective Go](https://golang.org/doc/effective_go.html)
 - [Go by Example](https://gobyexample.com/)
+- [GOSAMPLES](https://gosamples.dev/)
 - [Go Doc](https://golang.org/doc/)
 - [Go Blog](https://blog.golang.org/)
 - [Clean Go Article](https://github.com/Pungyeon/clean-go-article)
+- [How To Code in Go](https://www.digitalocean.com/community/tutorial_series/how-to-code-in-go)
 
 ### Video Tutorials
 
