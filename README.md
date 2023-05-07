@@ -10,11 +10,13 @@
 <details>
 <summary>View contents</summary>
 
-1. Run on multiple cores and builtin to support concurrency
-2. Fast compile times
-3. Ease to development
-4. Fast execution
-5. Automatic garbage collection
+1. Strongly type language (Variable type has to be known at compile time)
+2. Statically type language (The type of the variables cannot change at runtime)
+3. Nearly as fast as C and C++
+4. Readable as Python
+5. Fast execution
+6. Automatic garbage collection
+7. Run on multiple cores and builtin to support concurrency
 
 - **In Parallel:** Downloading, Uploading, Navigating at the same time
 - **Multi-Threading:** Do multiple things at once, e.g., Watching, commenting in Youtube
@@ -108,6 +110,15 @@ $ godoc -http :8000
 # go to: localhost:8000/pkg
 # go to personal project: localhost:8000/pkg/project-name
 ```
+
+5. Update the Go version
+
+```sh
+# Uninstall the exisiting version 
+$ sudo rm -rf /usr/local/go
+```
+
+Download the latest go installer & install it. Link: <https://go.dev/doc/install>
 
 </details>
 
