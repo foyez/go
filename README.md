@@ -120,6 +120,35 @@ $ sudo rm -rf /usr/local/go
 
 Download the latest go installer & install it. Link: <https://go.dev/doc/install>
 
+7. VS Code Setup
+
+`settings.json`
+
+```json
+{
+	"[go]": {
+		"editor.quickSuggestions": {
+			"other": "off",
+			"comments": "off",
+			"strings": "off"
+		}
+	},
+	"go.toolsManagement.autoUpdate": true,
+	"go.testFlags": [
+		"-v",
+		"-count=1",
+	],
+	"protoc": {
+		"options": [
+			"--proto_path=proto"
+		]
+	}
+}
+```
+
+- Install `[Go](https://marketplace.visualstudio.com/items?itemName=golang.go)` extension
+- Install `[vscode-proto3](https://marketplace.visualstudio.com/items?itemName=zxh404.vscode-proto3)` extension for __gRPC__
+
 </details>
 
 ## Go Directory Structure
@@ -184,9 +213,11 @@ go 1.18 // go version
 
 ```go
 // package name
-// Every go program needs at least one package main
-// Go programs are organized into packages
-// A package is a collection of source files
+/*
+	Every go program needs at least one package main
+	Go programs are organized into packages
+	A package is a collection of source files
+*/
 package main
 
 import (
