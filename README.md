@@ -114,7 +114,7 @@ $ godoc -http :8000
 5. Update the Go version
 
 ```sh
-# Uninstall the exisiting version 
+# Uninstall the exisiting version
 $ sudo rm -rf /usr/local/go
 ```
 
@@ -126,28 +126,23 @@ Download the latest go installer & install it. Link: <https://go.dev/doc/install
 
 ```json
 {
-	"[go]": {
-		"editor.quickSuggestions": {
-			"other": "off",
-			"comments": "off",
-			"strings": "off"
-		}
-	},
-	"go.toolsManagement.autoUpdate": true,
-	"go.testFlags": [
-		"-v",
-		"-count=1",
-	],
-	"protoc": {
-		"options": [
-			"--proto_path=proto"
-		]
-	}
+  "[go]": {
+    "editor.quickSuggestions": {
+      "other": "off",
+      "comments": "off",
+      "strings": "off"
+    }
+  },
+  "go.toolsManagement.autoUpdate": true,
+  "go.testFlags": ["-v", "-count=1"],
+  "protoc": {
+    "options": ["--proto_path=proto"]
+  }
 }
 ```
 
 - Install `[Go](https://marketplace.visualstudio.com/items?itemName=golang.go)` extension
-- Install `[vscode-proto3](https://marketplace.visualstudio.com/items?itemName=zxh404.vscode-proto3)` extension for __gRPC__
+- Install `[vscode-proto3](https://marketplace.visualstudio.com/items?itemName=zxh404.vscode-proto3)` extension for **gRPC**
 
 </details>
 
@@ -214,9 +209,9 @@ go 1.18 // go version
 ```go
 // package name
 /*
-	Every go program needs at least one package main
-	Go programs are organized into packages
-	A package is a collection of source files
+ Every go program needs at least one package main
+ Go programs are organized into packages
+ A package is a collection of source files
 */
 package main
 
@@ -345,20 +340,20 @@ import "testing"
 
 // exported if it begins with a capital letter
 func TestHello(t *testing.T) {
-	t.Run("saying hello to people", func(t *testing.T) {
-		got := Hello("Foyez")
-		want := "Hello, Foyez"
+ t.Run("saying hello to people", func(t *testing.T) {
+  got := Hello("Foyez")
+  want := "Hello, Foyez"
 
-		if got != want {
-			t.Errorf("got %q want %q", got, want)
-		}
-	})
+  if got != want {
+   t.Errorf("got %q want %q", got, want)
+  }
+ })
 }
 ```
 
 run `go test`
 
-```
+```sh
 ./hello_test.go:7:10: undefined: Hello
 ```
 
@@ -368,13 +363,13 @@ run `go test`
 package hello
 
 func Hello(name string) string {
-	return ""
+ return ""
 }
 ```
 
 run `go test`
 
-```
+```sh
 hello_test.go:11: got "" want "Hello, Foyez"
 ```
 
@@ -409,7 +404,7 @@ package hello
 const englishHelloPrefix = "Hello, "
 
 func Hello(name string) string {
-	return englishHelloPrefix + name
+ return englishHelloPrefix + name
 }
 ```
 
@@ -421,25 +416,25 @@ package hello
 import "testing"
 
 func TestHello(t *testing.T) {
-	assertErrorMessage := func(t testing.TB, got, want string) {
-		t.Helper()
+ assertErrorMessage := func(t testing.TB, got, want string) {
+  t.Helper()
 
-		if got != want {
-			t.Errorf("got %q want %q", got, want)
-		}
-	}
+  if got != want {
+   t.Errorf("got %q want %q", got, want)
+  }
+ }
 
-	t.Run("saying hello to people", func(t *testing.T) {
-		got := Hello("Foyez")
-		want := "Hello, Foyez"
-		assertErrorMessage(t, got, want)
-	})
+ t.Run("saying hello to people", func(t *testing.T) {
+  got := Hello("Foyez")
+  want := "Hello, Foyez"
+  assertErrorMessage(t, got, want)
+ })
 }
 ```
 
 run `go test`
 
-```
+```sh
 PASS
 ok      hello   0.004s
 ```
@@ -462,19 +457,19 @@ git commit --amend
 
 ```go
 func BenchmarkHello(b *testing.B) {
-	if testing.Short() {
-		b.Skip("skipping benchmark in short mode.")
-	}
-	for i := 0; i < b.N; i++ {
-		Hello("Zayan")
-	}
+ if testing.Short() {
+  b.Skip("skipping benchmark in short mode.")
+ }
+ for i := 0; i < b.N; i++ {
+  Hello("Zayan")
+ }
 }
 ```
 
 run `go test -v --bench . --benchmem`
 
-```
-BenchmarkHello   	2000000000	         0.46 ns/op
+```sh
+BenchmarkHello    2000000000          0.46 ns/op
 
 // This means that the loop ran 2000000000 times at a speed of 0.46 ns per loop.
 ```
@@ -483,21 +478,21 @@ BenchmarkHello   	2000000000	         0.46 ns/op
 
 ```go
 func ExampleHello() {
-	greeting := Hello("Zayan")
-	fmt.Println(greeting)
-	// Output: Hello, Zayan
+ greeting := Hello("Zayan")
+ fmt.Println(greeting)
+ // Output: Hello, Zayan
 }
 
 func ExampleHello() {
-	greeting := Hello("Farah")
-	fmt.Println(greeting)
-	// Output: Hello, Farah
+ greeting := Hello("Farah")
+ fmt.Println(greeting)
+ // Output: Hello, Farah
 }
 ```
 
 run `go test -v`
 
-```
+```sh
 === RUN   TestHello
 === RUN   TestHello/saying_hello_to_people
 --- PASS: TestHello (0.00s)
@@ -510,16 +505,16 @@ run `go test -v`
 
 </details>
 
-## Printing with fmt
+## Printing and Getting user input
 
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/printing)**
 
-#### **Print**
+### **Print**
 
-```
+```go
 fmt.Print()
 fmt.Println()
 fmt.Printf()
@@ -534,18 +529,27 @@ name := "Zohan"
 
 fmt.Print("Hello, ", name, "\n")
 fmt.Println("Hello,", name)
-fmt.Printf("Hello, %v\n", name)
+fmt.Printf("Hello, %s\n", name)
 ```
 
-```sh
-Hello, Zohan
-Hello, Zohan
-Hello, Zohan
+```go
+ s := Student{
+  ID:   1,
+  Name: "John Doe",
+ }
+ fmt.Printf("%s\n", "Hello")              // string
+ fmt.Printf("%d\n", -34)                  // decimal
+ fmt.Printf("%+d\n", 4)                   // positive decimal
+ fmt.Printf("%t\n", false)                // boolean
+ fmt.Printf("%f, %.2f\n", 3.1416, 3.1416) // float
+ fmt.Printf("%v\n", s)
+ fmt.Printf("%+v\n", s)
+ fmt.Printf("%T\n", s)
 ```
 
-#### Fprint
+### Fprint
 
-```
+```go
 fmt.Fprint()
 fmt.Fprintln()
 fmt.Fprintf()
@@ -554,9 +558,9 @@ fmt.Fprintf()
 - Prints the output to an external source (not in stdout console) (file, browser)
 - Returns number of bytes, and any write error
 
-#### Sprint
+### Sprint
 
-```
+```go
 fmt.Sprint()
 fmt.Sprintln()
 fmt.Sprintf()
@@ -565,6 +569,50 @@ fmt.Sprintf()
 - Stores output on a character buffer
 - Doesn't print to stdout console
 - Returns the string
+
+### Scan
+
+```go
+fmt.Scan()
+fmt.Scanln()
+fmt.Scanf()
+```
+
+- Read input from the stdout console
+- Returns number of bytes and an error
+- (The error is generally not worried about)
+
+```go
+var name string
+
+fmt.Scan("Hello, ", &name)
+fmt.Println("Hello,", name)
+
+fmt.Scanf("Hello, %s", &name)
+fmt.Println("Hello,", name)
+
+fmt.Scanln("Hello, ", &name)
+fmt.Println("Hello,", name)
+```
+
+### `os.Args`
+
+- Read input from command-line
+- User input starts from 1st index
+
+```go
+import (
+ os
+)
+
+arguments := os.Args
+```
+
+```sh
+go run main.go 10 20
+# argouments[1] -> 10
+# argouments[2] -> 20
+```
 
 </details>
 
@@ -582,14 +630,14 @@ fmt.Sprintf()
 | **STRING**  | string                                                                      | var fruit string = "mango"                |
 | **BOOLEAN** | bool<br/>&& <code>&#124;&#124;</code> ! < <= > >= == !=                     | true false<br/>var adult bool = age > 18  |
 
-#### Identify and convert type
+### Identify and convert type
 
 ```go
-	// identify type
-	reflect.TypeOf(6) // int
+ // identify type
+ reflect.TypeOf(6) // int
 
-	// convert type
-	float(10) + 5.5 // 15.5
+ // convert type
+ float(10) + 5.5 // 15.5
 ```
 
 </details>
@@ -611,27 +659,27 @@ import "fmt"
 var name string = "Zayan"
 
 func main() {
-	// Infer variable type
-	var age = 20
+ // Infer variable type
+ var age = 20
 
-	// variables without assigning value
-	// return default value
-	// int: 0, float: 0.0, string: "", bool: false
-	var salary int
+ // variables without assigning value
+ // return default value
+ // int: 0, float: 0.0, string: "", bool: false
+ var salary int
 
-	// value cannot be changed/re-assigned
-	const birthPlace = "Bangladesh"
+ // value cannot be changed/re-assigned
+ const birthPlace = "Bangladesh"
 
-	// variables in only function
-	funcVar := "can't declare outside of a function"
+ // variables in only function
+ funcVar := "can't declare outside of a function"
 
-	// multiple variables
-	one, two := 1, "two"
+ // multiple variables
+ one, two := 1, "two"
 
-	fmt.Println(name, age, salary)
-	fmt.Println(birthPlace)
-	fmt.Println(funcVar)
-	fmt.Println(one, two)
+ fmt.Println(name, age, salary)
+ fmt.Println(birthPlace)
+ fmt.Println(funcVar)
+ fmt.Println(one, two)
 }
 ```
 
@@ -648,23 +696,23 @@ func main() {
 package main
 
 import (
-	"fmt"
+ "fmt"
 )
 
 func main() {
-	var age = 10
+ var age = 10
 
-	if age < 18 {
-		fmt.Println("younger")
-	} else if age == 18 {
-		fmt.Println("adult")
-	} else {
-		fmt.Println("elder")
-	}
+ if age < 18 {
+  fmt.Println("younger")
+ } else if age == 18 {
+  fmt.Println("adult")
+ } else {
+  fmt.Println("elder")
+ }
 
-	if name := "Farah"; name != "Farhan" {
-		fmt.Println("She is Farah")
-	}
+ if name := "Farah"; name != "Farhan" {
+  fmt.Println("She is Farah")
+ }
 }
 ```
 
@@ -683,40 +731,40 @@ package main
 import "fmt"
 
 func main() {
-	// *****************************************
-	switch city := "Cumilla"; city {
-	case "Dhaka", "Cumilla", "Sylhet":
-		fmt.Println("You live in", city)
-	default:
-		fmt.Println("You're not from around here")
-	}
+ // *****************************************
+ switch city := "Cumilla"; city {
+ case "Dhaka", "Cumilla", "Sylhet":
+  fmt.Println("You live in", city)
+ default:
+  fmt.Println("You're not from around here")
+ }
 
-	// *****************************************
-	var age int = 30
+ // *****************************************
+ var age int = 30
 
-	switch {
-	case age < 18:
-		fmt.Println("young")
-	case age > 18 && age <= 40:
-		fmt.Println("adult")
-	default:
-		fmt.Println("elder")
-	}
+ switch {
+ case age < 18:
+  fmt.Println("young")
+ case age > 18 && age <= 40:
+  fmt.Println("adult")
+ default:
+  fmt.Println("elder")
+ }
 
-	// *****************************************
-	var num int = 9
+ // *****************************************
+ var num int = 9
 
-	switch {
-	case num != 10:
-		fmt.Println("Does not equal 10")
-		fallthrough // check other case after matching this case
-	case num < 10:
-		fmt.Println("Less than 10")
-	case num > 10:
-		fmt.Println("Greater than 10")
-	default:
-		fmt.Println("Is 10")
-	}
+ switch {
+ case num != 10:
+  fmt.Println("Does not equal 10")
+  fallthrough // check other case after matching this case
+ case num < 10:
+  fmt.Println("Less than 10")
+ case num > 10:
+  fmt.Println("Greater than 10")
+ default:
+  fmt.Println("Is 10")
+ }
 }
 ```
 
@@ -733,110 +781,110 @@ func main() {
 package main
 
 import (
-	"fmt"
+ "fmt"
 )
 
 func main() {
-	// *****************************************
-	// BASIC FOR LOOP
-	// *****************************************
-	fmt.Println("Basic for loop")
-	for i := 1; i <= 5; i++ {
-		fmt.Print(i)
-	}
+ // *****************************************
+ // BASIC FOR LOOP
+ // *****************************************
+ fmt.Println("Basic for loop")
+ for i := 1; i <= 5; i++ {
+  fmt.Print(i)
+ }
 
-	// *****************************************
-	// SIMILAR TO WHILE LOOP
-	// *****************************************
-	fmt.Println("\nSimilar to while loop")
-	j := 1
+ // *****************************************
+ // SIMILAR TO WHILE LOOP
+ // *****************************************
+ fmt.Println("\nSimilar to while loop")
+ j := 1
 
-	for j <= 5 {
-		fmt.Print(j)
-		j++
-	}
+ for j <= 5 {
+  fmt.Print(j)
+  j++
+ }
 
-	// *****************************************
-	// INFINITE LOOP
-	// *****************************************
-	fmt.Println("\nInfinite loop")
-	num := 1
+ // *****************************************
+ // INFINITE LOOP
+ // *****************************************
+ fmt.Println("\nInfinite loop")
+ num := 1
 
-	for {
-		num = num + 2
+ for {
+  num = num + 2
 
-		if num == 7 {
-			continue
-		}
+  if num == 7 {
+   continue
+  }
 
-		fmt.Print(num)
+  fmt.Print(num)
 
-		if num == 11 {
-			break
-		}
-	}
+  if num == 11 {
+   break
+  }
+ }
 
-	// ********************************************
-	// BASIC FOR LOOP ITERATION (STRING, ARRAY,...)
-	// ********************************************
-	fmt.Println("\nBasic for loop iteration")
-	var name = "Farah"
+ // ********************************************
+ // BASIC FOR LOOP ITERATION (STRING, ARRAY,...)
+ // ********************************************
+ fmt.Println("\nBasic for loop iteration")
+ var name = "Farah"
 
-	for i := 0; i < len(name); i++ {
-		fmt.Println("Letter:", string(name[i]))
-	}
+ for i := 0; i < len(name); i++ {
+  fmt.Println("Letter:", string(name[i]))
+ }
 
-	// *****************************************
-	// STRING ITERATION
-	// *****************************************
-	fmt.Println("\nString iteration")
-	var myCity = "কুমিল্লা"
+ // *****************************************
+ // STRING ITERATION
+ // *****************************************
+ fmt.Println("\nString iteration")
+ var myCity = "কুমিল্লা"
 
-	for index, letter := range myCity {
-		if index % 2 == 0 {
-			fmt.Printf("Index: %d, Letter:%#U\n", index, letter)
-		}
-	}
+ for index, letter := range myCity {
+  if index % 2 == 0 {
+   fmt.Printf("Index: %d, Letter:%#U\n", index, letter)
+  }
+ }
 
-	// *****************************************
-	// SLICE OR ARRAY ITERATION
-	// *****************************************
-	fmt.Println("\nSlice or Array iteration")
-	cities := []string{"Dhaka", "Cumilla"}
+ // *****************************************
+ // SLICE OR ARRAY ITERATION
+ // *****************************************
+ fmt.Println("\nSlice or Array iteration")
+ cities := []string{"Dhaka", "Cumilla"}
 
-	for _, city := range cities {
-		fmt.Printf("%s ", city)
-	}
+ for _, city := range cities {
+  fmt.Printf("%s ", city)
+ }
 
-	// *****************************************
-	// MAP ITERATION
-	// *****************************************
-	fmt.Println("\nMap iteration")
-	results := map[string]float64{
-		"Farah":   3.4,
-		"Laaibah": 3.3,
-		"Zayan":   3.5,
-	}
+ // *****************************************
+ // MAP ITERATION
+ // *****************************************
+ fmt.Println("\nMap iteration")
+ results := map[string]float64{
+  "Farah":   3.4,
+  "Laaibah": 3.3,
+  "Zayan":   3.5,
+ }
 
-	for key, value := range results {
-		fmt.Println(key, value)
-	}
+ for key, value := range results {
+  fmt.Println(key, value)
+ }
 
-	// *****************************************
-	// CHANNEL ITERATION
-	// *****************************************
-	fmt.Println("\nChannel iteration")
+ // *****************************************
+ // CHANNEL ITERATION
+ // *****************************************
+ fmt.Println("\nChannel iteration")
 
-	ch := make(chan int)
-	go func() {
-		ch <- 1
-		ch <- 2
-		close(ch)
-	}()
+ ch := make(chan int)
+ go func() {
+  ch <- 1
+  ch <- 2
+  close(ch)
+ }()
 
-	for n := range ch {
-		fmt.Println(n)
-	}
+ for n := range ch {
+  fmt.Println(n)
+ }
 }
 ```
 
@@ -855,7 +903,7 @@ _[Loop guide](https://yourbasic.org/golang/for-loop-range-array-slice-map-channe
 
 ```go
 func printAge() {
-	fmt.Println(10)
+ fmt.Println(10)
 }
 ```
 
@@ -863,7 +911,7 @@ func printAge() {
 
 ```go
 func printAge(age int) int {
-	return age
+ return age
 }
 ```
 
@@ -871,11 +919,11 @@ func printAge(age int) int {
 
 ```go
 func printAge(age int) (string, int) {
-	return "name", age
+ return "name", age
 }
 
 func main() {
-	name, age = printAge(10)
+ name, age = printAge(10)
 }
 ```
 
@@ -883,9 +931,9 @@ func main() {
 
 ```go
 func printAge(age1, age2 int) (ageOfBob, ageOfSally int) {
-	ageOfBob = age1
-	ageOfSally = age2
-	return
+ ageOfBob = age1
+ ageOfSally = age2
+ return
 }
 ```
 
@@ -893,22 +941,22 @@ func printAge(age1, age2 int) (ageOfBob, ageOfSally int) {
 
 ```go
 func average(ages ...int) float64 {
-	total := 0
+ total := 0
 
-	// ages - treated as slice
-	for _, age := range ages {
-		total += age
-	}
+ // ages - treated as slice
+ for _, age := range ages {
+  total += age
+ }
 
-	return float64(total) / float64(len(ages))
+ return float64(total) / float64(len(ages))
 }
 
 func main() {
-	fmt.Println(average(10, 20, 32))
-	
-	nums := []int{10, 20, 32}
-	// unpack or spread
-	fmt.Println(average(nums...))
+ fmt.Println(average(10, 20, 32))
+
+ nums := []int{10, 20, 32}
+ // unpack or spread
+ fmt.Println(average(nums...))
 }
 ```
 
@@ -918,8 +966,8 @@ func main() {
 var n1 = 5
 
 func foo(n2 int) {
-	n3 := 8
-	fmt.Println(n1, n2, n3)
+ n3 := 8
+ fmt.Println(n1, n2, n3)
 }
 ```
 
@@ -927,20 +975,20 @@ func foo(n2 int) {
 
 ```go
 func print(n int, fn func(int)) {
-	fn(n)
+ fn(n)
 }
 
 print(6, func(val int) {
-	fmt.Println(val) // 6
+ fmt.Println(val) // 6
 })
 ```
 
 ```go
 func add(n1 int) func(int) int {
-	fn := func(n2 int) int {
-		return n1 + n2
-	}
-	return fn
+ fn := func(n2 int) int {
+  return n1 + n2
+ }
+ return fn
 }
 // n1 is in the closure of fn()
 
@@ -1021,42 +1069,42 @@ fmt.Println(mySlice) // []
 
 // mySlice[0] = 1 // occurs an error, since size is unknown
 ```
-	
+
 A slice has 3 properties:
-									
+
 - `ptr` - a pointer to the underlying array
 - `len` - length of the slice - number of elements in the slice
 - `cap` - capacity of the slice - length of the underlying array, which is also the maximum length the slice can take (until it grows)
-									
+
 ![image](https://user-images.githubusercontent.com/11992095/202870508-0739d792-8747-4e20-8cd2-0ffa888d5c08.png)
-									
+
 source: https://gosamples.dev/capacity-and-length/
-	
+
 When we copy a slice it creates a new memeory location where it holds the same memory address of the underlying array, length & capacity. That's why, when modify the new copy of the slice, it also modify the old slice.
-	
+
 ```go
 var s = []int{1, 2, 3}
 var s2 = s
-	
+
 s2[0] = 5
-	
+
 fmt.Println(s, s2) // [5 2 3], [5 2 3]
 ```
 
 **Make**: make function "Initializes and allocates space in memory for a `slice`, `map`, or `channel`."
-	
+
 ```go
 // make([]T, len, cap)
 s := make([]int, 0, 3)
 sliceWithMake[0] = 1
 fmt.Println(sliceWithMake)      // [1 0 0]
-	
+
 for i := 0; i < 5; i++ {
     s = append(s, i)
     fmt.Printf("cap %v, len %v, %p\n", cap(s), len(s), s)
 }
 ```
-		  
+
 ```sh
 cap 3, len 1, 0xc0000b2000
 cap 3, len 2, 0xc0000b2000
@@ -1066,14 +1114,15 @@ cap 6, len 5, 0xc0000b8000
 ```
 
 - unpack/spread a slice
+
 ```go
 var fruits = []string{"apple", "mango"}
 
 // variable argument/vardiac function
 func addFruits(fruitsToAdd ...string) []string {
-	// unpack or spread
-	updatedFruits := append(fruits, fruitsToAdd...)
-	return updatedFruits
+ // unpack or spread
+ updatedFruits := append(fruits, fruitsToAdd...)
+ return updatedFruits
 }
 
 addFruits("banana", "pineapple") // [apple mango banana pineapple]
@@ -1098,8 +1147,8 @@ fmt.Println(results) // map[foyez:3.4 mithu:3.5]
 
 // ***********************************************
 userEmails := map[int]string{
-	1: "user1@email.com",
-	2: "user2@email.com",
+ 1: "user1@email.com",
+ 2: "user2@email.com",
 }
 
 userEmails[1] = "user12@email.com"
@@ -1111,9 +1160,9 @@ fmt.Println(emailOfSecondUser, ok)  // user2@email.com true
 fmt.Println(emailOfFourthUser, ok2) // false
 
 if email, ok := userEmails[2]; ok {
-	fmt.Printf("%s exists\n", email)
+ fmt.Printf("%s exists\n", email)
 } else {
-	fmt.Printf("%s doesn't exists\n", email)
+ fmt.Printf("%s doesn't exists\n", email)
 }
 
 delete(userEmails, 1)
@@ -1133,28 +1182,28 @@ fmt.Println(userEmails) // [2:user2@email.com]
 package main
 
 import (
-	"fmt"
-	s "strings"
+ "fmt"
+ s "strings"
 )
 
 var p = fmt.Println
 
 func main() {
-	p(s.Contains("test", "es"))        // true
-	p(s.Count("test", "t"))            // 2
-	p(s.HasPrefix("test", "te"))       // true
-	p(s.HasSuffix("test", "st"))       // true
-	p(s.Index("test", "t"))            // 0
-	p(s.LastIndex("test", "t"))        // 3
-	p(s.Join([]string{"a", "b"}, "-")) // a-b
-	p(s.Repeat("a", 5))                // aaaaa
-	p(s.Replace("fooo", "o", "O", -1)) // fOOO
-	p(s.Replace("fooo", "o", "O", 2))  // fOOo
-	p(s.Split("a-b-c", "-"))           // [a b c]
-	p(s.ToLower("TEST"))               // test
-	p(s.ToUpper("test"))               // TEST
-	p(len("hello"))                    // 5
-	p("hello"[1])                      // 1
+ p(s.Contains("test", "es"))        // true
+ p(s.Count("test", "t"))            // 2
+ p(s.HasPrefix("test", "te"))       // true
+ p(s.HasSuffix("test", "st"))       // true
+ p(s.Index("test", "t"))            // 0
+ p(s.LastIndex("test", "t"))        // 3
+ p(s.Join([]string{"a", "b"}, "-")) // a-b
+ p(s.Repeat("a", 5))                // aaaaa
+ p(s.Replace("fooo", "o", "O", -1)) // fOOO
+ p(s.Replace("fooo", "o", "O", 2))  // fOOo
+ p(s.Split("a-b-c", "-"))           // [a b c]
+ p(s.ToLower("TEST"))               // test
+ p(s.ToUpper("test"))               // TEST
+ p(len("hello"))                    // 5
+ p("hello"[1])                      // 1
 }
 ```
 
@@ -1169,10 +1218,10 @@ func main() {
 
 ```go
 type User struct {
-	ID        int
-	FirstName string
-	LastName  string
-	Email     string
+ ID        int
+ FirstName string
+ LastName  string
+ Email     string
 }
 
 user := User{ID: 1, FirstName: "Foyez", LastName: "Ahmed", Email: "foyez@email.com"}
@@ -1190,120 +1239,121 @@ fmt.Println(user.FirstName) // Foyez
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/pointers)**
 
 **Pointer:** a variable that holds the **memory location** of a variable instead of a copy of its value.
-	
+
 ```go
 // Declare a pointer variable
 var variableName *type
-	
+
 // Access to the variable address
 &variableName
-	
+
 // Access to the variable value
 *variableName
 ```
-	
 
 ```go
 type person struct {
-	firstName      string
-	lastName       string
-	faboriteSports []string
+ firstName      string
+ lastName       string
+ faboriteSports []string
 }
 
 func main() {
-	person := person{
-		firstName: "Foyez",
-		lastName:  "Ahmed",
-		faboriteSports: []string{"Cricket"}
-	}
-	
-	updateFirstName(&person, "Rumon")
-	fmt.Println(person) // {Foyez Ahmed [Cricket]}
-	updateFavoriteSports(person, "Football")
-	fmt.Println(person) // {Foyez Ahmed [Football]}
-}
-	
-func updateFirstName(p *person, newFirstName string) {
-	fmt.Println(p)  // &{Foyez Ahmed [Cricket]}
-	fmt.Println(&p) // 0xc00000e028
-	fmt.Println(*p) // {Foyez Ahmed [Cricket]}
+ person := person{
+  firstName: "Foyez",
+  lastName:  "Ahmed",
+  faboriteSports: []string{"Cricket"}
+ }
 
-	// (*p).firstName = newFirstName
-	p.firstName = newFirstName
+ updateFirstName(&person, "Rumon")
+ fmt.Println(person) // {Foyez Ahmed [Cricket]}
+ updateFavoriteSports(person, "Football")
+ fmt.Println(person) // {Foyez Ahmed [Football]}
 }
-	
+
+func updateFirstName(p *person, newFirstName string) {
+ fmt.Println(p)  // &{Foyez Ahmed [Cricket]}
+ fmt.Println(&p) // 0xc00000e028
+ fmt.Println(*p) // {Foyez Ahmed [Cricket]}
+
+ // (*p).firstName = newFirstName
+ p.firstName = newFirstName
+}
+
 func updateFavoriteSports(p person, sportName string) {
-	p.favoriteSports[0] = sportName
+ p.favoriteSports[0] = sportName
 }
 ```
-	
+
 **Value Types:** `int`, `float`, `string`, `bool`, `structs`, `array`
+
 > Have to use pointer to update these types of variables
-	
+
 **Reference Types:** `slices`, `maps`, `channels`, `pointers`, `functions`
+
 > Don't need to use pointer to update these types of variables
-	
+
 **Call by Value:**
-	
+
 - Passed arguments or receiver are copied to parameters
 - Modifying parameters or receiver has no effect outside of the function or the method
-	
+
 ```go
 type Person struct {
-	name string
-	age  int
+ name string
+ age  int
 }
 
 func updateAge(p Person) {
-	p.age = 20
-	fmt.Println(p) // {Mithu 20}
+ p.age = 20
+ fmt.Println(p) // {Mithu 20}
 }
-	
+
 func (p Person) updateAge() {
-	p.age = 30
-	fmt.Println(p) // {Mithu 30}
+ p.age = 30
+ fmt.Println(p) // {Mithu 30}
 }
-	
+
 func main() {
-	mithu := Person{name: "Mithu", age: 10}
-	
-	updateAge(mithu)
-	fmt.Println(mithu) // {Mithu 10}
-	
-	mithu.updateAge()
-	fmt.Println(mithu) // {Mithu 10}
+ mithu := Person{name: "Mithu", age: 10}
+
+ updateAge(mithu)
+ fmt.Println(mithu) // {Mithu 10}
+
+ mithu.updateAge()
+ fmt.Println(mithu) // {Mithu 10}
 }
 ```
-	
+
 **Call by Reference:**
-	
+
 - Pass pointer (memory location) as arguments or receiver
 - Modifying parameters or receiver has effect outside of the function or the method
-	
+
 ```go
 type Person struct {
-	name string
-	age  int
+ name string
+ age  int
 }
 
 func updateAge(p *Person) {
-	p.age = 20
-	fmt.Println(*p) // {Mithu 20}
+ p.age = 20
+ fmt.Println(*p) // {Mithu 20}
 }
-	
+
 func (p *Person) updateAge() {
-	p.age = 30
-	fmt.Println(*p) // {Mithu 30}
+ p.age = 30
+ fmt.Println(*p) // {Mithu 30}
 }
-	
+
 func main() {
-	mithu := Person{name: "Mithu", age: 10}
-	
-	updateAge(&mithu)
-	fmt.Println(mithu) // {Mithu 20}
-	
-	mithu.updateAge()
-	fmt.Println(mithu) // {Mithu 30}
+ mithu := Person{name: "Mithu", age: 10}
+
+ updateAge(&mithu)
+ fmt.Println(mithu) // {Mithu 20}
+
+ mithu.updateAge()
+ fmt.Println(mithu) // {Mithu 30}
 }
 ```
 
@@ -1329,7 +1379,7 @@ func main() {
 
 ```go
 type error interface {
-	Error() string
+ Error() string
 }
 
 err := funcReturnError()
@@ -1343,13 +1393,13 @@ A defer statement defers the execution of a function until the surrounding funct
 
 ```go
 func main(){
-	let country := "Bangladesh"
-	
-	defer fmt.Println(country)
-	defer fmt.Println("love")
-	country = "Australia"
-	
-	fmt.Println("I")
+ let country := "Bangladesh"
+
+ defer fmt.Println(country)
+ defer fmt.Println("love")
+ country = "Australia"
+
+ fmt.Println("I")
 }
 
 // I
@@ -1365,21 +1415,21 @@ func main(){
 
 ```go
 func recoverFromPanic() {
-	if r := recover(); r != nil {
-		fmt.Println(r)
-	}
+ if r := recover(); r != nil {
+  fmt.Println(r)
+ }
 }
 
 func main() {
-	defer recoverFromPanic()
+ defer recoverFromPanic()
 
-	for i := 0; i < 5; i++ {
-		fmt.Println(i)
+ for i := 0; i < 5; i++ {
+  fmt.Println(i)
 
-		if i == 2 {
-			panic("PANIC!")
-		}
-	}
+  if i == 2 {
+   panic("PANIC!")
+  }
+ }
 }
 
 // 0
@@ -1408,52 +1458,52 @@ func (r ReceiverType) funcName(parameters) (results)
 
 ```go
 type address struct {
-	email   string
-	zipCode int
+ email   string
+ zipCode int
 }
-	
+
 type User struct {
-	name string
-	age  int
-	address
+ name string
+ age  int
+ address
 }
-	
+
 func main() {
-	user := User{
-		name: "Manam", 
-		age: 25,
-		address: address{
-			email: "manam@email.com",
-			zipCode: 34000
-		},
-	}
-	
-	updateUserName(&user, "Chayon")
-	
-	// (&user).UpdateName("Chayon")
-	user.UpdateName("Chayon")
+ user := User{
+  name: "Manam",
+  age: 25,
+  address: address{
+   email: "manam@email.com",
+   zipCode: 34000
+  },
+ }
+
+ updateUserName(&user, "Chayon")
+
+ // (&user).UpdateName("Chayon")
+ user.UpdateName("Chayon")
 }
 
 func updateUserName(u *User, name string) {
-	u.name = name
+ u.name = name
 }
 
 // func (receiverName ReceiverType) MethodName(args)
 // When a method is called on a variable of that type,
 // we get the reference to its data via the receiverName variable.
 func (u *User) UpdateName(name string) {
-	// (*u).name = name
-	u.name = name
+ // (*u).name = name
+ u.name = name
 }
 ```
 
 **When should we make the pointer receiver type of a method?**
-	
+
 1. When the receiver type uses a large amount of memory, otherwise the receiver will be copied with a large amount of data which is costly.
 2. When the method must modify the data in the object of the receiver type.
-	
+
 **Good practices:**
-	
+
 1. All methods of a type should have pointer receivers, or
 2. All methods of a type should have non-pointer receivers
 
@@ -1496,57 +1546,57 @@ fmt.Println(num2, ok) // 0, false
 
 ```go
 type Shape2D interface {
-	Area() float64
-	Perimeter() float64
+ Area() float64
+ Perimeter() float64
 }
 
 type Rectangle struct {
-	Width  float64
-	Height float64
+ Width  float64
+ Height float64
 }
 
 func (r Rectangle) Area() float64 {
-	return r.Width * r.Height
+ return r.Width * r.Height
 }
 
 func (r Rectangle) Perimeter() float64 {
-	return 2 * (r.Width + r.Height)
+ return 2 * (r.Width + r.Height)
 }
 
 type Circle struct {
-	Radius float64
+ Radius float64
 }
 
 func (c Circle) Area() float64 {
-	return math.Pi * c.Radius * c.Radius
+ return math.Pi * c.Radius * c.Radius
 }
 
 func (c Circle) Perimeter() float64 {
-	return 2 * math.Pi * c.Radius
+ return 2 * math.Pi * c.Radius
 }
 
 func fitInYard(s Shape2D) bool {
-	return s.Area() > 200 && s.Perimeter() > 200
+ return s.Area() > 200 && s.Perimeter() > 200
 }
 
 func printShapeProps(s Shape2D) {
-	if rect, ok := s.(Rectangle); ok {
-		fmt.Printf("Height: %.2f, Width: %.2f\n", rect.Height, rect.Width)
-	}
-	if circle, ok := s.(Circle); ok {
-		fmt.Printf("Radius: %.2f\n", circle.Radius)
-	}
+ if rect, ok := s.(Rectangle); ok {
+  fmt.Printf("Height: %.2f, Width: %.2f\n", rect.Height, rect.Width)
+ }
+ if circle, ok := s.(Circle); ok {
+  fmt.Printf("Radius: %.2f\n", circle.Radius)
+ }
 }
 
 func main() {
-	circle := Circle{10}
-	rectangle := Rectangle{10, 20}
+ circle := Circle{10}
+ rectangle := Rectangle{10, 20}
 
-	fmt.Println(fitInYard(circle))
-	fmt.Println(fitInYard(rectangle))
-	
-	printShapeProps(rectangle) // Height: 20.00, Width: 10.00
-	printShapeProps(circle) // Radius: 10.00
+ fmt.Println(fitInYard(circle))
+ fmt.Println(fitInYard(rectangle))
+
+ printShapeProps(rectangle) // Height: 20.00, Width: 10.00
+ printShapeProps(circle) // Radius: 10.00
 }
 ```
 
@@ -1571,83 +1621,84 @@ fmt.Printf("%#v %T", people["age"], people["age"])     // 28 int
 ```
 
 </details>
-	
+ 
 ## Generics
-	
+ 
 <details>
 <summary>View contents</summary>
-	
+ 
 Suppose, we write a function that accepts string or integer as arguments
-	
+ 
 ```go
 func isEqual(a, b interface{}) bool {
-	return a == b
+ return a == b
 }
 
 func main() {
-	fmt.Println(isEqual(1, 1)) // true
-	fmt.Println(isEqual(1, "1")) // true
+fmt.Println(isEqual(1, 1)) // true
+fmt.Println(isEqual(1, "1")) // true
 }
-```
-	
+
+````
+
 Here, though the empty interface `interface{}` gives us the flexibility to pass string or integer type, it don't provide us type-safety. Because we can't compare a number with a string. This means the compiler can't help us and we're instead more likely to have runtime errors.
-	
+
 To solve this issue, we can use generics which give us flexibility and type-safety at the same time.
-	
+
 ```go
 func isEqual[T comparable](a, b T) bool {
-	return a == b
+ return a == b
 }
 
 func main() {
-	fmt.Println(isEqual(1, 1))   // true
-	fmt.Println(isEqual(1, "1")) // default type string of "1" does not match inferred type int for T
+ fmt.Println(isEqual(1, 1))   // true
+ fmt.Println(isEqual(1, "1")) // default type string of "1" does not match inferred type int for T
 }
-```
-	
+````
+
 **Implementation of `reduce()`, `find()`, `filter()` & `map()`:**
-	
+
 ```go
 func Reduce[A, B any](collection []A, accumulator func(B, A) B, initialValue B) B {
-	var result = initialValue
-	for _, x := range collection {
-		result = accumulator(result, x)
-	}
-	return result
+ var result = initialValue
+ for _, x := range collection {
+  result = accumulator(result, x)
+ }
+ return result
 }
 
 func Find[A any](items []A, predict func(A) bool) (value A, found bool) {
-	for _, v := range items {
-		if predict(v) {
-			return v, true
-		}
-	}
-	return
+ for _, v := range items {
+  if predict(v) {
+   return v, true
+  }
+ }
+ return
 }
 
 func Filter[A any](items []A, predict func(A) bool) []A {
-	var founds []A
+ var founds []A
 
-	for _, v := range items {
-		if predict(v) {
-			founds = append(founds, v)
-		}
-	}
+ for _, v := range items {
+  if predict(v) {
+   founds = append(founds, v)
+  }
+ }
 
-	return founds
+ return founds
 }
 
 func Map[A, B any](items []A, modify func(A) B) []B {
-	var modifiedItems []B
-	for _, v := range items {
-		modifiedItems = append(modifiedItems, modify(v))
-	}
-	return modifiedItems
+ var modifiedItems []B
+ for _, v := range items {
+  modifiedItems = append(modifiedItems, modify(v))
+ }
+ return modifiedItems
 }
 ```
 
 Reference: [Golang Generics Are Here! - Golang Beyond the Basics](https://www.youtube.com/watch?v=P2CQWeZZ--4)
-	
+
 </details>
 
 ## Concurrency
@@ -1657,7 +1708,7 @@ Reference: [Golang Generics Are Here! - Golang Beyond the Basics](https://www.yo
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/concurrency)**
 
-#### Goroutines
+### Goroutines
 
 - A **Goroutine** is a lightweight thread manged by the Go runtime
 - Implemented by adding the `go` keyword before executing a function
@@ -1680,21 +1731,21 @@ Reference: [Golang Generics Are Here! - Golang Beyond the Basics](https://www.yo
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
+ "fmt"
+ "log"
+ "net/http"
 )
 
 func home(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("Home!")
-	fmt.Fprint(w, "Home!")
+ fmt.Println("Home!")
+ fmt.Fprint(w, "Home!")
 }
 
 func main() {
-	http.HandleFunc("/", home)
+ http.HandleFunc("/", home)
 
-	fmt.Println("Server is running on port :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+ fmt.Println("Server is running on port :8080")
+ log.Fatal(http.ListenAndServe(":8080", nil))
 }
 ```
 
@@ -1707,66 +1758,66 @@ func main() {
 
 ```go
 import (
-	"fmt"
-	"os"
-	"strings"
+ "fmt"
+ "os"
+ "strings"
 )
 
 type names string[]
 
 func main() {
-	names := names{"Sohel", "Mithu", "Rupom"}
-	names.saveToFile("my_names")
-	fmt.Println(readNamesFromFiles("my_names"))
-	removeFile("my_names")
+ names := names{"Sohel", "Mithu", "Rupom"}
+ names.saveToFile("my_names")
+ fmt.Println(readNamesFromFiles("my_names"))
+ removeFile("my_names")
 }
 
 func (n names) toString() string {
-	return strings.Join(n, ",")
+ return strings.Join(n, ",")
 }
 
 func (n names) saveToFile(filename string) error {
-	return os.WriteFile(filename, []bytes(n.toString()), 0666)
+ return os.WriteFile(filename, []bytes(n.toString()), 0666)
 }
 
 func readNamesFromFile(filename string) names {
-	bs, err := os.ReadFile(filename)
-	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
-	}
-	
-	return strings.Split(string(bs), ",")
+ bs, err := os.ReadFile(filename)
+ if err != nil {
+  fmt.Println("Error:", err)
+  os.Exit(1)
+ }
+
+ return strings.Split(string(bs), ",")
 }
 
 func removeFile(filename string) {
-	err := os.Remove(filename)
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
+ err := os.Remove(filename)
+ if err != nil {
+  fmt.Println("Error:", err)
+ }
 }
 ```
 
 </details>
-	
+ 
 ## Generate random numbers
-	
+ 
 <details>
 <summary>View contents</summary>
-	
+ 
 ```go
 import (
-	"math/rand"
-	"time"
+ "math/rand"
+ "time"
 )
-	
+ 
 source := rand.NewSource(time.Now().UnixNano())
 r := rand.New(source)
-	
+ 
 // genrate random number from 0 to n
 r.Intn(8) // n = 8
 ```
-	
+ 
 </details>
 
 ## Learning Resources

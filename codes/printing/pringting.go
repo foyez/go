@@ -5,6 +5,11 @@ import (
 	"os"
 )
 
+type Student struct {
+	ID   uint
+	Name string
+}
+
 func main() {
 	// Print
 	fmt.Println("Hello, World")
@@ -27,11 +32,24 @@ func main() {
 	var ageInput int
 	var legend bool
 
-	fmt.Println("Type your name:")
+	fmt.Print("Type your name: ")
 	fmt.Scan(&nameInput)
-	fmt.Println("Type your age:")
+	fmt.Print("Type your age: ")
 	fmt.Scan(&ageInput)
-	fmt.Println("Are you a legend (true/false)?")
+	fmt.Print("Are you a legend (true/false)? ")
 	fmt.Scan(&legend)
-	fmt.Printf("I'm %s. I'm %d. I'm a legend: %t", nameInput, ageInput, legend)
+	fmt.Printf("I'm %s. I'm %d. I'm a legend: %t\n", nameInput, ageInput, legend)
+
+	s := Student{
+		ID:   1,
+		Name: "John Doe",
+	}
+	fmt.Printf("%s\n", "Hello")              // string
+	fmt.Printf("%d\n", -34)                  // decimal
+	fmt.Printf("%+d\n", 4)                   // positive decimal
+	fmt.Printf("%t\n", false)                // boolean
+	fmt.Printf("%f, %.2f\n", 3.1416, 3.1416) // float
+	fmt.Printf("%v\n", s)
+	fmt.Printf("%+v\n", s)
+	fmt.Printf("%T\n", s)
 }
