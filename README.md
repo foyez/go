@@ -1137,8 +1137,15 @@ addFruits("banana", "pineapple") // [apple mango banana pineapple]
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/maps)**
 
+1. Map operations
+
+<details>
+<summary>View codes</summary>
+
 ```go
 var results map[string]float64 = make(map[string]float64) // create empty map
+
+fmt.Println(results["test]) // 0
 
 results["foyez"] = 3.4
 results["mithu"] = 3.5
@@ -1168,6 +1175,28 @@ if email, ok := userEmails[2]; ok {
 delete(userEmails, 1)
 fmt.Println(userEmails) // [2:user2@email.com]
 ```
+
+</details>
+
+2. Iterating map
+
+<details>
+<summary>View codes</summary>
+
+```go
+users := map[string]interface{}{
+  "name":     "zayan",
+  "age":      5,
+  "religion": "islam",
+}
+
+for key, val := range users {
+  fmt.Printf("%s -> %v\n", key, val) // name -> zayan, age -> 5, religion -> islam
+}
+```
+
+</details>
+
 
 </details>
 
