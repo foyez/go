@@ -1044,6 +1044,10 @@ fmt.Println(splicedFruits, fruitsToAdd)             // [pear apple] [pear apple 
 fmt.Println(len(splicedFruits), cap(splicedFruits)) // 2 4
 fmt.Println(len(fruitsToAdd), cap(fruitsToAdd)) // 5 8 (after crossing the previous capacity, the current capcity is doubled up)
 
+// prepend
+nums := []int{1,2,3}
+nums = append([]int{0}, nums...)
+
 // multidimensional array
 multi := [2][3]int{{1, 2, 3}, {5, 6, 7}}
 fmt.Println(multi) // [[1 2 3] [5 6 7]]
