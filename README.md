@@ -1672,7 +1672,7 @@ fmt.Println(isEqual(1, 1)) // true
 fmt.Println(isEqual(1, "1")) // true
 }
 
-````
+```
 
 Here, though the empty interface `interface{}` gives us the flexibility to pass string or integer type, it don't provide us type-safety. Because we can't compare a number with a string. This means the compiler can't help us and we're instead more likely to have runtime errors.
 
@@ -1687,7 +1687,26 @@ func main() {
  fmt.Println(isEqual(1, 1))   // true
  fmt.Println(isEqual(1, "1")) // default type string of "1" does not match inferred type int for T
 }
-````
+```
+
+> `comparable` is a built-in Go constraint introduced in Go 1.18. It is used to denote types that can be compared for equality using == and !=.
+
+```go
+import (
+	"fmt"
+	"golang.org/x/exp/constraints"
+)
+
+// Max returns the maximum of two values that implement the Ordered constraint.
+func Max[T constraints.Ordered](a, b T) T {
+	if a > b {
+		return a
+	}
+	return b
+}
+```
+
+> The `constraints.Ordered` constraint comes from the `golang.org/x/exp/constraints` package and is used to denote types that support ordering operations like <, <=, >, and >=.
 
 **Implementation of `reduce()`, `find()`, `filter()` & `map()`:**
 
