@@ -1872,6 +1872,355 @@ r.Intn(8) // n = 8
  
 </details>
 
+## Effective Go in short <sup>[ref](https://go.dev/doc/effective_go)</sup>
+
+<details>
+
+<summary>View contents</summary>
+
+### Formatting with `gofmt`
+
+Go uses `gofmt` to automatically format code, ensuring consistency across projects. Instead of manually aligning comments or indentation, developers rely on `gofmt`.
+
+#### Key Formatting Rules:
+
+1. **Indentation**: Uses **tabs**, not spaces.
+2. **Line Length**: No strict limit; wrap long lines if needed.
+3. **Parentheses**: Avoid unnecessary parentheses in control structures (`if`, `for`, `switch`).
+
+#### Example:
+
+**Before `gofmt`:**
+```go
+type T struct {
+    name string // name of the object
+    value int // its value
+}
+```
+
+**After `gofmt`:**
+```go
+type T struct {
+    name    string // name of the object
+    value   int    // its value
+}
+```
+
+To format code, run:
+```sh
+gofmt -w filename.go
+```
+Or use:
+```sh
+go fmt ./...
+```
+This keeps your code clean and readable without manual effort.
+
+### Commentary
+
+Go supports both **C-style block comments (`/* */`)** and **C++-style line comments (`//`)**. 
+
+- **Line comments (`//`)** are the standard and widely used.
+- **Block comments (`/* */`)** are mainly for package documentation or temporarily disabling code.
+
+#### Example:
+
+```go
+package main
+
+import "fmt"
+
+// Greet prints a welcome message.
+func Greet(name string) {
+    fmt.Println("Hello,", name)
+}
+
+/* 
+   This is a block comment.
+   It is useful for package-level documentation or disabling large sections of code.
+*/
+
+func main() {
+    Greet("Foyez") // Calling the Greet function
+}
+```
+
+**Doc comments** (before functions, structs, or packages) serve as the primary documentation.
+
+For more details, check: [`go doc`](https://pkg.go.dev/cmd/doc).
+
+### Names
+
+Go follows clear and consistent naming conventions for better readability and usability.
+
+#### 1️⃣ **Package Names**
+- Use **short, lowercase, single-word** names.
+- The package name should match its directory name.
+
+✅ **Example:**  
+```go
+import "bytes" // Use bytes.Buffer, not bytes_package.Buffer
+```
+```go
+import "encoding/base64" // Imported as base64, not encodingBase64
+```
+
+#### 2️⃣ **Avoid Redundant Names**
+- Names should be **concise and meaningful**.
+- Use the **package name** as context.
+
+✅ **Example:**  
+```go
+buf := bufio.NewReader(input) // Not bufio.NewBufReader
+r := ring.New()               // Not ring.NewRing
+```
+
+#### 3️⃣ **Getters & Setters**
+- Avoid `Get` in getter names.
+- Use **exported (uppercase) methods** for getters, and `SetX` for setters.
+
+✅ **Example:**  
+```go
+type User struct {
+    owner string
+}
+
+func (u *User) Owner() string { return u.owner }   // Not GetOwner()
+func (u *User) SetOwner(o string) { u.owner = o }  // Setter
+```
+```go
+user := User{}
+user.SetOwner("Foyez")
+fmt.Println(user.Owner()) // Reads naturally
+```
+
+#### 4️⃣ **Interface Naming**
+- **Single-method interfaces** should use `-er` suffix.
+
+✅ **Example:**  
+```go
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}
+```
+
+#### 5️⃣ **Use MixedCaps Instead of Underscores**
+✅ **Example:**  
+```go
+type DataProcessor struct {}  // Not data_processor
+func ProcessData() {}         // Not process_data()
+```
+
+Following these conventions makes Go code **clean, idiomatic, and easy to read**.
+
+### Semicolons
+
+Go automatically inserts semicolons (`;`) where needed, so they are **mostly invisible** in source code. The rule:  
+👉 If a line ends with an **identifier, literal, or certain tokens (`return`, `break`, `}` etc.)**, Go **inserts a semicolon**.
+
+#### ✅ **Examples:**
+```go
+x := 10  // Semicolon inserted automatically
+fmt.Println(x)  // Semicolon inserted automatically
+```
+
+#### **Semicolons in Loops**
+Semicolons are required **only in `for` loops**:
+```go
+for i := 0; i < 5; i++ {  // Semicolons required
+    fmt.Println(i)
+}
+```
+
+#### **Incorrect Brace Placement**
+🚨 **Wrong:**
+```go
+if x > 0  // Semicolon inserted → Unexpected behavior!
+{ 
+    fmt.Println("Positive") 
+}
+```
+✅ **Correct:**
+```go
+if x > 0 {  // No semicolon inserted
+    fmt.Println("Positive")
+}
+```
+
+**Conclusion:** Let Go handle semicolons **automatically**, except in `for` loops or multiple statements on one line.
+
+### Control Structures
+
+Go's control structures are **similar to C** but with key differences:  
+✅ No `do` or `while`, just `for` loops  
+✅ `switch` is more flexible  
+✅ No parentheses `()` in conditions  
+✅ Braces `{}` are **mandatory**  
+
+---
+
+#### **1. `if` Statement**  
+Braces `{}` are **always required**.  
+Optional **initialization** before condition.
+
+✅ **Example:**  
+```go
+if x := getValue(); x > 0 {  
+    fmt.Println("Positive:", x)
+}
+```
+✅ **No need for `else` if returning early:**  
+```go
+f, err := os.Open("file.txt")  
+if err != nil {
+    return err
+}
+useFile(f)
+```
+
+---
+
+#### **2. `for` Loop**  
+Go has **only `for`**, which works like `for`, `while`, and `forever` loops.
+
+✅ **Standard `for` loop:**  
+```go
+for i := 0; i < 5; i++ {  
+    fmt.Println(i)
+}
+```
+✅ **While-like loop:**  
+```go
+for x > 0 {  
+    x--
+}
+```
+✅ **Infinite loop:**  
+```go
+for {  
+    fmt.Println("Running forever")
+}
+```
+
+✅ **Loop over collections (array, slice, string, or map, or reading from a channel) using `range`:**  
+```go
+for i, val := range arr {  
+    fmt.Println(i, val)
+}
+
+for key, value := range oldMap {
+    newMap[key] = value
+}
+```
+If you only need the first item in the range (the key or index), drop the second:
+```go
+for key := range myMap {
+    if key.expired() {
+        delete(myMap, key)
+    }
+}
+```
+If you only need the second item in the range (the value), use the blank identifier, an underscore, to discard the first:
+```go
+for _, val := range arr { fmt.Println(val) }
+```
+
+✅ Go's `range` loop **automatically decodes UTF-8** and provides **rune values** (Unicode code points) instead of bytes.
+
+**Example:**  
+```go
+for pos, char := range "日本\x80語" { // \x80 is an invalid UTF-8 byte
+    fmt.Printf("character %#U starts at byte position %d\n", char, pos)
+}
+```
+🛠 **Output:**  
+```
+character U+65E5 '日' starts at byte position 0
+character U+672C '本' starts at byte position 3
+character U+FFFD '�' starts at byte position 6  // Invalid UTF-8 replaced
+character U+8A9E '語' starts at byte position 7
+```
+
+- `range` **extracts Unicode runes**, not raw bytes.
+- Invalid UTF-8 sequences are replaced with `U+FFFD (�)`.
+- **Positions refer to bytes, not runes**.
+
+✅  **Go Has No Comma Operator (`++` & `--` are Statements)** \
+In Go:
+- ✅ `++` and `--` are **statements, not expressions**  
+- 🚫 You **cannot** use them inside expressions like `x = y++ + z`  
+
+**Reverse an Array Using Parallel Assignment:**  
+```go
+for i, j := 0, len(a)-1; i < j; i, j = i+1, j-1 {
+    a[i], a[j] = a[j], a[i]  // Swap elements
+}
+```
+
+---
+
+#### **3. `switch` Statement**  
+✅ **No need for `break` (no fallthrough by default):**  
+```go
+switch x {
+case 1:
+    fmt.Println("One")
+case 2, 3:
+    fmt.Println("Two or Three")
+default:
+    fmt.Println("Other")
+}
+```
+✅ **Can replace `if-else` chains:**  
+```go
+x := 5
+switch {
+case x >= 1 && x <= 4:
+  fmt.Println("Between 1 to 4")
+case x > 4:
+  fmt.Println("Greater than 4")
+default:
+  fmt.Println("Zero")
+}
+```
+
+✅ **Labeled `break` for loops:**  
+```go
+Loop:
+    for i := 0; i < 5; i++ {
+        for j := 0; j < 5; j++ {
+            if i+j > 5 {
+                fmt.Println("Print only one time")
+                break Loop // Exits outer loop
+            }
+        }
+    }
+```
+
+---
+
+#### **4. `type switch` (Detect Dynamic Type)**  
+```go
+var i any = "hello"
+
+switch v := i.(type) {
+case int:
+    fmt.Println("Integer:", v)
+case string:
+    fmt.Println("String:", v)
+default:
+    fmt.Println("Unknown type")
+}
+```
+
+---
+
+</details>
+
 ## Learning Resources
 
 <details>
