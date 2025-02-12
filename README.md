@@ -1880,6 +1880,10 @@ r.Intn(8) // n = 8
 
 ### Formatting with `gofmt`
 
+<details>
+
+<summary>View contents</summary>
+
 Go uses `gofmt` to automatically format code, ensuring consistency across projects. Instead of manually aligning comments or indentation, developers rely on `gofmt`.
 
 #### Key Formatting Rules:
@@ -1916,7 +1920,13 @@ go fmt ./...
 ```
 This keeps your code clean and readable without manual effort.
 
+</details>
+
 ### Commentary
+
+<details>
+
+<summary>View contents</summary>
 
 Go supports both **C-style block comments (`/* */`)** and **C++-style line comments (`//`)**. 
 
@@ -1949,7 +1959,13 @@ func main() {
 
 For more details, check: [`go doc`](https://pkg.go.dev/cmd/doc).
 
+</details>
+
 ### Names
+
+<details>
+
+<summary>View contents</summary>
 
 Go follows clear and consistent naming conventions for better readability and usability.
 
@@ -2017,7 +2033,13 @@ func ProcessData() {}         // Not process_data()
 
 Following these conventions makes Go code **clean, idiomatic, and easy to read**.
 
+</details>
+
 ### Semicolons
+
+<details>
+
+<summary>View contents</summary>
 
 Go automatically inserts semicolons (`;`) where needed, so they are **mostly invisible** in source code. The rule:  
 👉 If a line ends with an **identifier, literal, or certain tokens (`return`, `break`, `}` etc.)**, Go **inserts a semicolon**.
@@ -2053,7 +2075,13 @@ if x > 0 {  // No semicolon inserted
 
 **Conclusion:** Let Go handle semicolons **automatically**, except in `for` loops or multiple statements on one line.
 
+</details>
+
 ### Control Structures
+
+<details>
+
+<summary>View contents</summary>
 
 Go's control structures are **similar to C** but with key differences:  
 ✅ No `do` or `while`, just `for` loops  
@@ -2218,6 +2246,409 @@ default:
 ```
 
 ---
+
+</details>
+
+### **Functions**
+
+<details>
+
+<summary>View contents</summary>
+
+#### **1️⃣ Multiple Return Values**  
+Go allows functions to return multiple values, avoiding in-band error returns (like `-1` in C).
+
+✅ **Example:** `Write` method in `os` package  
+```go
+func (file *File) Write(b []byte) (n int, err error)
+```
+Returns:
+- `n` → number of bytes written  
+- `err` → error (if not all bytes were written)
+
+✅ **Example:** Extracting an integer from a byte slice  
+```go
+func nextInt(b []byte, i int) (int, int) {
+    for ; i < len(b) && !isDigit(b[i]); i++ {}
+    x := 0
+    for ; i < len(b) && isDigit(b[i]); i++ {
+        x = x*10 + int(b[i]) - '0'
+    }
+    return x, i
+}
+```
+Usage:
+```go
+for i := 0; i < len(b); {
+    x, i = nextInt(b, i)
+    fmt.Println(x)
+}
+```
+
+---
+
+#### **2️⃣ Named Return Parameters**  
+Return variables can be **named**, making code more readable.
+
+✅ **Example:** Naming `value` and `nextPos`
+```go
+func nextInt(b []byte, pos int) (value, nextPos int) {
+```
+✅ **Example:** Simplifying `io.ReadFull`
+```go
+func ReadFull(r Reader, buf []byte) (n int, err error) {
+    for len(buf) > 0 && err == nil {
+        var nr int
+        nr, err = r.Read(buf)
+        n += nr
+        buf = buf[nr:]
+    }
+    return  // Uses named return variables
+}
+```
+
+---
+
+#### **3️⃣ `defer` Statement (Delayed Execution)**  
+`defer` schedules a function to run **before the surrounding function exits**.
+
+✅ **Example:** Ensuring a file closes  
+```go
+func Contents(filename string) (string, error) {
+    f, err := os.Open(filename)
+    if err != nil {
+        return "", err
+    }
+    defer f.Close()  // Ensures file closes before return
+
+    var result []byte
+    buf := make([]byte, 100)
+    for {
+        n, err := f.Read(buf)
+        result = append(result, buf[:n]...)
+        if err == io.EOF {
+            break
+        } else if err != nil {
+            return "", err
+        }
+    }
+    return string(result), nil
+}
+```
+**Why use `defer`?**  
+✔ Guarantees cleanup (prevents leaks)  
+✔ Keeps code cleaner (close near open)  
+
+✅ **Example:** `defer` executes in LIFO order  
+```go
+for i := 0; i < 5; i++ {
+    defer fmt.Print(i, " ")
+}
+// Output: 4 3 2 1 0
+```
+
+✅ **Example:** Function Tracing  
+```go
+func trace(s string) string {
+    fmt.Println("entering:", s)
+    return s
+}
+
+func un(s string) {
+    fmt.Println("leaving:", s)
+}
+
+func a() {
+    defer un(trace("a"))
+    fmt.Println("in a")
+}
+
+func b() {
+    defer un(trace("b"))
+    fmt.Println("in b")
+    a()
+}
+
+func main() {
+    b()
+}
+```
+**Output:**  
+```
+entering: b  
+in b  
+entering: a  
+in a  
+leaving: a  
+leaving: b  
+```
+**Why use `defer`?**  
+✔ Ensures cleanup, even if function exits early  
+✔ Improves readability and maintainability 🚀
+
+</details>
+
+### **Data**
+
+<details>
+<summary>View contents</summary>
+
+**Memory Allocation: `new` vs. `make`**  
+
+Go provides two built-in functions for memory allocation:  
+- **`new(T)`** → Allocates zeroed storage for a value of type `T` and returns `*T` (a pointer).  
+- **`make(T, args)`** → Initializes slices, maps, and channels, returning `T` (not a pointer).  
+
+---
+
+### **Allocation with `new`**  
+✅ **Usage:**  
+- Allocates memory but does not initialize beyond zero values.  
+- Returns a **pointer** to the allocated type.  
+
+✅ **Example:** Allocating a struct  
+```go
+type SyncedBuffer struct {
+    lock   sync.Mutex
+    buffer bytes.Buffer
+}
+
+p := new(SyncedBuffer)  // Returns *SyncedBuffer
+var v SyncedBuffer      // Direct allocation, ready to use
+```
+✔ `p` is a pointer (`*SyncedBuffer`)  
+✔ `v` is a direct struct instance  
+
+✅ **Example:** Allocating an integer  
+```go
+p := new(int) // *int with zero value (0)
+fmt.Println(*p) // Prints 0
+```
+---
+
+### **Constructors & Composite Literals**  
+✅ **When zero values aren’t enough, use a constructor.**  
+
+🔴 **Verbose version**  
+```go
+func NewFile(fd int, name string) *File {
+    if fd < 0 {
+        return nil
+    }
+    f := new(File)
+    f.fd = fd
+    f.name = name
+    return f
+}
+```
+✔ Can be **simplified** with **composite literals**  
+
+🟢 **Optimized version**  
+```go
+func NewFile(fd int, name string) *File {
+    if fd < 0 {
+        return nil
+    }
+    return &File{fd, name, nil, 0} // Allocates and initializes
+}
+```
+
+The fields of a composite literal are laid out in order and must all be present. However, by labeling the elements explicitly as field:value pairs, the initializers can appear in any order, with the missing ones left as their respective zero values. Thus we could say
+```go
+return &File{fd: fd, name: name}
+```
+
+✔ `&File{}` creates and returns an initialized struct  
+✔ Equivalent to `new(File)` but with initialization  
+
+✅ **Examples of composite literals:**  
+```go
+a := [...]string{0: "no error", 1: "Eio", 2: "invalid argument"} // Array
+s := []string{"no error", "Eio", "invalid argument"}             // Slice
+m := map[int]string{0: "no error", 1: "Eio", 2: "invalid argument"} // Map
+```
+
+---
+
+### **Allocation with `make`**  
+✅ **`make` initializes slices, maps, and channels**  
+```go
+v := make([]int, 10, 100) // Length 10, capacity 100
+```
+✔ Allocates an array of 100 integers  
+✔ Creates a slice of length 10 referring to that array  
+
+✅ **Key difference:**  
+```go
+var p *[]int = new([]int) // *p == nil (rarely useful)
+var v  []int = make([]int, 100) // Allocates a slice of 100 ints
+```
+✔ `new([]int)` → Returns a pointer to an **empty** slice  
+✔ `make([]int, 100)` → Returns a **usable** slice of 100 ints  
+
+✅ **Idiomatic way:**  
+```go
+v := make([]int, 100) // Best practice
+```
+✔ Avoid unnecessary complexity  
+
+✅ **Other `make` examples:**  
+```go
+ch := make(chan int, 10)    // Buffered channel
+m := make(map[string]int)   // Empty map
+```
+✔ `make` initializes internal structures
+
+### **Arrys**  
+
+Arrays in Go differ from C-style arrays:  
+✔ **Arrays are values** → Assigning an array copies all elements.  
+✔ **Passing to a function copies the array** (unless using a pointer).  
+✔ **Array size is part of its type** → `[10]int` and `[20]int` are different types.  
+
+---
+
+#### **1️⃣ Array Declaration & Initialization**  
+```go
+var a [3]int            // Zero-initialized: [0, 0, 0]
+b := [3]int{1, 2, 3}    // Explicit values
+c := [...]int{4, 5, 6}  // Compiler determines size
+```
+
+---
+
+#### **2️⃣ Copying Arrays**  
+```go
+a := [3]int{1, 2, 3}
+b := a   // Creates a copy, modifying b won’t affect a
+b[0] = 10
+fmt.Println(a, b) // Output: [1 2 3] [10 2 3]
+```
+
+---
+
+#### **3️⃣ Passing Arrays to Functions**  
+🔴 **By Value (copying entire array)**  
+```go
+func ModifyArray(arr [3]int) {
+    arr[0] = 100
+}
+a := [3]int{1, 2, 3}
+ModifyArray(a)
+fmt.Println(a)  // Output: [1 2 3] (unchanged)
+```
+  
+🟢 **By Reference (using pointers for efficiency)**  
+```go
+func ModifyArray(arr *[3]int) {
+    arr[0] = 100
+}
+a := [3]int{1, 2, 3}
+ModifyArray(&a)
+fmt.Println(a)  // Output: [100 2 3]
+```
+
+---
+
+#### **4️⃣ Arrays vs. Slices**  
+✅ **Use slices for flexibility & efficiency**  
+```go
+array := [3]float64{7.0, 8.5, 9.1}
+slice := array[:]  // Convert to slice
+```
+✔ Slices are more idiomatic in Go  
+
+---
+
+### **Slices**  
+
+Slices provide a **dynamic, flexible view** over arrays and are the preferred way to handle collections in Go.  
+
+✔ **Slices reference an underlying array** (modifications affect all references).  
+✔ **Passing a slice to a function allows modifications** without explicit pointers.  
+✔ **Slice length (`len`) and capacity (`cap`) can change dynamically.**  
+
+---
+
+#### **1️⃣ Declaring & Initializing Slices**  
+```go
+var s []int              // nil slice (len=0, cap=0)
+s = []int{1, 2, 3}       // Initialized slice
+t := make([]int, 5, 10)  // Slice with len=5, cap=10
+```
+
+---
+
+#### **2️⃣ Slicing an Array**  
+```go
+arr := [5]int{1, 2, 3, 4, 5}
+s := arr[1:4]  // Slice of [2, 3, 4]
+```
+
+🔹 **Slices hold references to arrays, so modifying `s` affects `arr`**  
+```go
+s[0] = 100
+fmt.Println(arr) // Output: [1 100 3 4 5]
+```
+
+---
+
+#### **3️⃣ Passing Slices to Functions**  
+```go
+func modify(s []int) {
+    s[0] = 42
+}
+nums := []int{1, 2, 3}
+modify(nums)
+fmt.Println(nums) // Output: [42 2 3]
+```
+✔ No need to pass a pointer, as slices already reference the underlying array.  
+
+---
+
+#### **4️⃣ Appending to Slices**  
+```go
+s := []int{1, 2}
+s = append(s, 3, 4, 5)  // Expands the slice
+fmt.Println(s) // Output: [1 2 3 4 5]
+```
+✔ If capacity is exceeded, Go automatically **allocates new memory**.  
+
+---
+
+#### **5️⃣ Copying Slices**  
+```go
+src := []int{1, 2, 3}
+dst := make([]int, len(src))
+copy(dst, src)
+fmt.Println(dst) // Output: [1 2 3]
+```
+✔ `copy(dst, src)` copies **minimum of len(dst) and len(src)**.  
+
+---
+
+#### **6️⃣ Two-Dimensional Slices**  
+🔹 **Independent inner slices:**  
+```go
+matrix := make([][]int, 3) // 3 rows
+for i := range matrix {
+    matrix[i] = make([]int, 4) // 4 columns
+}
+```
+🔹 **Single allocation for efficiency:**  
+```go
+matrix := make([][]int, 3)
+data := make([]int, 3*4) // 3 rows * 4 cols
+for i := range matrix {
+    matrix[i], data = data[:4], data[4:] // Slice the array into rows
+}
+```
+✔ **More efficient** but less flexible than independent allocation.  
+
+---
+
+</details>
+
 
 </details>
 
