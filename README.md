@@ -2395,6 +2395,9 @@ leaving: b
 
 **Memory Allocation: `new` vs. `make`**  
 
+<details>
+<summary>View contents</summary> 
+
 Go provides two built-in functions for memory allocation:  
 - **`new(T)`** → Allocates zeroed storage for a value of type `T` and returns `*T` (a pointer).  
 - **`make(T, args)`** → Initializes slices, maps, and channels, returning `T` (not a pointer).  
@@ -2499,7 +2502,12 @@ m := make(map[string]int)   // Empty map
 ```
 ✔ `make` initializes internal structures
 
+</details>
+
 ### **Arrys**  
+
+<details>
+<summary>View contents</summary> 
 
 Arrays in Go differ from C-style arrays:  
 ✔ **Arrays are values** → Assigning an array copies all elements.  
@@ -2560,7 +2568,12 @@ slice := array[:]  // Convert to slice
 
 ---
 
+</details>
+
 ### **Slices**  
+
+<details>
+<summary>View contents</summary> 
 
 Slices provide a **dynamic, flexible view** over arrays and are the preferred way to handle collections in Go.  
 
@@ -2646,6 +2659,257 @@ for i := range matrix {
 ✔ **More efficient** but less flexible than independent allocation.  
 
 ---
+
+</details>
+
+### **Maps** 
+
+<details>
+<summary>View contents</summary> 
+
+Maps in Go provide an efficient **key-value** data structure with dynamic sizing.  
+
+✔ **Keys must support equality (`==`)** (e.g., strings, ints, structs).  
+✔ **Maps hold references** to an underlying structure (modifying inside a function affects the caller).  
+✔ **Accessing a non-existent key returns the zero value** of the value type.  
+
+---
+
+#### **1️⃣ Declaring & Initializing Maps**  
+```go
+// Using map literals
+timeZone := map[string]int{
+    "UTC":  0,
+    "EST": -5 * 3600,
+    "CST": -6 * 3600,
+}
+
+// Using make()
+users := make(map[string]int) // Empty map
+```
+
+---
+
+#### **2️⃣ Accessing & Modifying Maps**  
+```go
+timeZone["PST"] = -8 * 3600  // Add key-value pair
+offset := timeZone["EST"]    // Retrieve value
+fmt.Println(offset)          // Output: -18000
+```
+
+❌ **Accessing a non-existent key returns the zero value** (for int, it's `0`).  
+
+---
+
+#### **3️⃣ Checking Key Existence (Comma-Ok Idiom)**  
+```go
+if offset, exists := timeZone["UTC"]; exists {
+    fmt.Println("Offset:", offset)
+}
+```
+✔ Helps differentiate between **"zero value"** and **"missing key"**.
+
+To test for presence in the map without worrying about the actual value, you can use the blank identifier (_) in place of the usual variable for the value.
+
+```go
+_, exists := timeZone[tz]
+```
+
+---
+
+#### **4️⃣ Deleting Keys**  
+```go
+delete(timeZone, "PST")  // Remove PST from map
+```
+✔ Safe to call **even if the key doesn’t exist**.  
+
+---
+
+#### **5️⃣ Using Maps as Sets**  
+```go
+attended := map[string]bool{"Ann": true, "Joe": true}
+if attended["Ann"] {
+    fmt.Println("Ann was at the meeting")
+}
+```
+✔ **Maps with `bool` values** can function as sets.  
+
+---
+
+#### **6️⃣ Iterating Over a Map**  
+```go
+for key, value := range timeZone {
+    fmt.Println("Key:", key, "Value:", value)
+}
+```
+
+---
+
+</details>
+
+### **Printing**
+
+<details>
+<summary>View contents</summary> 
+
+Go’s `fmt` package provides **formatted printing** similar to C’s `printf`, but with enhanced features.  
+
+✔ `fmt.Print`, `fmt.Println`, `fmt.Printf` – Basic printing.  
+✔ `fmt.Sprintf`, `fmt.Fprintf` – Return formatted strings.  
+✔ `fmt.Fprint(os.Stdout, …)` – Print to `io.Writer`.  
+
+---
+
+#### **1️⃣ Basic Printing**  
+```go
+fmt.Print("Hello")      // Prints: Hello
+fmt.Println("Hello")    // Prints: Hello\n (adds newline)
+fmt.Printf("Age: %d\n", 25) // Prints: Age: 25
+```
+✔ `Println` adds spaces & newline.  
+✔ `Printf` supports format specifiers (`%d`, `%s`, etc.).  
+
+---
+
+#### **2️⃣ Formatting Values (`Printf`)**  
+```go
+x := 255
+fmt.Printf("%d %x %b\n", x, x, x) // Decimal, Hex, Binary
+// Output: 255 ff 11111111
+
+t := struct{ Name string; Age int }{"John", 30}
+fmt.Printf("%v\n", t)   // {John 30} (default format)
+fmt.Printf("%+v\n", t)  // {Name:John Age:30} (field names)
+fmt.Printf("%#v\n", t)  // struct { Name string; Age int }{Name:"John", Age:30} (Go syntax)
+```
+✔ `%v` → default value representation.  
+✔ `%+v` → shows struct field names.  
+✔ `%#v` → prints Go syntax representation.  
+
+---
+
+#### **3️⃣ Printing Maps & Slices**  
+```go
+timeZone := map[string]int{"UTC": 0, "PST": -8 * 3600}
+fmt.Printf("%v\n", timeZone)   // map[PST:-28800 UTC:0]
+fmt.Printf("%#v\n", timeZone)  // map[string]int{"PST":-28800, "UTC":0}
+```
+✔ **Maps are sorted lexicographically by key**.  
+
+---
+
+#### **4️⃣ Printing Types & Quotes**  
+```go
+str := "Hello"
+fmt.Printf("%T\n", str)   // string (prints type)
+fmt.Printf("%q\n", str)   // "Hello" (quoted string)
+fmt.Printf("%x\n", str)   // 48656c6c6f (hex encoding)
+fmt.Printf("% x\n", str)  // 48 65 6c 6c 6f (spaced hex)
+```
+✔ `%T` → prints type.  
+✔ `%q` → quoted string.  
+✔ `%x` → hexadecimal representation.  
+
+---
+
+#### **5️⃣ Custom String Representation (`String()` Method)**  
+```go
+type Person struct {
+    Name string
+    Age  int
+}
+
+func (p Person) String() string {
+    return fmt.Sprintf("%s is %d years old", p.Name, p.Age)
+}
+
+p := Person{"Alice", 25}
+fmt.Println(p) // Alice is 25 years old
+```
+✔ Implement `String()` for **custom print formatting**.  
+
+---
+
+#### **6️⃣ Variadic Functions (`...interface{}` & `...int`)**  
+```go
+func Min(values ...int) int {
+    min := values[0]
+    for _, v := range values {
+        if v < min {
+            min = v
+        }
+    }
+    return min
+}
+fmt.Println(Min(3, 1, 4, 1, 5)) // 1
+```
+✔ `...int` → allows multiple `int` arguments.  
+
+---
+
+</details>
+
+### **Append**
+
+<details>
+<summary>View contents</summary> 
+
+Go’s built-in `append` function dynamically grows slices.  
+
+#### **1️⃣ Syntax**  
+```go
+func append(slice []T, elements ...T) []T
+```
+- `T` is a generic type.  
+- `append` returns a **new slice** because the underlying array **may change**.  
+
+---
+
+#### **2️⃣ Appending Elements**  
+```go
+x := []int{1, 2, 3}
+x = append(x, 4, 5, 6)
+fmt.Println(x) // [1 2 3 4 5 6]
+```
+✔ Adds multiple elements at once.  
+
+---
+
+#### **3️⃣ Appending a Slice (`...` Operator)**  
+```go
+x := []int{1, 2, 3}
+y := []int{4, 5, 6}
+x = append(x, y...) // Spreads `y` into `x`
+fmt.Println(x) // [1 2 3 4 5 6]
+```
+✔ **`...` is required** to unpack a slice.  
+
+---
+
+#### **4️⃣ Capacity Expansion & Performance**  
+```go
+x := make([]int, 3, 5) // len=3, cap=5
+x[0], x[1], x[2] = 1, 2, 3
+x = append(x, 4, 5, 6) // Capacity exceeded → new array allocated
+fmt.Println(x) // [1 2 3 4 5 6]
+```
+✔ If **capacity is exceeded, a new array is created**.  
+
+---
+
+#### **5️⃣ Efficient Slice Growth (Doubling Strategy)**  
+```go
+var s []int
+for i := 0; i < 10; i++ {
+    s = append(s, i)
+    fmt.Printf("len=%d cap=%d %v\n", len(s), cap(s), s)
+}
+```
+✔ **Capacity doubles dynamically** when needed.  
+
+---
+
+</details>
 
 </details>
 
