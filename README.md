@@ -2949,12 +2949,9 @@ var variableName *type
 type person struct {
 	firstName      string
 	lastName       string
-	faboriteSports []string
+	favoriteSports []string
 }
 ```
-
-⚠️ **Note:** `faboriteSports` is misspelled (should be `favoriteSports`),
-but keeping it as-is to match your code.
 
 ---
 
@@ -2965,7 +2962,7 @@ func main() {
 	person := person{
 		firstName: "Foyez",
 		lastName:  "Ahmed",
-		faboriteSports: []string{"Cricket"},
+		favoriteSports: []string{"Cricket"},
 	}
 
 	updateFirstName(&person, "Rumon")
@@ -3003,7 +3000,7 @@ func updateFirstName(p *person, newFirstName string) {
 
 ```go
 func updateFavoriteSports(p person, sportName string) {
-	p.faboriteSports[0] = sportName
+	p.favoriteSports[0] = sportName
 }
 ```
 
@@ -3011,13 +3008,13 @@ func updateFavoriteSports(p person, sportName string) {
 
 * `person` is passed **by value**
 * BUT `slice` is a **reference type**
-* Both `p.faboriteSports` and `person.faboriteSports` point to the **same underlying array**
+* Both `p.favoriteSports` and `person.favoriteSports` point to the **same underlying array**
 
 ---
 
-# Value Types vs Reference Types (Very Important)
+### Value Types vs Reference Types (Very Important)
 
-### Value Types
+#### Value Types
 
 ```
 int, float, string, bool, struct, array
@@ -3030,7 +3027,7 @@ int, float, string, bool, struct, array
 
 ---
 
-### Reference Types
+#### Reference Types
 
 ```
 slice, map, channel, pointer, function
@@ -3043,7 +3040,7 @@ slice, map, channel, pointer, function
 
 ---
 
-# Call by Value (Default Behavior)
+### Call by Value (Default Behavior)
 
 ```go
 type Person struct {
@@ -3092,7 +3089,7 @@ func main() {
 
 ---
 
-# Call by Reference (Using Pointers)
+### Call by Reference (Using Pointers)
 
 #### Function Example
 
@@ -3173,45 +3170,121 @@ Use pointer receivers when:
 
 ## Error Handling
 
+Go treats errors as **values**, not exceptions.
+This design forces developers to **handle errors explicitly**, making programs more predictable and easier to reason about.
+
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/errors)**
 
-#### Error
+### Error
 
-- indicates that something bad happened, but it might be possible to continue running the program.
-- i.e: A function that intentionally returns an error if something goes wrong
+An **error** indicates that something went wrong, **but the program can usually continue**.
 
-#### Panic
+#### Characteristics
 
-- happen at run time
-- something happened that was fatal to the program and program stops execution
-- ex: Trying to open a file that doesn't exist
+* Returned as the **last return value**
+* Must be **checked explicitly**
+* Does **not crash** the program by default
 
 ```go
 type error interface {
- Error() string
+	Error() string
 }
+```
 
+Any type that implements `Error() string` satisfies the `error` interface.
+
+---
+
+#### Example
+
+```go
 err := funcReturnError()
-fmt.Println(err.Error())
+
+if err != nil {
+	fmt.Println(err.Error())
+}
+```
+
+💡 **Idiomatic Go**
+
+```go
+if err != nil {
+	return err
+}
+```
+
+---
+
+### Panic
+
+A **panic** is a runtime error that:
+
+* Immediately stops normal execution
+* Unwinds the stack
+* Executes deferred functions
+* Crashes the program if not recovered
+
+#### When to Panic
+
+* Programmer mistakes (nil pointer dereference)
+* Impossible states
+* Unrecoverable errors
+
+🚫 **Do NOT use panic for normal error handling**
+
+---
+
+#### Example
+
+```go
 panic(err.Error())
 ```
 
-#### Defer
+Common panic scenarios:
 
-A defer statement defers the execution of a function until the surrounding function completes. Typically used for cleanup activities. Arguments of a deffered call are evaluted immediately.
+* Accessing out-of-bounds slice index
+* Dereferencing a nil pointer
+* Explicit `panic()`
+
+---
+
+### Error vs Panic
+
+| Error             | Panic                    |
+| ----------------- | ------------------------ |
+| Recoverable       | Unrecoverable            |
+| Returned as value | Stops program            |
+| Must be handled   | Crashes if not recovered |
+| Expected failures | Programming bugs         |
+
+---
+
+### Defer
+
+A `defer` statement delays execution of a function **until the surrounding function returns**.
+
+#### Key Rules
+
+1. Deferred calls execute in **LIFO order** (stack)
+2. Arguments are **evaluated immediately**
+3. Execution happens **even after panic**
+
+---
+
+#### Example
 
 ```go
 func main(){
- let country := "Bangladesh"
+	let country := "Bangladesh"
 
- defer fmt.Println(country)
- defer fmt.Println("love")
- country = "Australia"
+	defer fmt.Println(country)
+	defer fmt.Println("love")
+	country = "Australia"
 
- fmt.Println("I")
+	fmt.Println("I")
 }
 
 // I
@@ -3219,29 +3292,64 @@ func main(){
 // Bangladesh
 ```
 
-#### Recover
+#### Explanation
 
-- **Panic** is called during a run time error and fatally kill the program
-- **Recover** tells Go what to do when a panic happens (returns what was passed to panic)
-- Recover must be paired with **defer**, which will fire even after a panic
+* `country` is evaluated at `defer` time → `"Bangladesh"`
+* Deferred calls run **after** `main()` completes
+* Last deferred call runs first
+
+---
+
+#### Common Uses of `defer`
+
+* Closing files
+* Unlocking mutexes
+* Database cleanup
+* Recovering from panics
+
+```go
+file, err := os.Open("test.txt")
+if err != nil {
+	return err
+}
+defer file.Close()
+```
+
+---
+
+### Recover
+
+`recover()` allows a program to **regain control after a panic**.
+
+#### Important Rules
+
+* Only works **inside a deferred function**
+* Stops the panic and resumes normal execution
+* Returns the value passed to `panic()`
+
+---
+
+#### Example
 
 ```go
 func recoverFromPanic() {
- if r := recover(); r != nil {
-  fmt.Println(r)
- }
+	if r := recover(); r != nil {
+		fmt.Println(r)
+	}
 }
+```
 
+```go
 func main() {
- defer recoverFromPanic()
+	defer recoverFromPanic()
 
- for i := 0; i < 5; i++ {
-  fmt.Println(i)
+	for i := 0; i < 5; i++ {
+		fmt.Println(i)
 
-  if i == 2 {
-   panic("PANIC!")
-  }
- }
+		if i == 2 {
+			panic("PANIC!")
+		}
+	}
 }
 
 // 0
@@ -3249,6 +3357,101 @@ func main() {
 // 2
 // PANIC!
 ```
+
+#### Explanation
+
+* Panic happens at `i == 2`
+* Deferred `recoverFromPanic()` executes
+* Panic is handled → program does not crash
+
+---
+
+#### Best Practice
+
+* Use `recover` only in **top-level goroutines**
+* Never silently ignore panics
+
+##### 1. “Use `recover` only in **top-level goroutines**”
+
+**What it means:**
+
+* A **goroutine** is a lightweight thread of execution in Go.
+* Every goroutine has its own **call stack**. If a panic happens inside a goroutine **and isn’t recovered there**, it **kills the whole program**.
+* “Top-level” here means the **main goroutine** or any goroutine that you explicitly control and launch.
+
+**Example of good usage:**
+
+```go
+func main() {
+    go safeGoroutine()
+    fmt.Println("Main continues...")
+}
+
+func safeGoroutine() {
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println("Recovered in goroutine:", r)
+        }
+    }()
+
+    panic("Something went wrong in goroutine")
+}
+```
+
+* Panic happens in the goroutine
+* `defer` + `recover` catches it **inside that goroutine**
+* Program continues; main goroutine is safe
+
+**Why “top-level”?**
+If you try to `recover` **deep inside nested function calls**, it may not work as expected, because `recover` only stops **panics in the same goroutine where it’s deferred**.
+
+---
+
+##### 2. “Never silently ignore panics”
+
+**What it means:**
+
+* A panic usually indicates a **serious bug** or unexpected condition.
+* If you recover from it **without logging, handling, or reporting**, you may **hide real issues**, making debugging very hard.
+
+**Bad example:**
+
+```go
+defer func() {
+    recover() // silently ignoring
+}()
+```
+
+* You catch the panic but **do nothing**
+* Bug remains, program continues in an inconsistent state
+
+**Good example:**
+
+```go
+defer func() {
+    if r := recover(); r != nil {
+        fmt.Println("Recovered from panic:", r)
+        // optionally log to file, report error, clean resources
+    }
+}()
+```
+
+* Panic is **handled responsibly**
+* Program can continue safely
+
+---
+
+**Rule of thumb:**
+
+* Only use `recover` when you **can handle the panic meaningfully**, like:
+
+  * Cleaning resources (closing files, network connections)
+  * Logging errors
+  * Gracefully shutting down a service
+
+* Don’t use `recover` to **silently ignore bugs**, otherwise you’re hiding problems.
+
+---
 
 </details>
 
