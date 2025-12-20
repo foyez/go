@@ -1744,10 +1744,14 @@ Reason:
 
 ## Variables
 
+Variables store values that can be used and modified during program execution.
+
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/variables)**
+
+### Variable Declaration
 
 ```go
 package main
@@ -1759,236 +1763,375 @@ import "fmt"
 var name string = "Zayan"
 
 func main() {
- // Infer variable type
- var age = 20
+	// Infer variable type
+	var age = 20
 
- // variables without assigning value
- // return default value
- // int: 0, float: 0.0, string: "", bool: false
- var salary int
+	// variables without assigning value
+	// return default value
+	// int: 0, float: 0.0, string: "", bool: false
+	var salary int
 
- // value cannot be changed/re-assigned
- const birthPlace = "Bangladesh"
+	// value cannot be changed/re-assigned
+	const birthPlace = "Bangladesh"
 
- // variables in only function
- funcVar := "can't declare outside of a function"
+	// variables in only function
+	funcVar := "can't declare outside of a function"
 
- // multiple variables
- one, two := 1, "two"
+	// multiple variables
+	one, two := 1, "two"
 
- fmt.Println(name, age, salary)
- fmt.Println(birthPlace)
- fmt.Println(funcVar)
- fmt.Println(one, two)
+	fmt.Println(name, age, salary)
+	fmt.Println(birthPlace)
+	fmt.Println(funcVar)
+	fmt.Println(one, two)
 }
 ```
+
+---
+
+### Key Concepts
+
+#### `var` keyword
+
+* Used for **explicit variable declaration**
+* Can be declared:
+
+  * At **package level**
+  * Inside functions
+
+```go
+var age int = 20
+```
+
+---
+
+#### Type inference
+
+```go
+var age = 20
+```
+
+* Go infers the type (`int`)
+* Cleaner and commonly used
+
+---
+
+#### Zero values
+
+When a variable is declared without assignment, Go assigns a **zero value**:
+
+| Type   | Zero value |
+| ------ | ---------- |
+| int    | 0          |
+| float  | 0.0        |
+| string | ""         |
+| bool   | false      |
+
+---
+
+#### Short variable declaration `:=`
+
+```go
+funcVar := "only inside function"
+```
+
+* Only works **inside functions**
+* Infers type automatically
+* Most commonly used in Go
+
+---
+
+#### Constants
+
+```go
+const birthPlace = "Bangladesh"
+```
+
+* Value **cannot be reassigned**
+* Must be known at compile time
+
+---
 
 </details>
 
 ## Control Structures: If & Else
 
+Go uses `if`, `else if`, and `else` for conditional logic.
+
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/control)**
+
+### Basic if–else
 
 ```go
 package main
 
 import (
- "fmt"
+	"fmt"
 )
 
 func main() {
- var age = 10
+	var age = 10
 
- if age < 18 {
-  fmt.Println("younger")
- } else if age == 18 {
-  fmt.Println("adult")
- } else {
-  fmt.Println("elder")
- }
+	if age < 18 {
+		fmt.Println("younger")
+	} else if age == 18 {
+		fmt.Println("adult")
+	} else {
+		fmt.Println("elder")
+	}
+```
 
- if name := "Farah"; name != "Farhan" {
-  fmt.Println("She is Farah")
- }
+---
+
+### If with short statement
+
+```go
+	if name := "Farah"; name != "Farhan" {
+		fmt.Println("She is Farah")
+	}
 }
 ```
+
+#### Key points
+
+* Variable `name` exists **only inside the if block**
+* Helps reduce variable scope
+* Common Go pattern
+
+---
 
 </details>
 
 ## Control Structures: switch
+
+Go’s `switch` is **more powerful and flexible** than many other languages.
 
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/control)**
 
+### Switch with expression
+
 ```go
-package main
-
-import "fmt"
-
-func main() {
- // *****************************************
- switch city := "Cumilla"; city {
- case "Dhaka", "Cumilla", "Sylhet":
-  fmt.Println("You live in", city)
- default:
-  fmt.Println("You're not from around here")
- }
-
- // *****************************************
- var age int = 30
-
- switch {
- case age < 18:
-  fmt.Println("young")
- case age > 18 && age <= 40:
-  fmt.Println("adult")
- default:
-  fmt.Println("elder")
- }
-
- // *****************************************
- var num int = 9
-
- switch {
- case num != 10:
-  fmt.Println("Does not equal 10")
-  fallthrough // check other case after matching this case
- case num < 10:
-  fmt.Println("Less than 10")
- case num > 10:
-  fmt.Println("Greater than 10")
- default:
-  fmt.Println("Is 10")
- }
+switch city := "Cumilla"; city {
+case "Dhaka", "Cumilla", "Sylhet":
+	fmt.Println("You live in", city)
+default:
+	fmt.Println("You're not from around here")
 }
 ```
+
+* Multiple values per case allowed
+* No `break` needed (automatic)
+
+---
+
+### Switch without expression (acts like if–else)
+
+```go
+var age int = 30
+
+switch {
+case age < 18:
+	fmt.Println("young")
+case age > 18 && age <= 40:
+	fmt.Println("adult")
+default:
+	fmt.Println("elder")
+}
+```
+
+* Each case is a boolean expression
+* Very readable alternative to long `if-else` chains
+
+---
+
+### `fallthrough` behavior
+
+```go
+var num int = 9
+
+switch {
+case num != 10:
+	fmt.Println("Does not equal 10")
+	fallthrough // check other case after matching this case
+case num < 10:
+	fmt.Println("Less than 10")
+case num > 10:
+	fmt.Println("Greater than 10")
+default:
+	fmt.Println("Is 10")
+}
+```
+
+#### Important
+
+* `fallthrough` forces execution of the **next case**
+* It **does not re-check conditions**
+* Use sparingly
+
+---
 
 </details>
 
 ## Loops
+
+Go has **only one loop keyword**: `for`.
+But it supports multiple patterns.
 
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/loops)**
 
+### Basic for loop
+
 ```go
-package main
-
-import (
- "fmt"
-)
-
-func main() {
- // *****************************************
- // BASIC FOR LOOP
- // *****************************************
- fmt.Println("Basic for loop")
- for i := 1; i <= 5; i++ {
-  fmt.Print(i)
- }
-
- // *****************************************
- // SIMILAR TO WHILE LOOP
- // *****************************************
- fmt.Println("\nSimilar to while loop")
- j := 1
-
- for j <= 5 {
-  fmt.Print(j)
-  j++
- }
-
- // *****************************************
- // INFINITE LOOP
- // *****************************************
- fmt.Println("\nInfinite loop")
- num := 1
-
- for {
-  num = num + 2
-
-  if num == 7 {
-   continue
-  }
-
-  fmt.Print(num)
-
-  if num == 11 {
-   break
-  }
- }
-
- // ********************************************
- // BASIC FOR LOOP ITERATION (STRING, ARRAY,...)
- // ********************************************
- fmt.Println("\nBasic for loop iteration")
- var name = "Farah"
-
- for i := 0; i < len(name); i++ {
-  fmt.Println("Letter:", string(name[i]))
- }
-
- // *****************************************
- // STRING ITERATION
- // *****************************************
- fmt.Println("\nString iteration")
- var myCity = "কুমিল্লা"
-
- for index, letter := range myCity {
-  if index % 2 == 0 {
-   fmt.Printf("Index: %d, Letter:%#U\n", index, letter)
-  }
- }
-
- // *****************************************
- // SLICE OR ARRAY ITERATION
- // *****************************************
- fmt.Println("\nSlice or Array iteration")
- cities := []string{"Dhaka", "Cumilla"}
-
- for _, city := range cities {
-  fmt.Printf("%s ", city)
- }
-
- // *****************************************
- // MAP ITERATION
- // *****************************************
- fmt.Println("\nMap iteration")
- results := map[string]float64{
-  "Farah":   3.4,
-  "Laaibah": 3.3,
-  "Zayan":   3.5,
- }
-
- for key, value := range results {
-  fmt.Println(key, value)
- }
-
- // *****************************************
- // CHANNEL ITERATION
- // *****************************************
- fmt.Println("\nChannel iteration")
-
- ch := make(chan int)
- go func() {
-  ch <- 1
-  ch <- 2
-  close(ch)
- }()
-
- for n := range ch {
-  fmt.Println(n)
- }
+fmt.Println("Basic for loop")
+for i := 1; i <= 5; i++ {
+	fmt.Print(i)
 }
 ```
 
-_[Loop guide](https://yourbasic.org/golang/for-loop-range-array-slice-map-channel/)_
+* Initialization; condition; increment
+
+---
+
+### Similar to while loop
+
+```go
+fmt.Println("\nSimilar to while loop")
+j := 1
+
+for j <= 5 {
+	fmt.Print(j)
+	j++
+}
+```
+
+* No `while` keyword in Go
+
+---
+
+### Infinite loop
+
+```go
+fmt.Println("\nInfinite loop")
+num := 1
+
+for {
+	num = num + 2
+
+	if num == 7 {
+		continue
+	}
+
+	fmt.Print(num)
+
+	if num == 11 {
+		break
+	}
+}
+```
+
+* `continue` skips to next iteration
+* `break` exits the loop
+
+---
+
+### Basic for loop iteration (string bytes)
+
+```go
+fmt.Println("\nBasic for loop iteration")
+var name = "Farah"
+
+for i := 0; i < len(name); i++ {
+	fmt.Println("Letter:", string(name[i]))
+}
+```
+
+⚠️ Iterates over **bytes**, not Unicode characters
+
+---
+
+### String iteration (Unicode-safe)
+
+```go
+fmt.Println("\nString iteration")
+var myCity = "কুমিল্লা"
+
+for index, letter := range myCity {
+	if index%2 == 0 {
+		fmt.Printf("Index: %d, Letter:%#U\n", index, letter)
+	}
+}
+```
+
+* `range` iterates over **runes (Unicode code points)**
+* Correct way to iterate strings with non-ASCII characters
+
+---
+
+### Slice or Array iteration
+
+```go
+fmt.Println("\nSlice or Array iteration")
+cities := []string{"Dhaka", "Cumilla"}
+
+for _, city := range cities {
+	fmt.Printf("%s ", city)
+}
+```
+
+* `_` ignores index
+* Most common loop style in Go
+
+---
+
+### Map iteration
+
+```go
+fmt.Println("\nMap iteration")
+results := map[string]float64{
+	"Farah":   3.4,
+	"Laaibah": 3.3,
+	"Zayan":   3.5,
+}
+
+for key, value := range results {
+	fmt.Println(key, value)
+}
+```
+
+⚠️ Map iteration order is **random**
+
+---
+
+### Channel iteration
+
+```go
+fmt.Println("\nChannel iteration")
+
+ch := make(chan int)
+go func() {
+	ch <- 1
+	ch <- 2
+	close(ch)
+}()
+
+for n := range ch {
+	fmt.Println(n)
+}
+```
+
+* `range` receives values until channel is closed
+* Common pattern in concurrent Go programs
+
+---
 
 </details>
 
