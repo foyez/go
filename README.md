@@ -858,11 +858,6 @@ go test -v
 
 ---
 
-Below is an **extended section added to your notes**, introducing **`github.com/stretchr/testify`** for writing **cleaner, more expressive unit tests** in Go.
-I’ve kept the same learning style, avoided ambiguity, and explained *why* and *when* to use it.
-
----
-
 ### Using `testify` for Cleaner Unit Tests in Go
 
 Go’s standard `testing` package is powerful and minimal, but as tests grow, you often repeat:
@@ -2137,102 +2132,165 @@ for n := range ch {
 
 ## Functions
 
+Functions are reusable blocks of code that perform a specific task.
+Go functions are **strongly typed**, support **multiple return values**, and treat functions as **first-class citizens**.
+
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/funtions)**
 
-- Basic function
+### Basic function
 
 ```go
 func printAge() {
- fmt.Println(10)
+	fmt.Println(10)
 }
 ```
 
-- return type declaration
+* No parameters
+* No return value
+
+---
+
+### Function with parameters and return type
 
 ```go
 func printAge(age int) int {
- return age
+	return age
 }
 ```
 
-- return multiple values
+* Parameters must have types
+* Return type is declared after parameters
+
+---
+
+### Returning multiple values
+
+One of Go’s most powerful features.
 
 ```go
 func printAge(age int) (string, int) {
- return "name", age
+	return "name", age
 }
 
 func main() {
- name, age = printAge(10)
+	name, age := printAge(10)
 }
 ```
 
-- return named values
+### Why this is useful
+
+* Returning `(value, error)`
+* Cleaner than exceptions
+* Common Go pattern
+
+---
+
+### Named return values
 
 ```go
 func printAge(age1, age2 int) (ageOfBob, ageOfSally int) {
- ageOfBob = age1
- ageOfSally = age2
- return
+	ageOfBob = age1
+	ageOfSally = age2
+	return
 }
 ```
 
-- unknown number of arguments / variadic function
+#### Key points
+
+* Return variables are pre-declared
+* `return` without arguments returns current values
+* Useful for documentation, but overuse can reduce clarity
+
+---
+
+### Variadic functions (unknown number of arguments)
 
 ```go
 func average(ages ...int) float64 {
- total := 0
+	total := 0
 
- // ages - treated as slice
- for _, age := range ages {
-  total += age
- }
+	// ages - treated as slice
+	for _, age := range ages {
+		total += age
+	}
 
- return float64(total) / float64(len(ages))
+	return float64(total) / float64(len(ages))
 }
 
 func main() {
- fmt.Println(average(10, 20, 32))
+	fmt.Println(average(10, 20, 32))
 
- nums := []int{10, 20, 32}
- // unpack or spread
- fmt.Println(average(nums...))
+	nums := []int{10, 20, 32}
+	// unpack or spread
+	fmt.Println(average(nums...))
 }
 ```
 
-- go functions are `lexically scoped` means variables are accessible from the functions in the same block where the functions are defined
+#### Key points
+
+* Variadic parameters are treated as slices
+* Only **one variadic parameter**, and it must be last
+
+---
+
+### Lexical scoping
+
+Go functions are **lexically scoped**, meaning:
+
+> A function can access variables defined in the same or outer block.
 
 ```go
 var n1 = 5
 
 func foo(n2 int) {
- n3 := 8
- fmt.Println(n1, n2, n3)
+	n3 := 8
+	fmt.Println(n1, n2, n3)
 }
 ```
 
-- function as first-class value (assigning as variable, pass as argument, return as value, etc.)
+* `n1` → package scope
+* `n2` → function parameter
+* `n3` → function local variable
+
+---
+
+### Functions as first-class values
+
+Functions can be:
+
+* Assigned to variables
+* Passed as arguments
+* Returned from functions
+
+---
+
+#### Passing function as argument
 
 ```go
 func print(n int, fn func(int)) {
- fn(n)
+	fn(n)
 }
 
 print(6, func(val int) {
- fmt.Println(val) // 6
+	fmt.Println(val) // 6
 })
 ```
 
+---
+
+#### Returning a function (closure)
+
 ```go
 func add(n1 int) func(int) int {
- fn := func(n2 int) int {
-  return n1 + n2
- }
- return fn
+	fn := func(n2 int) int {
+		return n1 + n2
+	}
+	return fn
 }
+
 // n1 is in the closure of fn()
 
 sum := add(1)
@@ -2240,94 +2298,160 @@ fmt.Println(sum(5)) // 6
 fmt.Println(sum(2)) // 3
 ```
 
-When functions are passed/returned, their environment comes with them.
+### Important concept: Closure
+
+When functions are passed or returned, **their environment comes with them**.
+`n1` remains available even after `add` finishes execution.
+
+---
 
 </details>
 
 ## Arrays
+
+Arrays have a **fixed length** and store elements of the same type.
 
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/arrays)**
 
+### Declaring arrays
+
 ```go
 // ARRAY
 // [number]T
 // A slice type has a specific length
-// declare array
 var arr [3]float64
 fmt.Println(arr) // [0 0 0]
+```
 
+* Length is part of the type
+* Zero values are assigned automatically
+
+---
+
+### Accessing elements
+
+```go
 arr[1] = 23               // set element
 element := arr[1]         // read element
 fmt.Println(arr, element) // [0 23 0] 23
+```
 
-// declare and initialize
+---
+
+### Declaring and initializing
+
+```go
 scores := [3]float64{9, 1.5, 2.2}
 fmt.Println(scores)
+```
 
-// compiler figure out array length
+---
+
+### Compiler-determined length
+
+```go
 arrNotMax := [...]int{2, 3, 4}
 fmt.Println(arrNotMax, len(arrNotMax)) // [2 3 4] 3
+```
 
-// slice
+---
+
+### Slicing an array
+
+```go
 fruits := [5]string{"banana", "pear", "apple", "orange", "peach"}
+
 splicedFruits := fruits[1:3]              // [pear apple]
 splicedFruits2 := fruits[2:]              // [apple orange peach]
 removeLastFruit := fruits[:len(fruits)-1] // [banana pear apple orange]
 lastFruit := fruits[len(fruits)-1]        // peach
+
 fmt.Println(splicedFruits, splicedFruits2, removeLastFruit, lastFruit)
 fmt.Println(len(splicedFruits)) // 2
-fmt.Println(cap(splicedFruits)) // 4 (since starts from 1 and end index is 4)
+fmt.Println(cap(splicedFruits)) // 4
+```
 
-// append
+---
+
+### Append behavior
+
+```go
 fruitsToAdd := append(splicedFruits, "cherry", "pineapple", "guava")
-fmt.Println(splicedFruits, fruitsToAdd)             // [pear apple] [pear apple cherry pineapple guava]
-fmt.Println(len(splicedFruits), cap(splicedFruits)) // 2 4
-fmt.Println(len(fruitsToAdd), cap(fruitsToAdd)) // 5 8 (after crossing the previous capacity, the current capcity is doubled up)
+```
 
-// prepend
-nums := []int{1,2,3}
+* If capacity is exceeded:
+
+  * A **new underlying array** is allocated
+  * Capacity usually **doubles**
+
+---
+
+### Prepend (not built-in)
+
+```go
+nums := []int{1, 2, 3}
 nums = append([]int{0}, nums...)
+```
 
-// multidimensional array
+---
+
+### Multidimensional array
+
+```go
 multi := [2][3]int{{1, 2, 3}, {5, 6, 7}}
 fmt.Println(multi) // [[1 2 3] [5 6 7]]
 ```
 
+---
+
 </details>
 
 ## Slices
+
+Slices are **more flexible than arrays** and are used almost everywhere in Go.
 
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/slices)**
 
+### Declaring a slice
+
 ```go
 // SLICE
 // []T
 // A slice type has no specific length
 
-// declare a slice
 var mySlice []int
 fmt.Println(mySlice) // []
-
-// mySlice[0] = 1 // occurs an error, since size is unknown
 ```
 
-A slice has 3 properties:
+❌ This will panic:
 
-- `ptr` - a pointer to the underlying array
-- `len` - length of the slice - number of elements in the slice
-- `cap` - capacity of the slice - length of the underlying array, which is also the maximum length the slice can take (until it grows)
+```go
+// mySlice[0] = 1
+```
+
+Because the slice has **no allocated memory yet**.
+
+---
+
+## Slice internals
+
+A slice has **three properties**:
+
+* `ptr` – pointer to the underlying array
+* `len` – number of elements
+* `cap` – capacity of the underlying array
 
 ![image](https://user-images.githubusercontent.com/11992095/202870508-0739d792-8747-4e20-8cd2-0ffa888d5c08.png)
 
-source: https://gosamples.dev/capacity-and-length/
+---
 
-When we copy a slice it creates a new memeory location where it holds the same memory address of the underlying array, length & capacity. That's why, when modify the new copy of the slice, it also modify the old slice.
+### Slice assignment copies metadata, not data
 
 ```go
 var s = []int{1, 2, 3}
@@ -2335,45 +2459,80 @@ var s2 = s
 
 s2[0] = 5
 
-fmt.Println(s, s2) // [5 2 3], [5 2 3]
+fmt.Println(s, s2) // [5 2 3] [5 2 3]
 ```
 
-**Make**: make function "Initializes and allocates space in memory for a `slice`, `map`, or `channel`."
+* Both slices point to the **same underlying array**
+* Modifying one affects the other
+
+---
+
+## make() with slices
+
+`make` initializes and allocates memory.
 
 ```go
 // make([]T, len, cap)
 s := make([]int, 0, 3)
-sliceWithMake[0] = 1
-fmt.Println(sliceWithMake)      // [1 0 0]
+```
 
+⚠️ Important correction
+This line is invalid:
+
+```go
+sliceWithMake[0] = 1
+```
+
+Because `len == 0`
+
+Correct usage:
+
+```go
+s = append(s, 1)
+```
+
+---
+
+### Capacity growth example
+
+```go
 for i := 0; i < 5; i++ {
-    s = append(s, i)
-    fmt.Printf("cap %v, len %v, %p\n", cap(s), len(s), s)
+	s = append(s, i)
+	fmt.Printf("cap %v, len %v, %p\n", cap(s), len(s), s)
 }
 ```
+
+Output:
 
 ```sh
 cap 3, len 1, 0xc0000b2000
 cap 3, len 2, 0xc0000b2000
 cap 3, len 3, 0xc0000b2000
-cap 6, len 4, 0xc0000b8000 # larger capacity and a new pointer address
+cap 6, len 4, 0xc0000b8000
 cap 6, len 5, 0xc0000b8000
 ```
 
-- unpack/spread a slice
+* Capacity grows
+* Underlying array changes when capacity exceeded
+
+---
+
+### Unpack / spread slice
 
 ```go
 var fruits = []string{"apple", "mango"}
 
-// variable argument/vardiac function
+// variable argument/variadic function
 func addFruits(fruitsToAdd ...string) []string {
- // unpack or spread
- updatedFruits := append(fruits, fruitsToAdd...)
- return updatedFruits
+	// unpack or spread
+	updatedFruits := append(fruits, fruitsToAdd...)
+	return updatedFruits
 }
 
-addFruits("banana", "pineapple") // [apple mango banana pineapple]
+addFruits("banana", "pineapple")
 ```
+
+---
 
 </details>
 
