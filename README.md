@@ -2,125 +2,368 @@
 
 **[Go Playground](https://play.golang.org/)**
 
-- Programming Language developed by Google in 2007
-- Open-sourced in 2009
+Go is a **compiled, statically typed programming language** designed at Google in **2007** and **open-sourced in 2009**.
 
-## Why Go
+Its main goals are:
 
-<details>
-<summary>View contents</summary>
+* Simplicity and readability
+* High performance
+* Built-in support for concurrency
+* Strong tooling and conventions
 
-1. Strongly type language (Variable type has to be known at compile time)
-2. Statically type language (The type of the variables cannot change at runtime)
-3. Nearly as fast as C and C++
-4. Readable as Python
-5. Fast execution
-6. Automatic garbage collection
-7. Run on multiple cores and builtin to support concurrency
+Go is often used for **backend services, cloud systems, distributed systems, CLIs, and DevOps tooling**.
 
-- **In Parallel:** Downloading, Uploading, Navigating at the same time
-- **Multi-Threading:** Do multiple things at once, e.g., Watching, commenting in Youtube
-- **Concurrency:** Dealing with lots of things at once but not necessarily run at the same time, e.g., Multiple users booking at the same time, Multiple users editing the same document
+---
 
-</details>
-
-## Go vs JS
+## Why Go?
 
 <details>
 <summary>View contents</summary>
 
-1. TYPING
+### 1. Strongly Typed
 
-- Go: Strongly typed (String, Float, Int, Byte, Struct...)
-- JS: Dynamically typed
+In Go, **every variable has a type**, and that type must be known at **compile time**.
 
-2. STRUCTURES
-
-- Go: Structs, Pointers, Methods, Interfaces
-- JS: ES6 classes
-
-3. ERROR HANDLING
-
-- Go: Explicit (sad path won't handle itself)
-- JS: Built-in
-
-4. MULTI-TASKING
-
-- Go: Multi-Threaded (Concurrency, Goroutines, Sync)
-- JS: Single-Threaded (Callbacks, async await, sagas, sadness)
-
-5. OPINIONATED-NESS
-
-- Go: Strong Opinions (Convention, built-in tooling and linters)
-- JS: Fluid Opinions (Subjective to the mood that day)
-
-</details>
-
-## Setup go
-
-<details>
-
-<summary>View contents</summary>
-
-1. Download go installer & install it. link: [go installer](https://go.dev/doc/install)
-2. Add environment variables into shell config
-
-Bash shell
-
-```bash
-# ~/.bash_profile
-
-# set the workspace path
-export GOPATH=$HOME/go-workspace # change your path correctly!
-
-# add the go bin path to be able to execute our programs
-export PATH=$PATH:$GOPATH/bin
+```go
+var age int = 25
+name := "Alice" // inferred as string
 ```
 
-Fish shell
+* You cannot accidentally mix incompatible types
+* Many bugs are caught **before the program runs**
+
+This leads to safer and more predictable code.
+
+---
+
+### 2. Statically Typed
+
+Once a variable has a type, **it cannot change** during runtime.
+
+```go
+var x int = 10
+x = "hello" // ❌ compile-time error
+```
+
+Benefits:
+
+* Better performance
+* Easier reasoning about code
+* Strong IDE support (autocompletion, refactoring)
+
+---
+
+### 3. High Performance (Near C / C++)
+
+Go is a **compiled language** that produces native machine code.
+
+* Much faster than interpreted languages
+* Slightly slower than C/C++ due to garbage collection
+* Excellent performance for servers and network applications
+
+---
+
+### 4. Simple and Readable (Python-like)
+
+Go intentionally avoids complex language features.
+
+* No inheritance
+* No operator overloading
+* Minimal keywords
+
+The result is:
+
+* Code that looks similar across projects
+* Easier onboarding for new developers
+* Less "clever" but more maintainable code
+
+---
+
+### 5. Fast Compilation & Execution
+
+Go is known for **very fast compile times**.
+
+* Designed for large codebases
+* Ideal for microservices
+* Quick feedback loop during development
+
+---
+
+### 6. Automatic Garbage Collection
+
+Go automatically manages memory:
+
+* Allocates memory when needed
+* Frees unused memory
+
+This reduces:
+
+* Memory leaks
+* Manual memory management bugs
+
+Unlike Java, Go’s garbage collector is designed to have **low latency**, making it suitable for high-performance systems.
+
+---
+
+### 7. Built-in Concurrency Support
+
+Concurrency is a **core feature** of Go, not an add-on.
+
+Key concepts:
+
+* **Goroutines**: Lightweight threads managed by Go
+* **Channels**: Safe communication between goroutines
+* **sync package**: Mutexes, WaitGroups, etc.
+
+```go
+go fetchData()
+go processData()
+```
+
+Go can efficiently run **thousands or millions of concurrent tasks**.
+
+---
+
+</details>
+
+## Parallelism vs Multithreading vs Concurrency
+
+<details>
+<summary>View contents</summary>
+
+### Parallelism
+
+Running multiple tasks **at the same time** on multiple CPU cores.
+
+Example:
+
+* Downloading
+* Uploading
+* Rendering
+
+All happening simultaneously.
+
+---
+
+### Multithreading
+
+Using multiple OS threads to do work concurrently.
+
+Example:
+
+* Watching a YouTube video
+* Commenting
+* Loading recommendations
+
+Go handles threads internally so developers don’t manage them directly.
+
+---
+
+### Concurrency (Go’s Core Strength)
+
+Concurrency means **handling many tasks at once**, but not necessarily executing them simultaneously.
+
+Example:
+
+* Multiple users booking tickets
+* Multiple users editing the same document
+
+Go excels at structuring concurrent programs safely and clearly.
+
+---
+
+</details>
+
+## Go vs Other Similar Languages
+
+<details>
+<summary>View contents</summary>
+
+### Go vs Java
+
+**Typing**
+
+* Go: Statically & strongly typed, simpler type system
+* Java: Statically typed, more verbose
+
+**Concurrency**
+
+* Go: Goroutines & channels (language-level support)
+* Java: Threads, Executors (heavier, more complex)
+
+**Verbosity**
+
+* Go: Minimal syntax
+* Java: Boilerplate-heavy
+
+---
+
+### Go vs Python
+
+**Performance**
+
+* Go: Compiled, very fast
+* Python: Interpreted, slower
+
+**Concurrency**
+
+* Go: True concurrency
+* Python: Limited by GIL (for CPython)
+
+**Use Case**
+
+* Go: High-performance services
+* Python: Scripting, data science, rapid prototyping
+
+---
+
+### Go vs Node.js (JavaScript)
+
+**Execution Model**
+
+* Go: Multi-threaded runtime
+* Node.js: Single-threaded event loop
+
+**Concurrency**
+
+* Go: Goroutines & channels
+* Node.js: async/await, callbacks, promises
+
+**Error Handling**
+
+* Go: Explicit error returns
+* Node.js: Exceptions, try/catch
+
+**Philosophy**
+
+* Go: Opinionated, consistent
+* Node.js: Flexible, ecosystem-driven
+
+---
+
+### Go vs Rust
+
+**Memory Management**
+
+* Go: Garbage collected
+* Rust: Ownership & borrowing (no GC)
+
+**Ease of Learning**
+
+* Go: Easier, simpler
+* Rust: Steep learning curve
+
+**Performance**
+
+* Both are extremely fast
+
+---
+
+</details>
+
+## Go Setup
+
+<details>
+<summary>View contents</summary>
+
+### 1. Install Go
+
+Download and install Go from the **official website**:
+
+👉 [https://go.dev/doc/install](https://go.dev/doc/install)
+
+Why this matters:
+
+* Installs the Go compiler (`go`)
+* Installs standard tools (`go build`, `go test`, `go fmt`, etc.)
+* Keeps your system aligned with official releases
+
+After installation, verify:
+
+```bash
+go version
+```
+
+---
+
+### 2. Environment Variables
+
+Go uses environment variables to locate:
+
+* Your workspace
+* Compiled binaries
+
+#### Bash Shell
+
+```bash
+# ~/.bash_profile or ~/.bashrc
+
+# Set the workspace path
+export GOPATH=$HOME/go-workspace # change this if needed
+
+# Add Go binaries to PATH
+export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
+```
+
+#### Fish Shell
 
 ```bash
 # ~/.config/fish/config.fish
 
-# set the workspace path
-set -x GOPATH $HOME/go-workspace # change your path correctly!
+# Set the workspace path
+set -x GOPATH $HOME/go-workspace # change this if needed
 
-# add the go bin path to be able to execute our programs
+# Add Go binaries to PATH
 set -x PATH $PATH /usr/local/go/bin $GOPATH/bin
 ```
 
-3. Create workspace
+Why this matters:
 
-```bash
-$ mkdir -p $GOPATH $GOPATH/src $GOPATH/pkg $GOPATH/bin
+* `$GOPATH/bin` allows running installed Go tools
+* `/usr/local/go/bin` allows running the Go compiler
 
-# $GOPATH/src : Where your Go projects / programs are located
-# $GOPATH/pkg : contains every package objects
-# $GOPATH/bin : The compiled binaries home
-```
+---
 
-4. Install godoc & run godoc
+### 3. Install & Run `godoc`
 
 ```bash
 $ go install golang.org/x/tools/cmd/godoc@latest
 
-# run godoc
+# Run documentation server
 $ godoc -http :8000
-
-# go to: localhost:8000/pkg
-# go to personal project: localhost:8000/pkg/project-name
 ```
 
-5. Update the Go version
+Visit:
 
-```sh
-# Uninstall the exisiting version
+* `http://localhost:8000/pkg` → Standard library docs
+* `http://localhost:8000/pkg/your-module` → Your project docs
+
+Why this matters:
+
+* Offline documentation
+* Learn Go idiomatically
+
+---
+
+### 4. Update Go Version
+
+Remove old version:
+
+```bash
 $ sudo rm -rf /usr/local/go
 ```
 
-Download the latest go installer & install it. Link: <https://go.dev/doc/install>
+Then install the latest version from:
+👉 [https://go.dev/doc/install](https://go.dev/doc/install)
 
-7. VS Code Setup
+---
+
+### 5. VS Code Setup
+
+Install extensions:
+
+* **Go** (official): [https://marketplace.visualstudio.com/items?itemName=golang.go](https://marketplace.visualstudio.com/items?itemName=golang.go)
+* **Proto3** (for gRPC): [https://marketplace.visualstudio.com/items?itemName=zxh404.vscode-proto3](https://marketplace.visualstudio.com/items?itemName=zxh404.vscode-proto3)
 
 `settings.json`
 
@@ -141,65 +384,43 @@ Download the latest go installer & install it. Link: <https://go.dev/doc/install
 }
 ```
 
-- Install `[Go](https://marketplace.visualstudio.com/items?itemName=golang.go)` extension
-- Install `[vscode-proto3](https://marketplace.visualstudio.com/items?itemName=zxh404.vscode-proto3)` extension for **gRPC**
+---
 
 </details>
 
-## Go Directory Structure
-
-<details>
-<summary>View contents</summary>
-
-```txt
-$GOPATH
-│
-└───bin
-│
-└───pkg
-│
-└───src
-    │
-    │
-    └───github.com
-        │
-        └───github_username
-            │
-            └───repo_name
-```
-
-</details>
-
-## Create a go project
+## Create a Go Project
 
 <details>
 <summary>View contents</summary>
 
 ```bash
-# created a directory called "hello"
+# Create project directory
 $ mkdir hello
-
-# change directory to "hello
 $ cd hello
 
-# create "main.go" file
-$ touch main.go
-
-# generate "go.mod" file
-$ go mod init github.com/foyez/hello # module path can be repository you want to publish
+# Initialize module
+$ go mod init github.com/foyez/hello
 ```
+
+Why Go Modules:
+
+* Dependency versioning
+* No GOPATH dependency
+* Reproducible builds
 
 `go.mod`
 
 ```go
-module github.com/foyez/hello // name or module path
+module github.com/foyez/hello // module path
 
-go 1.18 // go version
+go 1.18 // minimum Go version
 ```
+
+---
 
 </details>
 
-## Anatomy of a go file
+## Anatomy of a Go File
 
 <details>
 <summary>View contents</summary>
@@ -246,92 +467,93 @@ func Add(a int64, b int64) int64 {
 }
 ```
 
-- compiles and runs the code: `go run <file_name>`
-- build the code: `go build main.go`
+Why capitalization matters:
+
+* Uppercase → exported (public)
+* Lowercase → unexported (private)
+
+---
 
 </details>
 
-## Go Commands
+## Common Go Commands
 
 <details>
 <summary>View contents</summary>
 
-```sh
-# run a go program
-$ go run main.go # go run <file_name>
+```bash
+# Run program
+go run main.go
 
-# install go packages
-$ go install
+# Build binary
+go build
 
-# create a binary file from go codes
-$ go build
+# Format code
+go fmt main.go
 
-# format unindent go code
-$ go fmt main.go
+# List packages
+go list
 
-# shows go package directory tree
-$ go list
+# Static analysis
+go vet
 
-# identify unused variables & errors
-$ go vet
-
-# show go documentation
+# View documentation
 go doc fmt.Println
 
-# install third party library
-$ go get golang.org/x/lint/golint
+# Install dependency or tool
+go install golang.org/x/lint/golint@latest
 
-# linting go code
+# Run linter
 golint
 ```
 
+---
+
 </details>
 
-## List of keywords
+## Go Keywords (All 25)
 
 <details>
 <summary>View contents</summary>
 
-The list of all **25** keywords of Go language:
+```txt
+break        case        chan        const       continue
 
-1. `break`
-2. `case`
-3. `chan`
-4. `const`
-5. `continue`
-6. `default`
-7. `defer`
-8. `else`
-9. `fallthrough`
-10. `for`
-11. `func`
-12. `go`
-13. `goto`
-14. `if`
-15. `import`
-16. `interface`
-17. `map`
-18. `package`
-19. `range`
-20. `return`
-21. `select`
-22. `struct`
-23. `switch`
-24. `type`
-25. `var`
+default     defer       else        fallthrough for
+
+func         go          goto        if          import
+
+interface    map         package     range       return
+
+select       struct      switch      type        var
+```
+
+Why this matters:
+
+* Go intentionally has a **small keyword set**
+* Easier to learn
+* Easier to read
+* Less hidden behavior
+
+---
 
 </details>
 
-## TDD with Go
+## TDD with Go (Test-Driven Development)
+
+Test-Driven Development (TDD) is a development approach where you **write tests before writing production code**.
+The goal is to let tests **drive the design and behavior** of your code.
 
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/tddWithGo)**
 
-1 **Write the test first**
+### 1. Write the test first
 
-`hello_test.go`
+We start by writing a test for functionality that **does not exist yet**.
+
+#### `hello_test.go`
 
 ```go
 package hello
@@ -340,63 +562,137 @@ import "testing"
 
 // exported if it begins with a capital letter
 func TestHello(t *testing.T) {
- t.Run("saying hello to people", func(t *testing.T) {
-  got := Hello("Foyez")
-  want := "Hello, Foyez"
+	t.Run("saying hello to people", func(t *testing.T) {
+		got := Hello("Foyez")
+		want := "Hello, Foyez"
 
-  if got != want {
-   t.Errorf("got %q want %q", got, want)
-  }
- })
+		if got != want {
+			t.Errorf("got %q want %q", got, want)
+		}
+	})
 }
 ```
 
-run `go test`
+#### Key concepts
+
+* Test files **must end with** `_test.go`
+* Tests live in the **same package** as the code (`package hello`)
+* `TestHello`:
+
+  * Must start with `Test`
+  * Takes `*testing.T`
+* `t.Run`:
+
+  * Creates a **subtest**
+  * Makes tests easier to read and extend later
+
+#### Run the test
+
+```sh
+go test
+```
+
+#### Output
 
 ```sh
 ./hello_test.go:7:10: undefined: Hello
 ```
 
-2. **Write the minimal amount of code for the test to run and check the failing test output**
+This is **expected**.
+The test fails because `Hello` does not exist yet.
+
+This is the **first success in TDD**:
+
+> The test correctly tells us what is missing.
+
+---
+
+### 2. Write the minimal code to make the test compile
+
+Now we write the **smallest possible code** to satisfy the compiler.
+
+#### `hello.go`
 
 ```go
 package hello
 
 func Hello(name string) string {
- return ""
+	return ""
 }
 ```
 
-run `go test`
+#### Run the test again
+
+```sh
+go test
+```
+
+#### Output
 
 ```sh
 hello_test.go:11: got "" want "Hello, Foyez"
 ```
 
-3. **Write enough code to make it pass**
+The test **runs and fails**, which is exactly what we want.
+
+At this stage:
+
+* Compiler errors are gone
+* Logic is still incorrect
+
+---
+
+### 3. Write enough code to make the test pass
+
+Now we implement just enough logic to satisfy the test.
 
 ```go
 func Hello(name string) string {
-  return "Hello, " + name
+	return "Hello, " + name
 }
 ```
 
-run `go test`
+#### Run the test
 
+```sh
+go test
 ```
+
+#### Output
+
+```sh
 PASS
 ok      hello   0.004s
 ```
 
-4. **Commit the code**
+🎉 The test passes.
 
-```git
-git commit "add Hello() - greeting to people"
+---
+
+### 4. Commit the code
+
+Once tests are passing, **commit the working state**.
+
+```sh
+git commit -m "add Hello() - greeting to people"
 ```
 
-5. **Refactor**
+Why commit now?
 
-`hello.go`
+* You have a **green (passing) test**
+* This is a stable checkpoint
+
+---
+
+### 5. Refactor (without changing behavior)
+
+Refactoring means:
+
+> Improve code structure **without changing behavior**
+
+Since we already have tests, refactoring is **safe**.
+
+#### `hello.go`
 
 ```go
 package hello
@@ -404,11 +700,13 @@ package hello
 const englishHelloPrefix = "Hello, "
 
 func Hello(name string) string {
- return englishHelloPrefix + name
+	return englishHelloPrefix + name
 }
 ```
 
-`hello_test.go`
+#### Improve the test for readability and reuse
+
+#### `hello_test.go`
 
 ```go
 package hello
@@ -416,81 +714,136 @@ package hello
 import "testing"
 
 func TestHello(t *testing.T) {
- assertErrorMessage := func(t testing.TB, got, want string) {
-  t.Helper()
+	assertErrorMessage := func(t testing.TB, got, want string) {
+		t.Helper()
 
-  if got != want {
-   t.Errorf("got %q want %q", got, want)
-  }
- }
+		if got != want {
+			t.Errorf("got %q want %q", got, want)
+		}
+	}
 
- t.Run("saying hello to people", func(t *testing.T) {
-  got := Hello("Foyez")
-  want := "Hello, Foyez"
-  assertErrorMessage(t, got, want)
- })
+	t.Run("saying hello to people", func(t *testing.T) {
+		got := Hello("Foyez")
+		want := "Hello, Foyez"
+		assertErrorMessage(t, got, want)
+	})
 }
 ```
 
-run `go test`
+#### Important details
+
+* `testing.TB`:
+
+  * Interface implemented by both `*testing.T` and `*testing.B`
+* `t.Helper()`:
+
+  * Marks this function as a helper
+  * Error line numbers point to the **test**, not the helper
+
+#### Run tests again
+
+```sh
+go test
+```
 
 ```sh
 PASS
 ok      hello   0.004s
 ```
 
-6. **Amend git commit**
+---
 
-```git
+### 6. Amend the git commit
+
+Since refactoring didn’t change behavior, we **amend the previous commit**.
+
+```sh
 git commit --amend
 ```
 
-#### TDD workflow
+This keeps git history clean.
 
-- Write a test
-- Make the compiler pass
-- Run the test, see that it fails and check the error message is meaningful
-- Write enough code to make the test pass
-- Refactor
+---
 
-7. **Add Benchmark test**
+### TDD Workflow Summary
+
+1. Write a test
+2. Make the compiler pass
+3. Run the test and see it fail
+4. Write enough code to make it pass
+5. Refactor
+6. Repeat
+
+---
+
+### 7. Add a Benchmark test
+
+Benchmarks measure **performance**, not correctness.
 
 ```go
 func BenchmarkHello(b *testing.B) {
- if testing.Short() {
-  b.Skip("skipping benchmark in short mode.")
- }
- for i := 0; i < b.N; i++ {
-  Hello("Zayan")
- }
+	if testing.Short() {
+		b.Skip("skipping benchmark in short mode.")
+	}
+
+	for i := 0; i < b.N; i++ {
+		Hello("Zayan")
+	}
 }
 ```
 
-run `go test -v --bench . --benchmem`
+#### Notes
+
+* `b.N` is automatically adjusted by Go
+* `testing.Short()` allows skipping benchmarks in quick test runs
+
+#### Run benchmark
+
+```sh
+go test -v --bench . --benchmem
+```
+
+#### Output
 
 ```sh
 BenchmarkHello    2000000000          0.46 ns/op
-
-// This means that the loop ran 2000000000 times at a speed of 0.46 ns per loop.
 ```
 
-8. **Add example tests**
+This means:
+
+* The function ran **2,000,000,000 times**
+* Each call took **~0.46 nanoseconds**
+* Extremely fast, as expected
+
+---
+
+### 8. Add Example tests (documentation + tests)
+
+Example tests:
+
+* Act as **tests**
+* Appear in **Go documentation**
+* Must match output exactly
 
 ```go
 func ExampleHello() {
- greeting := Hello("Zayan")
- fmt.Println(greeting)
- // Output: Hello, Zayan
+	greeting := Hello("Zayan")
+	fmt.Println(greeting)
+	// Output: Hello, Zayan
 }
 
-func ExampleHello() {
- greeting := Hello("Farah")
- fmt.Println(greeting)
- // Output: Hello, Farah
+func ExampleHello_second() {
+	greeting := Hello("Farah")
+	fmt.Println(greeting)
+	// Output: Hello, Farah
 }
 ```
 
-run `go test -v`
+#### Run examples
+
+```sh
+go test -v
+```
 
 ```sh
 === RUN   TestHello
@@ -503,16 +856,269 @@ run `go test -v`
 --- PASS: ExampleHello_second (0.00s)
 ```
 
+---
+
+Below is an **extended section added to your notes**, introducing **`github.com/stretchr/testify`** for writing **cleaner, more expressive unit tests** in Go.
+I’ve kept the same learning style, avoided ambiguity, and explained *why* and *when* to use it.
+
+---
+
+### Using `testify` for Cleaner Unit Tests in Go
+
+Go’s standard `testing` package is powerful and minimal, but as tests grow, you often repeat:
+
+* Equality checks
+* Error handling
+* Failure messages
+
+[`testify`](https://github.com/stretchr/testify) solves this by providing:
+
+* Better assertions
+* Cleaner syntax
+* More readable test failures
+
+---
+
+#### 1. Install Testify
+
+Add `testify` to your project using Go modules:
+
+```sh
+go get github.com/stretchr/testify
+```
+
+This adds it to `go.mod` automatically.
+
+---
+
+#### 2. Why use `testify/assert`?
+
+Compare this:
+
+##### Standard library
+
+```go
+if got != want {
+	t.Errorf("got %q want %q", got, want)
+}
+```
+
+##### With `testify`
+
+```go
+assert.Equal(t, want, got)
+```
+
+Benefits:
+
+* Less boilerplate
+* Better failure output
+* Easier to read and maintain
+
+---
+
+#### 3. Rewrite existing test using `testify/assert`
+
+##### `hello_test.go`
+
+```go
+package hello
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestHello(t *testing.T) {
+	t.Run("saying hello to people", func(t *testing.T) {
+		got := Hello("Foyez")
+		want := "Hello, Foyez"
+
+		assert.Equal(t, want, got)
+	})
+}
+```
+
+##### What `assert.Equal` does
+
+* Compares expected (`want`) and actual (`got`)
+* Automatically fails the test if they differ
+* Prints a **clear diff-style error message**
+
+---
+
+#### 4. `assert` vs `require`
+
+Testify provides two main assertion packages:
+
+| Package   | Behavior                               |
+| --------- | -------------------------------------- |
+| `assert`  | Fails the test but continues execution |
+| `require` | Fails the test and stops immediately   |
+
+##### Example difference
+
+```go
+assert.Equal(t, want, got)
+```
+
+* Test continues even if this fails
+
+```go
+require.Equal(t, want, got)
+```
+
+* Test stops immediately if this fails
+
+##### Use cases
+
+* Use `assert` when multiple checks are independent
+* Use `require` when later checks depend on earlier ones
+
+---
+
+#### 5. Using `require` in tests
+
+```go
+package hello
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestHello(t *testing.T) {
+	t.Run("saying hello to people", func(t *testing.T) {
+		got := Hello("Foyez")
+		want := "Hello, Foyez"
+
+		require.Equal(t, want, got)
+	})
+}
+```
+
+---
+
+#### 6. Table-driven tests with Testify (recommended)
+
+Table-driven tests are the **idiomatic Go way** to test multiple cases.
+
+```go
+func TestHello_TableDriven(t *testing.T) {
+	tests := []struct {
+		name string
+		input string
+		want  string
+	}{
+		{
+			name:  "normal name",
+			input: "Foyez",
+			want:  "Hello, Foyez",
+		},
+		{
+			name:  "another name",
+			input: "Zayan",
+			want:  "Hello, Zayan",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Hello(tt.input)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+```
+
+##### Why this is powerful
+
+* Easy to add new test cases
+* No duplicated test logic
+* Clear test intent
+
+---
+
+#### 7. Assertions commonly used in real projects
+
+```go
+assert.Equal(t, expected, actual)
+assert.NotEqual(t, a, b)
+
+assert.Nil(t, err)
+assert.NotNil(t, value)
+
+assert.True(t, condition)
+assert.False(t, condition)
+
+assert.Len(t, collection, 3)
+assert.Contains(t, "hello world", "world")
+```
+
+These replace many `if` statements and manual error messages.
+
+---
+
+#### 8. Using Testify with Benchmarks (important note)
+
+⚠️ **Do not use assertions inside benchmarks**
+
+Benchmarks should measure **performance only**.
+
+Correct benchmark (unchanged):
+
+```go
+func BenchmarkHello(b *testing.B) {
+	if testing.Short() {
+		b.Skip("skipping benchmark in short mode.")
+	}
+
+	for i := 0; i < b.N; i++ {
+		Hello("Zayan")
+	}
+}
+```
+
+---
+
+#### 9. Should you always use Testify?
+
+##### Pros
+
+* Cleaner and more expressive tests
+* Better error messages
+* Faster test writing
+
+##### Cons
+
+* External dependency
+* Slightly less “pure stdlib”
+
+##### Recommendation
+
+* ✅ Use `testify` in **application code**
+* ⚠️ Stdlib is fine for **very small libraries**
+
+Most production Go teams use `testify`.
+
+---
+
 </details>
 
-## Printing and Getting user input
+## Printing and Getting User Input
+
+This section explains how Go handles **output (printing)** and **input (reading data)** using the `fmt` and `os` packages.
 
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/printing)**
 
-### **Print**
+### Print
+
+Go provides three main print functions for writing output to the **standard output (stdout)**, usually the terminal.
 
 ```go
 fmt.Print()
@@ -520,9 +1126,18 @@ fmt.Println()
 fmt.Printf()
 ```
 
-- Prints output to the stdout console
-- Returns number of bytes and an error
-- (The error is generally not worried about)
+#### Key points
+
+* Print output to the **stdout console**
+* Return:
+
+  * Number of bytes written
+  * An error (`error`)
+* The returned error is usually ignored in beginner-level code
+
+---
+
+#### Examples
 
 ```go
 name := "Zohan"
@@ -532,20 +1147,47 @@ fmt.Println("Hello,", name)
 fmt.Printf("Hello, %s\n", name)
 ```
 
+#### Difference between Print, Println, and Printf
+
+| Function | Newline | Formatting |
+| -------- | ------- | ---------- |
+| Print    | ❌ No    | ❌ No       |
+| Println  | ✅ Yes   | ❌ No       |
+| Printf   | ❌ No    | ✅ Yes      |
+
+---
+
+#### Format specifiers with `Printf`
+
 ```go
- s := Student{
-  ID:   1,
-  Name: "John Doe",
- }
- fmt.Printf("%s\n", "Hello")              // string
- fmt.Printf("%d\n", -34)                  // decimal
- fmt.Printf("%+d\n", 4)                   // positive decimal
- fmt.Printf("%t\n", false)                // boolean
- fmt.Printf("%f, %.2f\n", 3.1416, 3.1416) // float
- fmt.Printf("%v\n", s)
- fmt.Printf("%+v\n", s)
- fmt.Printf("%T\n", s)
+s := Student{
+	ID:   1,
+	Name: "John Doe",
+}
+
+fmt.Printf("%s\n", "Hello")              // string
+fmt.Printf("%d\n", -34)                  // decimal integer
+fmt.Printf("%+d\n", 4)                   // always show sign
+fmt.Printf("%t\n", false)                // boolean
+fmt.Printf("%f, %.2f\n", 3.1416, 3.1416) // float (default & precision)
+fmt.Printf("%v\n", s)                    // value
+fmt.Printf("%+v\n", s)                   // value with field names
+fmt.Printf("%T\n", s)                    // type
 ```
+
+#### Common format verbs
+
+| Verb  | Meaning            |
+| ----- | ------------------ |
+| `%s`  | string             |
+| `%d`  | integer            |
+| `%f`  | float              |
+| `%t`  | boolean            |
+| `%v`  | value              |
+| `%+v` | struct with fields |
+| `%T`  | type               |
+
+---
 
 ### Fprint
 
@@ -555,8 +1197,26 @@ fmt.Fprintln()
 fmt.Fprintf()
 ```
 
-- Prints the output to an external source (not in stdout console) (file, browser)
-- Returns number of bytes, and any write error
+#### What they do
+
+* Print output to an **external writer**, not stdout
+* Commonly used with:
+
+  * Files
+  * Network connections
+  * HTTP responses
+
+```go
+fmt.Fprintln(file, "Hello file")
+```
+
+#### Key points
+
+* Require an `io.Writer`
+* Return number of bytes written and an error
+* Useful in real-world applications (files, logs, servers)
+
+---
 
 ### Sprint
 
@@ -566,11 +1226,205 @@ fmt.Sprintln()
 fmt.Sprintf()
 ```
 
-- Stores output on a character buffer
-- Doesn't print to stdout console
-- Returns the string
+#### What they do
 
-### Scan
+* **Do NOT print anything**
+* Return formatted output as a **string**
+* Useful when you need formatted data stored in a variable
+
+```go
+msg := fmt.Sprintf("Hello, %s", name)
+```
+
+#### Use cases
+
+* Logging
+* Building strings
+* Returning formatted messages from functions
+
+---
+
+### Log Printing (`log` package)
+
+Go provides the built-in `log` package for **structured, timestamped output**, mainly used for:
+
+* Debugging
+* Errors and warnings
+* Application logs (servers, CLIs, services)
+
+Unlike `fmt`, `log` is **opinionated** and designed for **production usage**.
+
+---
+
+### Basic Log Functions
+
+```go
+log.Print()
+log.Println()
+log.Printf()
+```
+
+#### Key points
+
+* Print to **stderr** by default (not stdout)
+* Automatically include:
+
+  * Date
+  * Time
+* Return no values
+* Safe for concurrent use
+
+---
+
+#### Examples
+
+```go
+import "log"
+
+log.Print("application started")
+log.Println("user logged in")
+log.Printf("user %s logged in", "Foyez")
+```
+
+#### Example output
+
+```sh
+2025/01/01 10:15:30 application started
+2025/01/01 10:15:30 user logged in
+2025/01/01 10:15:30 user Foyez logged in
+```
+
+---
+
+### Log vs fmt (When to use which?)
+
+| Feature            | fmt    | log    |
+| ------------------ | ------ | ------ |
+| Timestamp          | ❌ No   | ✅ Yes  |
+| Output stream      | stdout | stderr |
+| Production logging | ❌      | ✅      |
+| Formatting         | ✅      | ✅      |
+
+**Rule of thumb**
+
+* Use `fmt` → user-facing output
+* Use `log` → developer/system messages
+
+---
+
+### Fatal and Panic Logging
+
+The `log` package provides helpers that **terminate the program**.
+
+#### `log.Fatal`
+
+```go
+log.Fatal("failed to connect to database")
+```
+
+* Prints the log message
+* Calls `os.Exit(1)`
+* Deferred functions are **NOT executed**
+
+---
+
+#### `log.Panic`
+
+```go
+log.Panic("unexpected state")
+```
+
+* Prints the log message
+* Calls `panic()`
+* Deferred functions **ARE executed**
+
+---
+
+#### Comparison
+
+| Function  | Program stops | Deferred calls |
+| --------- | ------------- | -------------- |
+| log.Fatal | ✅ Yes         | ❌ No           |
+| log.Panic | ✅ Yes         | ✅ Yes          |
+
+---
+
+### Customizing Log Output
+
+#### Change log prefix
+
+```go
+log.SetPrefix("INFO: ")
+log.Println("server started")
+```
+
+```sh
+INFO: 2025/01/01 10:20:00 server started
+```
+
+---
+
+#### Change log flags
+
+```go
+log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+```
+
+#### Common flags
+
+| Flag                | Description           |
+| ------------------- | --------------------- |
+| `log.Ldate`         | Date                  |
+| `log.Ltime`         | Time                  |
+| `log.Lmicroseconds` | Microsecond precision |
+| `log.Lshortfile`    | File name and line    |
+| `log.Llongfile`     | Full file path        |
+
+---
+
+### Logging to a File
+
+```go
+file, err := os.OpenFile(
+	"app.log",
+	os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+	0644,
+)
+if err != nil {
+	log.Fatal(err)
+}
+
+log.SetOutput(file)
+log.Println("logging to file")
+```
+
+#### Important notes
+
+* Logs are written to `app.log`
+* Common in production systems
+* `io.Writer` based (same as `fmt.Fprint`)
+
+---
+
+### log vs fmt vs println
+
+| Use case        | Recommended |
+| --------------- | ----------- |
+| CLI output      | fmt         |
+| Debug info      | log         |
+| Errors          | log         |
+| Learning/demo   | fmt         |
+| Production apps | log         |
+
+---
+
+### Scan (Getting User Input)
+
+Go reads user input from **standard input (`stdin`)** using functions from the `fmt` package and utilities from `bufio`.
+
+---
+
+### fmt.Scan Family
 
 ```go
 fmt.Scan()
@@ -578,41 +1432,235 @@ fmt.Scanln()
 fmt.Scanf()
 ```
 
-- Read input from the stdout console
-- Returns number of bytes and an error
-- (The error is generally not worried about)
+#### Common characteristics
+
+* Read input from **stdin**
+* Store values using **pointers**
+* Return:
+
+  * Number of items successfully scanned
+  * An error (`error`)
+* Input is **space-separated** by default
+
+---
+
+### fmt.Scan
 
 ```go
 var name string
-
-fmt.Scan("Hello, ", &name)
-fmt.Println("Hello,", name)
-
-fmt.Scanf("Hello, %s", &name)
-fmt.Println("Hello,", name)
-
-fmt.Scanln("Hello, ", &name)
+fmt.Scan(&name)
 fmt.Println("Hello,", name)
 ```
 
-### `os.Args`
+#### Behavior
 
-- Read input from command-line
-- User input starts from 1st index
+* Reads input until **space or newline**
+* Best for simple, single-value input
+
+Example input:
+
+```sh
+Zayan
+```
+
+---
+
+### fmt.Scanln
 
 ```go
-import (
- os
-)
+var name string
+fmt.Scanln(&name)
+fmt.Println("Hello,", name)
+```
+
+#### Behavior
+
+* Reads input until **newline**
+* Fails if extra input remains on the same line
+* Useful when you expect exactly one line of input
+
+---
+
+### fmt.Scanf
+
+```go
+var name string
+fmt.Scanf("%s", &name)
+fmt.Println("Hello,", name)
+```
+
+#### Behavior
+
+* Reads input based on a **format string**
+* Similar to `fmt.Printf`, but for input
+
+Example:
+
+```go
+var age int
+fmt.Scanf("%d", &age)
+```
+
+---
+
+### Important Rule ⚠️
+
+❌ `Scan`, `Scanln`, and `Scanf` **do NOT print prompts**
+
+You must print prompts explicitly:
+
+```go
+fmt.Print("Enter your name: ")
+fmt.Scan(&name)
+```
+
+---
+
+### Common Input Pitfalls
+
+* Forgetting `&` (pointer)
+* Mixing `Scan` and `Scanln`
+* Leaving unread newline characters
+* Using `Scan` for multi-word input
+
+---
+
+### Reading Multi-word Input (bufio.Reader)
+
+`fmt.Scan` **cannot read spaces inside strings**.
+
+For full-line input, use `bufio.Reader`.
+
+```go
+in := bufio.NewReader(os.Stdin)
+
+line, err := in.ReadString('\n')
+if err != nil {
+	log.Fatal(err)
+}
+
+fmt.Println("You entered:", line)
+```
+
+---
+
+### fmt.Fscan (Recommended for Competitive Programming & CLIs)
+
+`fmt.Fscan` reads input from any **`io.Reader`**, not just stdin.
+
+```go
+fmt.Fscan()
+fmt.Fscanln()
+fmt.Fscanf()
+```
+
+---
+
+### Using fmt.Fscan with bufio.Reader
+
+This is the **most flexible and performant approach**.
+
+```go
+in := bufio.NewReader(os.Stdin)
+
+var n int
+fmt.Fscan(in, &n)
+
+fmt.Println("Number:", n)
+```
+
+#### Why this is preferred
+
+* Faster than `fmt.Scan`
+* Works well with large inputs
+* Avoids common newline issues
+* Standard pattern in real-world Go code
+
+---
+
+### Reading Multiple Values
+
+```go
+in := bufio.NewReader(os.Stdin)
+
+var a, b int
+fmt.Fscan(in, &a, &b)
+
+fmt.Println(a + b)
+```
+
+Input:
+
+```sh
+10 20
+```
+
+---
+
+### fmt.Fscan vs fmt.Scan
+
+| Feature          | Scan       | Fscan           |
+| ---------------- | ---------- | --------------- |
+| Input source     | stdin only | any `io.Reader` |
+| Performance      | slower     | faster          |
+| Flexibility      | limited    | high            |
+| Real-world usage | learning   | production      |
+
+---
+
+### When to Use What
+
+| Scenario                 | Recommended    |
+| ------------------------ | -------------- |
+| Simple learning examples | `fmt.Scan`     |
+| Multi-word input         | `bufio.Reader` |
+| Large / repeated input   | `fmt.Fscan`    |
+| Files / network input    | `fmt.Fscan`    |
+
+---
+
+### os.Args (Command-line Arguments)
+
+#### What is `os.Args`?
+
+* Reads arguments passed from the command line
+* Returns a slice of strings (`[]string`)
+* Indexing starts at **0**
+
+```go
+import "os"
 
 arguments := os.Args
 ```
 
+#### Important details
+
+| Index        | Value                |
+| ------------ | -------------------- |
+| `os.Args[0]` | Program name         |
+| `os.Args[1]` | First user argument  |
+| `os.Args[2]` | Second user argument |
+
+---
+
+#### Example
+
 ```sh
 go run main.go 10 20
-# argouments[1] -> 10
-# argouments[2] -> 20
 ```
+
+```go
+// os.Args[1] -> "10"
+// os.Args[2] -> "20"
+```
+
+⚠️ Values are **strings**, conversion is required:
+
+```go
+num, _ := strconv.Atoi(os.Args[1])
+```
+
+---
 
 </details>
 
