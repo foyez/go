@@ -4464,20 +4464,428 @@ func Max_float64(a, b float64) float64 {
 
 ## Concurrency
 
+**Concurrency** means **dealing with multiple tasks at the same time**.
+
+> Important distinction:
+>
+> * **Concurrency**: Structuring a program to handle many things at once
+> * **Parallelism**: Actually running things at the same time on multiple CPU cores
+
+A concurrent program **may or may not** run in parallel.
+
+Go makes concurrency **easy to write and easy to reason about**.
+
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/concurrency)**
 
+### Why Concurrency Matters
+
+Most real-world programs are naturally concurrent:
+
+* Web servers handling many users
+* APIs calling multiple services
+* Background jobs + user requests
+* Reading files while processing data
+* Waiting on network responses
+
+Without concurrency:
+
+* Programs block unnecessarily
+* CPU time is wasted
+* Code becomes complex and fragile
+
+---
+
+### Key Concepts
+
+#### 1 Process
+
+* A **process** is an independent program in execution.
+* It has its own memory, variables, and resources.
+* Example: When you open a browser or run `go run main.go`, each runs as a separate process.
+* Processes do **not share memory** by default. Communication between them requires mechanisms like IPC (Inter-Process Communication).
+
+#### 2 Thread
+
+* A **thread** is a smaller unit of execution within a process.
+* Threads in the same process **share memory**, which allows faster communication but requires careful synchronization to avoid conflicts.
+* Each process can have multiple threads. For example, a browser may use threads to render a page, handle network requests, and manage UI simultaneously.
+
+#### 3 Goroutine
+
+* A **goroutine** is Go’s lightweight abstraction over threads.
+* They are **cheaper** than threads in terms of memory and startup cost.
+* Created using the `go` keyword.
+* Goroutines are managed by the Go runtime scheduler, which multiplexes many goroutines over a small number of OS threads.
+* Unlike threads, you don’t manage goroutine lifecycle manually.
+
+#### 4 Parallelism vs Concurrency
+
+* **Concurrency**: Multiple tasks making progress at the same time (interleaved execution).
+
+  * Example: Handling multiple network requests on a single CPU using goroutines.
+* **Parallelism**: Multiple tasks running at the exact same time (requires multiple CPUs or cores).
+
+  * Example: Rendering multiple images simultaneously using multiple CPU cores.
+
+> Go supports both concurrency and parallelism via goroutines and GOMAXPROCS setting.
+
+#### 5 Multithreading
+
+* Traditional multithreading means creating multiple threads manually.
+* Go abstracts this complexity using goroutines and a **scheduler**, so you rarely manage threads directly.
+* OS threads are heavier than goroutines, so Go can run **thousands of goroutines** easily.
+
+---
+
 ### Goroutines
 
-- A **Goroutine** is a lightweight thread manged by the Go runtime
-- Implemented by adding the `go` keyword before executing a function
-- Tells go to spin up a new thread to do that thing
+A **goroutine** is a lightweight unit of execution managed by the Go runtime.
+
+#### Key Properties
+
+* Much lighter than OS threads
+* Created with the `go` keyword
+* Managed by Go, not the OS
+* Can scale to **thousands or millions**
+
+#### Example
 
 ```go
+func sayHello() {
+	fmt.Println("Hello")
+}
 
+func main() {
+	go sayHello()
+	fmt.Println("World")
+}
 ```
+
+Here:
+
+* `sayHello()` runs concurrently
+* `main()` continues immediately
+
+⚠️ The program may exit before the goroutine runs.
+
+---
+
+### The Synchronization Problem
+
+```go
+func main() {
+	go fmt.Println("Hello")
+}
+```
+
+Why this is broken:
+
+* `main()` exits immediately
+* Goroutine may never execute
+
+We need a way to **wait** for goroutines.
+
+---
+
+### WaitGroup (Synchronization)
+
+* Ensures the main function waits for all goroutines to finish.
+
+```go
+package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+func worker(id int, wg *sync.WaitGroup) {
+    defer wg.Done() // signals when goroutine is finished
+    fmt.Println("Worker", id, "starting")
+}
+
+func main() {
+    var wg sync.WaitGroup
+    for i := 1; i <= 3; i++ {
+        wg.Add(1)
+        go worker(i, &wg)
+    }
+
+    wg.Wait() // wait for all workers to finish
+}
+```
+
+#### How It Works
+
+* `Add(n)` → number of goroutines
+* `Done()` → signals completion
+* `Wait()` → blocks until all are done
+
+Use `WaitGroup` when:
+
+* You only need to wait
+* No data needs to be passed back
+
+---
+
+### Channels – Communication Between Goroutines
+
+* **Channels** are Go’s way of communicating safely between goroutines.
+* Think of a channel as a **pipe**: one goroutine sends data in, another receives it.
+
+> Go philosophy:
+>
+> **“Do not communicate by sharing memory; share memory by communicating.”**
+
+#### Create a Channel
+
+```go
+ch := make(chan string)
+```
+
+#### Send and Receive
+
+```go
+go func() {
+	ch <- "Hello"
+}()
+
+msg := <-ch
+fmt.Println(msg)
+```
+
+Key behavior:
+
+* Sending blocks until received
+* Receiving blocks until sent
+* Prevents data races
+
+#### Example
+
+```go
+package main
+
+import "fmt"
+
+func worker(ch chan string) {
+    ch <- "Work done!" // send message to channel
+}
+
+func main() {
+    messageChannel := make(chan string) // create channel
+
+    go worker(messageChannel) // start goroutine
+
+    msg := <-messageChannel // receive message from channel
+    fmt.Println(msg)
+}
+```
+
+**Key points:**
+
+* `chan string` is a channel that carries strings.
+* `<-` operator is used to send (`ch <- value`) or receive (`value := <-ch`).
+
+---
+
+### Buffered vs Unbuffered Channels
+
+#### Unbuffered Channel
+
+* Communication blocks until both sender and receiver are ready.
+
+```go
+ch := make(chan int) // unbuffered
+```
+
+* Sender waits for receiver
+* Strong synchronization
+
+#### Buffered Channel
+
+* Allows sending `n` values without waiting for receiver.
+
+```go
+ch := make(chan int, 2) // buffer of 2
+
+ch <- 1
+ch <- 2 // won't block because buffer is not full yet
+```
+
+* Holds up to 3 values
+* Sender blocks only when buffer is full
+* Useful for worker pools and queues
+
+---
+
+### Select Statement
+
+* `select` allows goroutines to wait on multiple channels simultaneously.
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+    ch1 := make(chan string)
+    ch2 := make(chan string)
+
+    go func() { ch1 <- "Message from ch1" }()
+    go func() { ch2 <- "Message from ch2" }()
+
+    select {
+    case msg1 := <-ch1:
+        fmt.Println(msg1)
+    case msg2 := <-ch2:
+        fmt.Println(msg2)
+    }
+}
+```
+
+**Explanation:**
+
+* Only one of the channels will proceed randomly if both are ready.
+* Useful for timeouts and handling multiple sources of data.
+
+Why `select` matters:
+
+* Handles multiple concurrent inputs
+* Avoids blocking
+* Core for advanced concurrency patterns
+
+---
+
+### Mutex – Safe Access to Shared Memory
+
+* Goroutines can share memory, but concurrent writes can cause **race conditions**.
+* **Mutex** locks resources to avoid conflicts.
+
+```go
+package main
+
+import (
+    "fmt"
+    "sync"
+)
+
+var counter = 0
+var mutex = &sync.Mutex{}
+
+func increment(wg *sync.WaitGroup) {
+    defer wg.Done()
+    mutex.Lock()   // acquire lock
+    counter++
+    mutex.Unlock() // release lock
+}
+
+func main() {
+    var wg sync.WaitGroup
+
+    for i := 0; i < 1000; i++ {
+        wg.Add(1)
+        go increment(&wg)
+    }
+
+    wg.Wait()
+    fmt.Println("Final Counter:", counter)
+}
+```
+
+#### Problems with Mutexes
+
+* Easy to forget `Unlock()`
+* Can cause deadlocks
+* Harder to reason about
+
+➡️ Prefer **channels** when possible.
+
+---
+
+### Data Races
+
+A **data race** occurs when:
+
+* Two goroutines access the same variable
+* At least one writes
+* No synchronization exists
+
+#### Detect Races
+
+```bash
+go test -race
+```
+
+Go’s race detector is one of the best in any language.
+
+---
+
+### Common Patterns in Go Concurrency
+
+1. **Worker Pool**
+
+   * Manage a pool of goroutines to process tasks.
+   * Fixed number of goroutines
+   * Jobs sent through a channel
+   * Results collected via another channel
+
+2. **Fan-Out / Fan-In**
+
+   * Multiple goroutines send data into a channel; main goroutine aggregates results.
+   * Fan-out: distribute work to many goroutines
+   * Fan-in: collect results into one channel
+
+3. **Pipeline**
+
+   * Data passes through multiple stages, each stage a goroutine.
+   * Each stage runs in its own goroutine
+   * Output of one stage feeds the next
+
+---
+
+### When to Use Concurrency
+
+Use concurrency when:
+
+* Tasks are independent
+* Program waits on I/O
+* Handling many users or requests
+
+Avoid concurrency when:
+
+* Code becomes harder to understand
+* Performance gain is minimal
+
+> **Concurrency is a tool, not a requirement.**
+
+---
+
+### Summary Table of Concepts
+
+| Concept        | Definition                       | Go Feature/Example          |
+| -------------- | -------------------------------- | --------------------------- |
+| Process        | Program in execution             | `go run main.go`            |
+| Thread         | Unit inside a process            | Managed by OS               |
+| Goroutine      | Lightweight thread               | `go f()`                    |
+| Concurrency    | Tasks making progress together   | Multiple goroutines         |
+| Parallelism    | Tasks running simultaneously     | Multiple CPU cores          |
+| Multithreading | Using multiple threads           | Managed automatically by Go |
+| Channel        | Communication between goroutines | `chan`                      |
+| Mutex          | Lock to protect shared memory    | `sync.Mutex`                |
+| WaitGroup      | Wait for multiple goroutines     | `sync.WaitGroup`            |
+
+---
+
+### Tips for Learning Go Concurrency
+
+1. Think in **goroutines and channels**, not threads.
+2. Avoid sharing memory when possible; prefer **channel communication**.
+3. Understand difference between **concurrency** and **parallelism**.
+4. Practice small programs: worker pools, pipelines, fan-in/fan-out.
+5. Always check for **race conditions** using `go run -race`.
 
 </details>
 
