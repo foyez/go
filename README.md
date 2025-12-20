@@ -2538,109 +2538,288 @@ addFruits("banana", "pineapple")
 
 ## Maps / Object / Dictionary
 
+In Go, a **map** is a built-in data type that stores **key–value pairs**.
+It is similar to:
+
+* Object (JavaScript)
+* Dictionary (Python)
+* HashMap (Java)
+
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/maps)**
 
-1. Map operations
+### Map Basics
 
-<details>
-<summary>View codes</summary>
+#### Declaring and creating a map
 
 ```go
 var results map[string]float64 = make(map[string]float64) // create empty map
+```
 
-fmt.Println(results["test]) // 0
+Key points:
 
+* `map[string]float64` → key type is `string`, value type is `float64`
+* `make` is required to allocate memory
+* A `nil` map cannot be written to
+
+---
+
+#### Reading from a map
+
+```go
+fmt.Println(results["test"]) // 0
+```
+
+Important:
+
+* If a key does **not exist**, Go returns the **zero value** of the value type
+* For `float64`, zero value is `0`
+
+---
+
+#### Writing to a map
+
+```go
 results["foyez"] = 3.4
 results["mithu"] = 3.5
 
 fmt.Println(results) // map[foyez:3.4 mithu:3.5]
+```
 
-// ***********************************************
+---
+
+### Map literal (initialize with values)
+
+```go
 userEmails := map[int]string{
- 1: "user1@email.com",
- 2: "user2@email.com",
+	1: "user1@email.com",
+	2: "user2@email.com",
 }
+```
 
+* Cleaner and more common
+* `make` is implicit
+
+---
+
+#### Updating values
+
+```go
 userEmails[1] = "user12@email.com"
+```
+
+* If key exists → value updated
+* If key does not exist → key created
+
+---
+
+### Checking if a key exists (`comma ok` idiom)
+
+```go
 emailOfSecondUser, ok := userEmails[2]
 emailOfFourthUser, ok2 := userEmails[4]
 
-fmt.Println(userEmails)             // map[1:user12@email.com 2:user2@email.com]
 fmt.Println(emailOfSecondUser, ok)  // user2@email.com true
-fmt.Println(emailOfFourthUser, ok2) // false
-
-if email, ok := userEmails[2]; ok {
- fmt.Printf("%s exists\n", email)
-} else {
- fmt.Printf("%s doesn't exists\n", email)
-}
-
-delete(userEmails, 1)
-fmt.Println(userEmails) // [2:user2@email.com]
+fmt.Println(emailOfFourthUser, ok2) // "" false
 ```
 
-</details>
+Key points:
 
-2. Iterating map
+* `ok == true` → key exists
+* `ok == false` → key does not exist
+* Returned value is **zero value** if key is missing
 
-<details>
-<summary>View codes</summary>
+---
+
+#### Idiomatic existence check
+
+```go
+if email, ok := userEmails[2]; ok {
+	fmt.Printf("%s exists\n", email)
+} else {
+	fmt.Println("email doesn't exist")
+}
+```
+
+---
+
+### Deleting from a map
+
+```go
+delete(userEmails, 1)
+fmt.Println(userEmails) // map[2:user2@email.com]
+```
+
+Notes:
+
+* Safe to delete a non-existing key
+* No error is thrown
+
+---
+
+### Important Map Characteristics
+
+* Map keys must be **comparable**
+
+  * Allowed: `int`, `string`, `bool`, structs (if fields are comparable)
+  * Not allowed: `slice`, `map`, `function`
+* Map iteration order is **random**
+* Maps are **reference types**
+
+  * Assigning a map copies the reference, not the data
+
+---
+
+### Iterating Over a Map
 
 ```go
 users := map[string]interface{}{
-  "name":     "zayan",
-  "age":      5,
-  "religion": "islam",
+	"name":     "zayan",
+	"age":      5,
+	"religion": "islam",
 }
 
 for key, val := range users {
-  fmt.Printf("%s -> %v\n", key, val) // name -> zayan, age -> 5, religion -> islam
+	fmt.Printf("%s -> %v\n", key, val)
 }
 ```
 
-</details>
+#### Notes
 
+* `interface{}` allows **mixed value types**
+* `%v` prints the value in default format
+* Order is **not guaranteed**
+
+---
+
+### When to Use `map[string]interface{}`
+
+✅ Useful for:
+
+* JSON-like data
+* Dynamic or unknown schemas
+
+⚠️ Avoid in:
+
+* Strongly typed business logic
+* Performance-critical code
+
+---
 
 </details>
 
 ## Strings
+
+In Go, strings are:
+
+* **Immutable**
+* **UTF-8 encoded**
+* Internally a **read-only byte slice**
 
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/strings)**
 
+### Common String Operations (`strings` package)
+
 ```go
 package main
 
 import (
- "fmt"
- s "strings"
+	"fmt"
+	s "strings"
 )
 
 var p = fmt.Println
 
 func main() {
- p(s.Contains("test", "es"))        // true
- p(s.Count("test", "t"))            // 2
- p(s.HasPrefix("test", "te"))       // true
- p(s.HasSuffix("test", "st"))       // true
- p(s.Index("test", "t"))            // 0
- p(s.LastIndex("test", "t"))        // 3
- p(s.Join([]string{"a", "b"}, "-")) // a-b
- p(s.Repeat("a", 5))                // aaaaa
- p(s.Replace("fooo", "o", "O", -1)) // fOOO
- p(s.Replace("fooo", "o", "O", 2))  // fOOo
- p(s.Split("a-b-c", "-"))           // [a b c]
- p(s.ToLower("TEST"))               // test
- p(s.ToUpper("test"))               // TEST
- p(len("hello"))                    // 5
- p("hello"[1])                      // 1
+	p(s.Contains("test", "es"))        // true
+	p(s.Count("test", "t"))            // 2
+	p(s.HasPrefix("test", "te"))       // true
+	p(s.HasSuffix("test", "st"))       // true
+	p(s.Index("test", "t"))            // 0
+	p(s.LastIndex("test", "t"))        // 3
+	p(s.Join([]string{"a", "b"}, "-")) // a-b
+	p(s.Repeat("a", 5))                // aaaaa
+	p(s.Replace("fooo", "o", "O", -1)) // fOOO
+	p(s.Replace("fooo", "o", "O", 2))  // fOOo
+	p(s.Split("a-b-c", "-"))           // [a b c]
+	p(s.ToLower("TEST"))               // test
+	p(s.ToUpper("test"))               // TEST
+	p(len("hello"))                    // 5
+	p("hello"[1])                      // 101 (byte value of 'e')
 }
 ```
+
+---
+
+### Important String Details ⚠️
+
+#### `len(string)` counts bytes, not characters
+
+```go
+len("hello") // 5
+len("ক")     // 3
+```
+
+Because:
+
+* Strings are UTF-8 encoded
+* Non-ASCII characters use multiple bytes
+
+---
+
+#### Indexing a string returns a byte
+
+```go
+p("hello"[1]) // 101
+```
+
+Explanation:
+
+* `'e'` → ASCII value `101`
+* Type is `byte`, not `string`
+
+To convert to character:
+
+```go
+p(string("hello"[1])) // e
+```
+
+---
+
+### Iterating Strings Safely (Unicode)
+
+```go
+for _, r := range "কুমিল্লা" {
+	fmt.Printf("%c\n", r)
+}
+```
+
+* `range` iterates over **runes**, not bytes
+* Correct way to handle Unicode
+
+---
+
+### String Immutability
+
+❌ This is invalid:
+
+```go
+s := "hello"
+s[0] = 'H' // compile-time error
+```
+
+✅ Correct approach:
+
+```go
+s = "Hello"
+```
+
+---
 
 </details>
 
