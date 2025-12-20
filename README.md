@@ -3869,42 +3869,295 @@ default:
 ```
 
 </details>
+
+
+## Go Type System & Relationships Diagram
+
+<details>
+<summary>View contents</summary>
+
+```
+              ┌────────────┐
+              │  Struct    │
+              │  (Data)    │
+              │ FirstName, │
+              │ LastName   │
+              │ etc.       │
+              └─────┬──────┘
+                    │
+         ┌──────────┴──────────┐
+         │                     │
+   Value Receiver          Pointer Receiver
+  (func (s Struct) M())   (func (s *Struct) M())
+         │                     │
+         │                     │
+         └──────────┬──────────┘
+                    │
+                Methods
+                    │
+         ┌──────────┴──────────┐
+         │                     │
+      Interface             Interface
+  (defines required     (can accept pointer
+     behavior)           receivers if needed)
+         │
+         ▼
+   Any type that implements the
+   interface methods
+         │
+         ▼
+     Interface Value
+     (holds concrete type + value/pointer)
+         │
+   ┌─────┴─────┐
+   │           │
+Type Assertion  Type Switch
+(variable.(T))  switch v := variable.(type) {}
+```
+
+---
+
+## Explanation of Each Part
+
+### 1️⃣ Structs
+
+* Hold **fields/data**
+* Can have **methods** (value or pointer receiver)
+* Example:
+
+```go
+type User struct {
+    FirstName string
+    LastName  string
+}
+```
+
+---
+
+### 2️⃣ Methods
+
+* Methods are **functions tied to a struct**
+* Can have **value receiver** `(u User)` or **pointer receiver** `(u *User)`
+* Pointer receiver needed if you want to **modify the struct**
+
+---
+
+### 3️⃣ Interfaces
+
+* Define **behavior only**
+* Any type that has required methods **automatically implements the interface**
+* Can accept **struct values or pointers**, depending on receiver type
+
+```go
+type Greeter interface {
+    Greet() string
+}
+```
+
+---
+
+### 4️⃣ Interface Values
+
+* Store **two things**:
+
+  1. Concrete type (`User` or `*User`)
+  2. Value/pointer to data
+* Can pass **different types** to the same function using an interface
+
+```go
+func SayHello(g Greeter) {
+    fmt.Println(g.Greet())
+}
+```
+
+---
+
+### 5️⃣ Type Assertions & Type Switches
+
+* **Type assertion**: get the concrete type back from an interface
+
+```go
+u := g.(User)       // unsafe, panics if wrong
+u, ok := g.(User)   // safe, returns ok=true/false
+```
+
+* **Type switch**: check multiple types safely
+
+```go
+switch v := g.(type) {
+case User:
+    fmt.Println("User", v.FirstName)
+case Admin:
+    fmt.Println("Admin", v.Level)
+}
+```
+
+---
+
+### 6️⃣ Pointers
+
+* Important when:
+
+  * You need to **modify a struct** in a method
+  * Interface methods are defined on pointer receivers
+* Go automatically handles:
+
+```go
+u := User{"Foyez", "Ahmed"}
+u.UpdateName("Rumon") // auto-converts to (&u).UpdateName
+```
+
+---
+
+## Visual Summary (Flow)
+
+```
+Struct (data)
+    │
+    ▼
+Methods (value / pointer)
+    │
+    ▼
+Interface (behavior)
+    │
+    ▼
+Interface Value (type + pointer/value)
+    │
+    ├──> Type Assertion (recover concrete type)
+    └──> Type Switch (branch on type)
+```
+
+---
+
+✅ **Key Takeaways**
+
+1. **Structs** = data
+2. **Methods** = attach behavior to structs
+3. **Interfaces** = abstract behavior (polymorphism)
+4. **Pointer receivers** = modify data / satisfy interfaces
+5. **Interface values** = hold concrete type + value/pointer
+6. **Type assertions/switches** = access concrete type safely
+
+---
+
+</details>
  
 ## Generics
+
+Generics (introduced in **Go 1.18**) allow you to write **type-safe, reusable code** without sacrificing compile-time checks.
  
 <details>
 <summary>View contents</summary>
- 
-Suppose, we write a function that accepts string or integer as arguments
- 
+
+### Problem: Using `interface{}` (Empty Interface)
+
 ```go
 func isEqual(a, b interface{}) bool {
- return a == b
+	return a == b
 }
 
 func main() {
-fmt.Println(isEqual(1, 1)) // true
-fmt.Println(isEqual(1, "1")) // true
+	fmt.Println(isEqual(1, 1))   // true
+	fmt.Println(isEqual(1, "1")) // ❌ NOT type-safe
 }
-
 ```
 
-Here, though the empty interface `interface{}` gives us the flexibility to pass string or integer type, it don't provide us type-safety. Because we can't compare a number with a string. This means the compiler can't help us and we're instead more likely to have runtime errors.
+#### Important Clarification (Very Important ⚠️)
 
-To solve this issue, we can use generics which give us flexibility and type-safety at the same time.
+* This function **compiles**, but:
+
+  * `interface{}` removes **type safety**
+  * The compiler **cannot help you**
+* You are allowing **any two values** to be compared, even if it makes no logical sense
+
+💡 In reality:
+
+```go
+isEqual(1, "1") // returns false, but comparison itself is meaningless
+```
+
+The **real problem** is not panic here — it’s that:
+
+* The compiler **should have rejected this code**
+* Bugs move from **compile time → runtime**
+
+---
+
+### Why `interface{}` Is Dangerous Here
+
+* You lose:
+
+  * Compile-time guarantees
+  * Meaningful comparisons
+* You rely on **runtime behavior**
+* Bugs become harder to detect
+
+👉 This is exactly what generics were designed to fix.
+
+---
+
+### Solution: Generics (Type Parameters)
 
 ```go
 func isEqual[T comparable](a, b T) bool {
- return a == b
-}
-
-func main() {
- fmt.Println(isEqual(1, 1))   // true
- fmt.Println(isEqual(1, "1")) // default type string of "1" does not match inferred type int for T
+	return a == b
 }
 ```
 
-> `comparable` is a built-in Go constraint introduced in Go 1.18. It is used to denote types that can be compared for equality using == and !=.
+#### What This Means
+
+* `T` is a **type parameter**
+* `comparable` is a **constraint**
+* Only types that support `==` and `!=` are allowed
+
+---
+
+#### Usage
+
+```go
+func main() {
+	fmt.Println(isEqual(1, 1))   // true
+	fmt.Println(isEqual(1, "1")) // ❌ compile-time error
+}
+```
+
+🛑 **Compiler error (GOOD thing):**
+
+```
+default type string of "1" does not match inferred type int for T
+```
+
+✅ This is **type safety**
+✅ Bug caught **before the program runs**
+
+---
+
+### What Is `comparable`?
+
+```go
+func isEqual[T comparable](a, b T) bool
+```
+
+#### `comparable` (built-in constraint)
+
+* Introduced in Go 1.18
+* Allows types that can be compared using `==` and `!=`
+
+Includes:
+
+* `int`, `float`, `string`, `bool`
+* pointers
+* structs (if all fields are comparable)
+
+Excludes:
+
+* slices
+* maps
+* functions
+
+---
+
+### Constraints and Ordering
 
 ```go
 import (
@@ -3921,50 +4174,291 @@ func Max[T constraints.Ordered](a, b T) T {
 }
 ```
 
-> The `constraints.Ordered` constraint comes from the `golang.org/x/exp/constraints` package and is used to denote types that support ordering operations like <, <=, >, and >=.
+#### `constraints.Ordered`
 
-**Implementation of `reduce()`, `find()`, `filter()` & `map()`:**
+* Allows:
+
+  * `<`, `<=`, `>`, `>=`
+* Works for:
+
+  * integers
+  * floats
+  * strings
+
+⚠️ Note:
+
+* This package existed **before** Go finalized generics
+* Today, many people define their **own constraints** instead
+
+---
+
+### Custom Constraints (Important Missing Concept)
 
 ```go
-func Reduce[A, B any](collection []A, accumulator func(B, A) B, initialValue B) B {
- var result = initialValue
- for _, x := range collection {
-  result = accumulator(result, x)
- }
- return result
+type Number interface {
+	~int | ~int64 | ~float64
 }
 
-func Find[A any](items []A, predict func(A) bool) (value A, found bool) {
- for _, v := range items {
-  if predict(v) {
-   return v, true
-  }
- }
- return
-}
-
-func Filter[A any](items []A, predict func(A) bool) []A {
- var founds []A
-
- for _, v := range items {
-  if predict(v) {
-   founds = append(founds, v)
-  }
- }
-
- return founds
-}
-
-func Map[A, B any](items []A, modify func(A) B) []B {
- var modifiedItems []B
- for _, v := range items {
-  modifiedItems = append(modifiedItems, modify(v))
- }
- return modifiedItems
+func Add[T Number](a, b T) T {
+	return a + b
 }
 ```
 
-Reference: [Golang Generics Are Here! - Golang Beyond the Basics](https://www.youtube.com/watch?v=P2CQWeZZ--4)
+#### Why `~` (tilde)?
+
+* Allows **underlying types**
+* Makes generics work with custom type aliases
+
+---
+
+### Higher-Order Generic Functions
+
+Your implementations are **excellent and idiomatic** 👍
+Let’s explain *why* they matter.
+
+---
+
+#### `Reduce`
+
+```go
+func Reduce[A, B any](collection []A, accumulator func(B, A) B, initialValue B) B {
+	var result = initialValue
+	for _, x := range collection {
+		result = accumulator(result, x)
+	}
+	return result
+}
+```
+
+* `A` → element type
+* `B` → accumulator/result type
+* Extremely flexible
+* Used for:
+
+  * sums
+  * concatenation
+  * aggregation
+
+---
+
+#### `Find`
+
+```go
+func Find[A any](items []A, predict func(A) bool) (value A, found bool) {
+	for _, v := range items {
+		if predict(v) {
+			return v, true
+		}
+	}
+	return
+}
+```
+
+* Returns:
+
+  * value
+  * boolean indicating presence
+* Avoids sentinel values (`nil`, `-1`, etc.)
+
+---
+
+#### `Filter`
+
+```go
+func Filter[A any](items []A, predict func(A) bool) []A {
+	var founds []A
+
+	for _, v := range items {
+		if predict(v) {
+			founds = append(founds, v)
+		}
+	}
+
+	return founds
+}
+```
+
+* Keeps type information
+* No casting
+* Fully compile-time safe
+
+---
+
+#### `Map`
+
+```go
+func Map[A, B any](items []A, modify func(A) B) []B {
+	var modifiedItems []B
+	for _, v := range items {
+		modifiedItems = append(modifiedItems, modify(v))
+	}
+	return modifiedItems
+}
+```
+
+* Transforms `[]A → []B`
+* Classic functional pattern
+* Impossible to do safely with `interface{}`
+
+---
+
+### Generics vs Interfaces (Very Important Comparison)
+
+| Feature             | Interfaces                | Generics                |
+| ------------------- | ------------------------- | ----------------------- |
+| Purpose             | Abstraction over behavior | Abstraction over types  |
+| Uses methods        | ✅                         | ❌                       |
+| Compile-time safety | ✅                         | ✅                       |
+| Polymorphism        | Dynamic                   | Static                  |
+| Best for            | APIs, behavior            | Algorithms, collections |
+
+---
+
+#### Rule of Thumb
+
+* Use **interfaces** when:
+
+  * You care about *what something does*
+* Use **generics** when:
+
+  * You care about *what type something is*
+
+---
+
+### Generics vs `interface{}`
+
+| Feature             | interface{} | Generics |
+| ------------------- | ----------- | -------- |
+| Type safety         | ❌           | ✅        |
+| Compile-time checks | ❌           | ✅        |
+| Casting required    | ✅           | ❌        |
+| Performance         | Worse       | Better   |
+| Readability         | Worse       | Better   |
+
+---
+
+### When NOT to Use Generics (Important)
+
+❌ Don’t use generics when:
+
+* You only have **one concrete type**
+* Interfaces already solve the problem
+* The generic version is harder to read
+
+✅ Generics are powerful — but **not free**
+
+---
+
+### Mental Model
+
+```
+interface{}  → maximum flexibility, zero safety
+interfaces   → behavior abstraction
+generics     → type abstraction + safety
+```
+
+---
+
+### How Go Generics Compile Internally
+
+#### Important Truth (Core Idea)
+
+👉 **Go generics are NOT implemented like C++ templates or TypeScript generics.**
+
+Go uses a strategy called:
+
+> **Monomorphization with sharing (a.k.a. dictionary passing)**
+
+---
+
+#### What That Means (Simplified)
+
+When you write:
+
+```go
+func Max[T comparable](a, b T) T {
+	if a > b {
+		return a
+	}
+	return b
+}
+```
+
+And call it like:
+
+```go
+Max(10, 20)
+Max(3.5, 2.1)
+```
+
+The compiler does **NOT** blindly generate infinite versions.
+
+Instead, it does roughly this:
+
+* Generates **specialized code per constraint group**
+* Shares implementations when possible
+* Passes **type-specific operations** (like `>`, `==`) via hidden dictionaries
+
+---
+
+#### Mental Model of Compilation
+
+Conceptually, the compiler turns this:
+
+```go
+Max[int](10, 20)
+```
+
+Into something *like*:
+
+```go
+func Max_int(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+```
+
+And:
+
+```go
+func Max_float64(a, b float64) float64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+```
+
+⚠️ **But**:
+
+* Go does **not** literally generate one function per call
+* It generates **shared instantiations** per type set
+
+---
+
+#### Why Go Did This
+
+| Language | Strategy              | Result                          |
+| -------- | --------------------- | ------------------------------- |
+| C++      | Full monomorphization | Very fast, very large binaries  |
+| Java     | Type erasure          | Smaller binaries, runtime casts |
+| Go       | Hybrid                | Fast + controlled binary size   |
+
+---
+
+### Final Takeaway
+
+* Generics solve problems that `interface{}` **never should**
+* They move bugs from **runtime → compile time**
+* They shine in:
+
+  * collections
+  * algorithms
+  * utility libraries
+
+---
 
 </details>
 
