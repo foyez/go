@@ -3457,173 +3457,264 @@ defer func() {
 
 ## Methods
 
+A **method** is a function with a **receiver**.
+
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/methods)**
-Syntax of method
+
+### Syntax
 
 ```go
 func (r ReceiverType) funcName(parameters) (results)
 ```
 
-#### Methods vs Functions
+---
 
-- The difference between a method and a function is that instead of accepting an argument as struct, we're calling a method on an instance of that struct.
+## Methods vs Functions
+
+* Functions operate on values passed as arguments
+* Methods are **called on a value of a specific type**
+
+---
+
+### Example
 
 ```go
 type address struct {
- email   string
- zipCode int
+	email   string
+	zipCode int
 }
 
 type User struct {
- name string
- age  int
- address
-}
-
-func main() {
- user := User{
-  name: "Manam",
-  age: 25,
-  address: address{
-   email: "manam@email.com",
-   zipCode: 34000
-  },
- }
-
- updateUserName(&user, "Chayon")
-
- // (&user).UpdateName("Chayon")
- user.UpdateName("Chayon")
-}
-
-func updateUserName(u *User, name string) {
- u.name = name
-}
-
-// func (receiverName ReceiverType) MethodName(args)
-// When a method is called on a variable of that type,
-// we get the reference to its data via the receiverName variable.
-func (u *User) UpdateName(name string) {
- // (*u).name = name
- u.name = name
+	name string
+	age  int
+	address
 }
 ```
 
-**When should we make the pointer receiver type of a method?**
+---
 
-1. When the receiver type uses a large amount of memory, otherwise the receiver will be copied with a large amount of data which is costly.
-2. When the method must modify the data in the object of the receiver type.
-
-**Good practices:**
-
-1. All methods of a type should have pointer receivers, or
-2. All methods of a type should have non-pointer receivers
-
-</details>
-
-## Type Assertions
-
-<details>
-<summary>View contents</summary>
-
-> Type assertions is used to assert the type of a given variable. It provides access to an interface value's underlying concrete value.
+### Function Version
 
 ```go
-// assertedVariable, ok := variable.(Type)
-
-var foo interface{} = "Hello"
-
-str := foo.(string)
-fmt.Println(str) // "Hello"
-
-num := foo.(int) // panic
-fmt.Println(num)
-
-num2, ok := foo.(int)
-fmt.Println(num2, ok) // 0, false
+func updateUserName(u *User, name string) {
+	u.name = name
+}
 ```
+
+---
+
+### Method Version
+
+```go
+func (u *User) UpdateName(name string) {
+	// (*u).name = name
+	u.name = name
+}
+```
+
+---
+
+### Usage
+
+```go
+func main() {
+	user := User{
+		name: "Manam",
+		age: 25,
+		address: address{
+			email: "manam@email.com",
+			zipCode: 34000,
+		},
+	}
+
+	updateUserName(&user, "Chayon")
+
+	// (&user).UpdateName("Chayon")
+	user.UpdateName("Chayon")
+}
+```
+
+---
+
+### Why Methods Matter
+
+* Better readability
+* Encapsulation
+* Enables interfaces
+* Object-oriented style without classes
+
+---
+
+### Pointer Receivers
+
+#### When should we use pointer receivers?
+
+1. When the method **modifies receiver data**
+2. When the receiver is **large** (avoid copying)
+3. For **consistency**
+
+---
+
+#### Automatic Addressing
+
+```go
+user.UpdateName("Chayon")
+```
+
+Even though `UpdateName` expects `*User`, Go automatically does:
+
+```go
+(&user).UpdateName("Chayon")
+```
+
+---
+
+#### Good Practices
+
+✔ Choose **one** receiver type:
+
+1. All pointer receivers, **or**
+2. All value receivers
+
+🚫 Avoid mixing unless there is a strong reason
+
+---
 
 </details>
 
 ## Interfaces
+
+**Interfaces** are one of the most powerful features in Go.
+They allow you to define **behavior** without specifying how that behavior is implemented.
 
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/interfaces)**
 
-**Structs:** define a set of attributes on a type, e.g.: a user has a `FirstName` and a `LastName`, it is the type of User.
+### Structs vs Interfaces
 
-**Interfaces:** define a set of method signatures (name, parameters & return types), NOT the implementation.
+| Concept  | Struct                    | Interface                             |
+| -------- | ------------------------- | ------------------------------------- |
+| Purpose  | Holds **data/attributes** | Defines **behavior/methods**          |
+| Contains | Fields                    | Method signatures (no implementation) |
+| Usage    | Create instances          | Implemented by types implicitly       |
+| Analogy  | “What an object **has**”  | “What an object **can do**”           |
+
+---
+
+### Defining an Interface
 
 ```go
 type Shape2D interface {
- Area() float64
- Perimeter() float64
+	Area() float64
+	Perimeter() float64
 }
+```
 
+* `Shape2D` is an **interface type**
+* Any type that has **both `Area()` and `Perimeter()` methods** automatically implements `Shape2D`
+* **No explicit declaration needed** (unlike Java/C#)
+
+---
+
+### Implementing Interfaces with Structs
+
+```go
 type Rectangle struct {
- Width  float64
- Height float64
+	Width  float64
+	Height float64
 }
 
 func (r Rectangle) Area() float64 {
- return r.Width * r.Height
+	return r.Width * r.Height
 }
 
 func (r Rectangle) Perimeter() float64 {
- return 2 * (r.Width + r.Height)
+	return 2 * (r.Width + r.Height)
 }
 
 type Circle struct {
- Radius float64
+	Radius float64
 }
 
 func (c Circle) Area() float64 {
- return math.Pi * c.Radius * c.Radius
+	return math.Pi * c.Radius * c.Radius
 }
 
 func (c Circle) Perimeter() float64 {
- return 2 * math.Pi * c.Radius
-}
-
-func fitInYard(s Shape2D) bool {
- return s.Area() > 200 && s.Perimeter() > 200
-}
-
-func printShapeProps(s Shape2D) {
- if rect, ok := s.(Rectangle); ok {
-  fmt.Printf("Height: %.2f, Width: %.2f\n", rect.Height, rect.Width)
- }
- if circle, ok := s.(Circle); ok {
-  fmt.Printf("Radius: %.2f\n", circle.Radius)
- }
-}
-
-func main() {
- circle := Circle{10}
- rectangle := Rectangle{10, 20}
-
- fmt.Println(fitInYard(circle))
- fmt.Println(fitInYard(rectangle))
-
- printShapeProps(rectangle) // Height: 20.00, Width: 10.00
- printShapeProps(circle) // Radius: 10.00
+	return 2 * math.Pi * c.Radius
 }
 ```
 
-#### Empty Interface
+✅ **Key Points**
+
+* Both `Rectangle` and `Circle` implement `Shape2D`
+* Go checks **struct methods** at compile time
+* No need to explicitly declare `implements Shape2D`
+
+---
+
+### Using Interfaces as Function Parameters
 
 ```go
-interface{}
+func fitInYard(s Shape2D) bool {
+	return s.Area() > 200 && s.Perimeter() > 200
+}
 ```
 
-- Specifies zero methods
-- An empty interface may hold values of any type
-- Like _any_ type in Typescript
+* `fitInYard` works with **any type** that implements `Shape2D`
+* This is **polymorphism** in Go
+* Allows **generic-like behavior** without generics
+
+---
+
+### Type Assertions
+
+Sometimes you want to **access the concrete type** from an interface:
+
+```go
+func printShapeProps(s Shape2D) {
+	if rect, ok := s.(Rectangle); ok {
+		fmt.Printf("Height: %.2f, Width: %.2f\n", rect.Height, rect.Width)
+	}
+	if circle, ok := s.(Circle); ok {
+		fmt.Printf("Radius: %.2f\n", circle.Radius)
+	}
+}
+```
+
+* `s.(Rectangle)` tries to assert that `s` is of type `Rectangle`
+* `ok` is `true` if the assertion succeeds, `false` otherwise
+* Safe: avoids panic
+
+---
+
+#### Example Usage
+
+```go
+func main() {
+	circle := Circle{10}
+	rectangle := Rectangle{10, 20}
+
+	fmt.Println(fitInYard(circle))
+	fmt.Println(fitInYard(rectangle))
+
+	printShapeProps(rectangle) // Height: 20.00, Width: 10.00
+	printShapeProps(circle)    // Radius: 10.00
+}
+```
+
+---
+
+### Empty Interface (`interface{}`)
+
+* Defines **zero methods**
+* Can hold **values of any type**
+* Equivalent to `any` in TypeScript
 
 ```go
 var people map[string]interface{} = make(map[string]interface{})
@@ -3633,6 +3724,148 @@ people["age"] = 28
 
 fmt.Printf("%#v %T\n", people["name"], people["name"]) // "Foyez" string
 fmt.Printf("%#v %T", people["age"], people["age"])     // 28 int
+```
+
+**Use Cases**
+
+* Storing **heterogeneous data**
+* Functions like `fmt.Println` and JSON marshaling
+* Type-agnostic containers
+
+---
+
+### Interfaces vs Structs Summary
+
+| Feature      | Struct                            | Interface                      |
+| ------------ | --------------------------------- | ------------------------------ |
+| Stores       | Fields/data                       | Methods/behavior               |
+| Implements   | N/A                               | Any type with matching methods |
+| Inheritance  | No                                | Can embed interfaces           |
+| Polymorphism | No                                | Yes                            |
+| Example      | `Rectangle{Width: 10, Height: 5}` | `Shape2D`                      |
+
+---
+
+### Important Notes / Best Practices
+
+1. **Implicit implementation**
+
+   * A struct implements an interface **automatically** if it has required methods
+   * No need to declare `implements`
+
+2. **Pointers vs Values**
+
+   * If a method has a **pointer receiver**, only a **pointer to struct** implements the interface
+
+   ```go
+   type MyInterface interface {
+       Foo()
+   }
+   func (m *MyStruct) Foo() {}
+   ```
+
+   * `var x MyInterface = &MyStruct{}` ✅
+   * `var x MyInterface = MyStruct{}` ❌
+
+3. **Use interfaces for abstraction**
+
+   * Don’t overuse empty interfaces; prefer **specific interfaces**
+
+4. **Type switches** (advanced)
+
+   * Safer than multiple type assertions
+
+   ```go
+   switch v := s.(type) {
+   case Rectangle:
+       fmt.Println("Rectangle", v.Width, v.Height)
+   case Circle:
+       fmt.Println("Circle", v.Radius)
+   default:
+       fmt.Println("Unknown shape")
+   }
+   ```
+
+---
+
+### Why Interfaces Matter
+
+* Enable **polymorphism** without inheritance
+* Decouple code: functions don’t need to know concrete types
+* Allow **mocking/testing** by passing fake implementations
+
+---
+
+</details>
+
+## Type Assertions
+
+A **type assertion** extracts the **concrete value** from an interface.
+
+<details>
+<summary>View contents</summary>
+
+### Syntax
+
+```go
+value, ok := interfaceValue.(ConcreteType)
+```
+
+---
+
+### Example
+
+```go
+var foo interface{} = "Hello"
+
+str := foo.(string)
+fmt.Println(str) // "Hello"
+```
+
+---
+
+### Unsafe Assertion (Causes Panic)
+
+```go
+num := foo.(int) // panic
+fmt.Println(num)
+```
+
+---
+
+### Safe Assertion (Recommended)
+
+```go
+num2, ok := foo.(int)
+fmt.Println(num2, ok) // 0 false
+```
+
+---
+
+### Why Type Assertions Are Needed
+
+* Interfaces hide concrete types
+* To access concrete behavior, you must assert
+* Widely used in:
+
+  * `error` handling
+  * `fmt`
+  * `context`
+  * type switches
+
+---
+
+### Type Switch
+
+```go
+switch v := foo.(type) {
+case string:
+	fmt.Println("string:", v)
+case int:
+	fmt.Println("int:", v)
+default:
+	fmt.Println("unknown type")
+}
 ```
 
 </details>
