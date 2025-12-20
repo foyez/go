@@ -1666,27 +1666,79 @@ num, _ := strconv.Atoi(os.Args[1])
 
 ## Types
 
+Go is a **statically typed language**, meaning variable types are known at compile time.
+
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/types)**
 
-| Name        | Type Name                                                                   | Examples                                  |
-| ----------- | --------------------------------------------------------------------------- | ----------------------------------------- |
-| **INTEGER** | int, int8, int16, int32, int64<br/>unint, unint8, unint16, unint32, unint64 | var age int = 20<br/>var count unint = -5 |
-| **FLOAT**   | float32, float64                                                            | var gpa float64 = 3.4                     |
-| **STRING**  | string                                                                      | var fruit string = "mango"                |
-| **BOOLEAN** | bool<br/>&& <code>&#124;&#124;</code> ! < <= > >= == !=                     | true false<br/>var adult bool = age > 18  |
+### Built-in Types
 
-### Identify and convert type
+| Name        | Type Name                                                              | Examples                   |
+| ----------- | ---------------------------------------------------------------------- | -------------------------- |
+| **INTEGER** | int, int8, int16, int32, int64<br/>uint, uint8, uint16, uint32, uint64 | var age int = 20           |
+| **FLOAT**   | float32, float64                                                       | var gpa float64 = 3.4      |
+| **STRING**  | string                                                                 | var fruit string = "mango" |
+| **BOOLEAN** | bool                                                                   | var adult bool = age > 18  |
+
+
+❌ Unsigned integers **cannot store negative values**
 
 ```go
- // identify type
- reflect.TypeOf(6) // int
-
- // convert type
- float(10) + 5.5 // 15.5
+var count uint = 5     // valid
+// var count uint = -5 // compile-time error
 ```
+
+---
+
+### Boolean Operators
+
+```go
+&&  // AND
+||  // OR
+!   // NOT
+< <= > >= == !=
+```
+
+```go
+var adult bool = age >= 18
+```
+
+---
+
+### Identifying and Converting Types
+
+#### Identify type
+
+```go
+reflect.TypeOf(6) // int
+```
+
+Useful for debugging and learning, not common in production code.
+
+---
+
+#### Type conversion
+
+Go does **not** perform implicit type conversion.
+
+```go
+float64(10) + 5.5 // 15.5
+```
+
+❌ This will fail:
+
+```go
+10 + 5.5
+```
+
+Reason:
+
+* `10` is `int`
+* `5.5` is `float64`
+
+---
 
 </details>
 
