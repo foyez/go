@@ -2825,151 +2825,349 @@ s = "Hello"
 
 ## Structs
 
+A **struct** is a composite data type that groups together variables (fields) under one name.
+
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/structs)**
 
+### Why use structs?
+
+* To represent **real-world entities**
+* To organize related data
+* To define **custom types**
+
+---
+
+### Basic Struct Definition
+
 ```go
 type User struct {
- ID        int
- FirstName string
- LastName  string
- Email     string
+	ID        int
+	FirstName string
+	LastName  string
+	Email     string
 }
+```
 
-user := User{ID: 1, FirstName: "Foyez", LastName: "Ahmed", Email: "foyez@email.com"}
+* `type User struct {}` defines a **new type**
+* Field names starting with **capital letters are exported** (accessible outside the package)
+* Field names starting with **lowercase letters are unexported**
+
+---
+
+### Creating a Struct Value
+
+```go
+user := User{
+	ID:        1,
+	FirstName: "Foyez",
+	LastName:  "Ahmed",
+	Email:     "foyez@email.com",
+}
 
 fmt.Println(user.FirstName) // Foyez
 ```
 
+#### Important Notes
+
+* This is called **named-field initialization** (recommended)
+* It prevents bugs when fields are reordered
+* Unspecified fields get **zero values**
+
+---
+
+### Zero Values of Struct Fields
+
+```go
+var user User
+fmt.Println(user)
+```
+
+Output:
+
+```go
+{0 "" "" ""}
+```
+
+* `int` → `0`
+* `string` → `""`
+* `bool` → `false`
+* slices/maps → `nil`
+
+---
+
+### Struct Pointers
+
+You can create a pointer to a struct:
+
+```go
+user := &User{
+	ID:        1,
+	FirstName: "Foyez",
+}
+```
+
+Access fields using **dot notation** (Go automatically dereferences):
+
+```go
+fmt.Println(user.FirstName)
+```
+
+---
+
 </details>
 
 ## Pointers
+
+A **pointer** stores the **memory address** of a variable instead of a copy of its value.
 
 <details>
 <summary>View contents</summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/pointers)**
 
-**Pointer:** a variable that holds the **memory location** of a variable instead of a copy of its value.
+### Pointer Syntax
 
 ```go
 // Declare a pointer variable
 var variableName *type
 
-// Access to the variable address
+// Get the address of a variable
 &variableName
 
-// Access to the variable value
+// Dereference a pointer (get the value it points to)
 *variableName
 ```
 
+---
+
+### Example: Pointer with Struct
+
 ```go
 type person struct {
- firstName      string
- lastName       string
- faboriteSports []string
+	firstName      string
+	lastName       string
+	faboriteSports []string
 }
+```
 
+⚠️ **Note:** `faboriteSports` is misspelled (should be `favoriteSports`),
+but keeping it as-is to match your code.
+
+---
+
+#### Main Function
+
+```go
 func main() {
- person := person{
-  firstName: "Foyez",
-  lastName:  "Ahmed",
-  faboriteSports: []string{"Cricket"}
- }
+	person := person{
+		firstName: "Foyez",
+		lastName:  "Ahmed",
+		faboriteSports: []string{"Cricket"},
+	}
 
- updateFirstName(&person, "Rumon")
- fmt.Println(person) // {Foyez Ahmed [Cricket]}
- updateFavoriteSports(person, "Football")
- fmt.Println(person) // {Foyez Ahmed [Football]}
+	updateFirstName(&person, "Rumon")
+	fmt.Println(person) // {Rumon Ahmed [Cricket]}
+
+	updateFavoriteSports(person, "Football")
+	fmt.Println(person) // {Rumon Ahmed [Football]}
 }
+```
 
+---
+
+### Updating Struct Fields Using Pointer
+
+```go
 func updateFirstName(p *person, newFirstName string) {
- fmt.Println(p)  // &{Foyez Ahmed [Cricket]}
- fmt.Println(&p) // 0xc00000e028
- fmt.Println(*p) // {Foyez Ahmed [Cricket]}
+	fmt.Println(p)  // &{Foyez Ahmed [Cricket]}
+	fmt.Println(&p) // address of pointer variable itself
+	fmt.Println(*p) // {Foyez Ahmed [Cricket]}
 
- // (*p).firstName = newFirstName
- p.firstName = newFirstName
+	// (*p).firstName = newFirstName
+	p.firstName = newFirstName
 }
+```
 
+#### Key Concepts
+
+* `p` is a pointer to `person`
+* `*p` gives the actual struct value
+* `p.firstName` works because **Go automatically dereferences pointers**
+
+---
+
+### Why This Works Without Pointer?
+
+```go
 func updateFavoriteSports(p person, sportName string) {
- p.favoriteSports[0] = sportName
+	p.faboriteSports[0] = sportName
 }
 ```
 
-**Value Types:** `int`, `float`, `string`, `bool`, `structs`, `array`
+#### Explanation
 
-> Have to use pointer to update these types of variables
+* `person` is passed **by value**
+* BUT `slice` is a **reference type**
+* Both `p.faboriteSports` and `person.faboriteSports` point to the **same underlying array**
 
-**Reference Types:** `slices`, `maps`, `channels`, `pointers`, `functions`
+---
 
-> Don't need to use pointer to update these types of variables
+# Value Types vs Reference Types (Very Important)
 
-**Call by Value:**
+### Value Types
 
-- Passed arguments or receiver are copied to parameters
-- Modifying parameters or receiver has no effect outside of the function or the method
+```
+int, float, string, bool, struct, array
+```
+
+* Passed **by value**
+* A **copy** is created
+* Changes inside a function **do NOT affect original data**
+* Use **pointer** to modify original value
+
+---
+
+### Reference Types
+
+```
+slice, map, channel, pointer, function
+```
+
+* Internally contain a **pointer**
+* Passed **by value**, but reference same data
+* Changes inside a function **DO affect original data**
+* Pointer usually **not required**
+
+---
+
+# Call by Value (Default Behavior)
 
 ```go
 type Person struct {
- name string
- age  int
+	name string
+	age  int
 }
+```
 
+#### Function Example
+
+```go
 func updateAge(p Person) {
- p.age = 20
- fmt.Println(p) // {Mithu 20}
-}
-
-func (p Person) updateAge() {
- p.age = 30
- fmt.Println(p) // {Mithu 30}
-}
-
-func main() {
- mithu := Person{name: "Mithu", age: 10}
-
- updateAge(mithu)
- fmt.Println(mithu) // {Mithu 10}
-
- mithu.updateAge()
- fmt.Println(mithu) // {Mithu 10}
+	p.age = 20
+	fmt.Println(p) // {Mithu 20}
 }
 ```
 
-**Call by Reference:**
-
-- Pass pointer (memory location) as arguments or receiver
-- Modifying parameters or receiver has effect outside of the function or the method
+#### Method Example
 
 ```go
-type Person struct {
- name string
- age  int
-}
-
-func updateAge(p *Person) {
- p.age = 20
- fmt.Println(*p) // {Mithu 20}
-}
-
-func (p *Person) updateAge() {
- p.age = 30
- fmt.Println(*p) // {Mithu 30}
-}
-
-func main() {
- mithu := Person{name: "Mithu", age: 10}
-
- updateAge(&mithu)
- fmt.Println(mithu) // {Mithu 20}
-
- mithu.updateAge()
- fmt.Println(mithu) // {Mithu 30}
+func (p Person) updateAge() {
+	p.age = 30
+	fmt.Println(p) // {Mithu 30}
 }
 ```
+
+#### Main
+
+```go
+func main() {
+	mithu := Person{name: "Mithu", age: 10}
+
+	updateAge(mithu)
+	fmt.Println(mithu) // {Mithu 10}
+
+	mithu.updateAge()
+	fmt.Println(mithu) // {Mithu 10}
+}
+```
+
+#### Explanation
+
+* `p` receives a **copy**
+* Changes affect only the copy
+* Original value remains unchanged
+
+---
+
+# Call by Reference (Using Pointers)
+
+#### Function Example
+
+```go
+func updateAge(p *Person) {
+	p.age = 20
+	fmt.Println(*p) // {Mithu 20}
+}
+```
+
+#### Method Example
+
+```go
+func (p *Person) updateAge() {
+	p.age = 30
+	fmt.Println(*p) // {Mithu 30}
+}
+```
+
+#### Main
+
+```go
+func main() {
+	mithu := Person{name: "Mithu", age: 10}
+
+	updateAge(&mithu)
+	fmt.Println(mithu) // {Mithu 20}
+
+	mithu.updateAge()
+	fmt.Println(mithu) // {Mithu 30}
+}
+```
+
+---
+
+### Important Go Feature: Automatic Addressing
+
+```go
+mithu.updateAge()
+```
+
+Even though `updateAge` expects `*Person`, Go automatically does:
+
+```go
+(&mithu).updateAge()
+```
+
+This makes pointer receivers **clean and safe to use**
+
+---
+
+### When to Use Pointer Receivers in Methods
+
+Use pointer receivers when:
+
+1. You want to **modify the receiver**
+2. The struct is **large** (performance)
+3. Consistency (recommended if any method uses pointer)
+
+---
+
+### Summary Cheat Sheet
+
+| Concept                   | Behavior                |
+| ------------------------- | ----------------------- |
+| Struct                    | Collection of fields    |
+| Pointer                   | Stores memory address   |
+| Value Types               | Copied on function call |
+| Reference Types           | Share underlying data   |
+| Method (value receiver)   | Cannot modify original  |
+| Method (pointer receiver) | Can modify original     |
+| Slices                    | Reference type          |
+| Maps                      | Reference type          |
+
+---
 
 </details>
 
