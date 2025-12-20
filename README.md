@@ -4891,6 +4891,9 @@ Avoid concurrency when:
 
 ## Web Servers
 
+Go has a **powerful, production-ready HTTP server built into the standard library**.
+You do **not** need external frameworks to build fast and scalable web servers.
+
 <details>
 <summary>View contents</summary>
 
@@ -4918,9 +4921,58 @@ func main() {
 }
 ```
 
+Explanation:
+
+* `http.ResponseWriter` → used to write the HTTP response
+* `*http.Request` → contains request data (method, headers, body, URL)
+* `fmt.Fprint` sends data back to the client
+* `http.HandleFunc("/", home)`
+  Registers the `/` route and associates it with the `home` handler
+* `http.ListenAndServe(":8080", nil)`
+  Starts an HTTP server on port `8080`
+* `nil` → uses the default multiplexer (`http.DefaultServeMux`)
+* `log.Fatal` → logs error and exits if server fails
+
+### Key Concepts
+
+#### 1. Routing
+
+Go uses a **request multiplexer** (router) internally.
+
+```go
+http.HandleFunc("/about", aboutHandler)
+```
+
+#### 2. Concurrency
+
+Each HTTP request is handled in its **own goroutine** automatically.
+
+> You do not need to manage threads manually.
+
+#### 3. Production Ready
+
+* Fast
+* Concurrent
+* Secure by default
+* Used internally by many Go services
+
+---
+
+### When to Use Frameworks
+
+Use only when you need:
+
+* Middleware chaining
+* Advanced routing
+* Request validation helpers
+
+Otherwise, `net/http` is often enough.
+
 </details>
 
 ## Working with files
+
+Go provides simple and safe file handling via the `os` and `io` packages.
 
 <details>
 <summary>View contents</summary>
@@ -4966,6 +5018,13 @@ func removeFile(filename string) {
  }
 }
 ```
+
+### Important Notes
+
+* Always handle file errors
+* File operations are blocking
+* Avoid `os.Exit` in libraries (fine for small examples)
+* Use streaming (`os.Open`) for large files
 
 </details>
  
