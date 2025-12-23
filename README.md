@@ -4062,7 +4062,7 @@ func main() {
 }
 ```
 
-#### Important Clarification (Very Important ⚠️)
+#### Important Clarification
 
 * This function **compiles**, but:
 
@@ -4121,14 +4121,14 @@ func main() {
 }
 ```
 
-🛑 **Compiler error (GOOD thing):**
+**Compiler error (GOOD thing):**
 
 ```
 default type string of "1" does not match inferred type int for T
 ```
 
-✅ This is **type safety**
-✅ Bug caught **before the program runs**
+- This is **type safety**
+- Bug caught **before the program runs**
 
 ---
 
@@ -4172,6 +4172,17 @@ func Max[T constraints.Ordered](a, b T) T {
 	}
 	return b
 }
+
+type Ordered interface {
+	~int | ~int64 | ~float64 | ~string
+}
+
+func Min[T Ordered](a, b T) T {
+	if a < b {
+		return a
+	}
+	return b
+}
 ```
 
 #### `constraints.Ordered`
@@ -4192,7 +4203,7 @@ func Max[T constraints.Ordered](a, b T) T {
 
 ---
 
-### Custom Constraints (Important Missing Concept)
+### Custom Constraints
 
 ```go
 type Number interface {
@@ -4212,11 +4223,6 @@ func Add[T Number](a, b T) T {
 ---
 
 ### Higher-Order Generic Functions
-
-Your implementations are **excellent and idiomatic** 👍
-Let’s explain *why* they matter.
-
----
 
 #### `Reduce`
 
@@ -4302,7 +4308,7 @@ func Map[A, B any](items []A, modify func(A) B) []B {
 
 ---
 
-### Generics vs Interfaces (Very Important Comparison)
+### Generics vs Interfaces
 
 | Feature             | Interfaces                | Generics                |
 | ------------------- | ------------------------- | ----------------------- |
@@ -4337,7 +4343,7 @@ func Map[A, B any](items []A, modify func(A) B) []B {
 
 ---
 
-### When NOT to Use Generics (Important)
+### When NOT to Use Generics
 
 ❌ Don’t use generics when:
 
@@ -4761,8 +4767,10 @@ Why `select` matters:
 
 ### Mutex – Safe Access to Shared Memory
 
-* Goroutines can share memory, but concurrent writes can cause **race conditions**.
-* **Mutex** locks resources to avoid conflicts.
+In Go, **goroutines can share memory**, but **concurrent access to shared data** can cause **race conditions**.  
+A **mutex (mutual exclusion lock)** ensures that **only one goroutine** can access a critical section of code at a time.
+
+Shared memory means multiple goroutines **read or write the same variable stored at a single memory location**.
 
 ```go
 package main
@@ -4795,15 +4803,258 @@ func main() {
 }
 ```
 
-#### Problems with Mutexes
+- **What is “shared memory” here?**
 
-* Easy to forget `Unlock()`
-* Can cause deadlocks
-* Harder to reason about
+```go
+var counter = 0
+```
 
-➡️ Prefer **channels** when possible.
+👉 **All goroutines access the SAME `counter` variable**. This is called **shared memory**.
+
+- **What REALLY happens without a mutex?**
+
+You might think:
+
+> “counter++ just adds 1, what’s the problem?”
+
+But `counter++` is **NOT atomic**.
+
+It actually means:
+
+```
+1. Read counter from memory
+2. Add 1
+3. Write result back to memory
+```
+
+Now imagine **two goroutines** running at the same time.
+
+Timeline (WITHOUT mutex)
+
+```
+counter = 0
+
+Goroutine A: read counter → 0
+Goroutine B: read counter → 0
+
+Goroutine A: add 1 → 1
+Goroutine B: add 1 → 1
+
+Goroutine A: write 1
+Goroutine B: write 1
+```
+
+**Final value = 1 instead of 2**
+
+This is called a **race condition**.
+
+> The result depends on timing, which is unpredictable.
+
+#### Real-World Analogy: Bank Account
+
+Imagine a shared bank account:
+
+* Balance = ₹1000
+* Two ATMs withdraw ₹100 at the same time
+
+**Without a lock:**
+
+* ATM A reads balance → 1000
+* ATM B reads balance → 1000
+* Both write back → 900
+
+💥 Lost ₹100
+
+**With a lock (mutex):**
+
+* ATM A locks the account
+* ATM B waits
+* ATM A updates balance → 900
+* ATM A unlocks
+* ATM B updates balance → 800
+
+✅ Correct result
+
+A mutex acts like a **lock on the bank account**.
 
 ---
+
+#### ❌ Broken Version (No Mutex)
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+var balance = 1000
+
+func withdraw(wg *sync.WaitGroup) {
+	defer wg.Done()
+	balance = balance - 100
+}
+
+func main() {
+	var wg sync.WaitGroup
+
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go withdraw(&wg)
+	}
+
+	wg.Wait()
+	fmt.Println("Final Balance:", balance)
+}
+```
+
+Expected:
+
+```
+1000 - (10 × 100) = 0
+```
+
+Actual (varies):
+
+```
+Final Balance: 300
+Final Balance: 500
+Final Balance: 100
+```
+
+⚠️ **Unpredictable = race condition**
+
+#### ✅ Correct Version (With Mutex)
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+)
+
+var balance = 1000
+var mu sync.Mutex
+
+func withdraw(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	mu.Lock()
+	balance = balance - 100
+	mu.Unlock()
+}
+
+func main() {
+	var wg sync.WaitGroup
+
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go withdraw(&wg)
+	}
+
+	wg.Wait()
+	fmt.Println("Final Balance:", balance)
+}
+```
+
+Output:
+
+```
+Final Balance: 0
+```
+
+- Correct
+- Deterministic
+- Safe shared memory access
+
+---
+
+#### Why Mutex Works (Mental Model)
+
+Think of a mutex as:
+
+* 🚪 **One key**
+* 🧍 **Only one goroutine can enter**
+* ⏳ Others must wait
+* 🔓 When unlocked, next goroutine enters
+
+In Go:
+
+```go
+mu.Lock()   // enter critical section
+// shared memory access
+mu.Unlock() // exit
+```
+
+The protected code is called a **critical section**.
+
+#### How Professionals Decide to Use Mutex
+
+Use a mutex when:
+
+* Multiple goroutines
+* Writing OR reading shared data
+* Data must stay consistent
+
+Avoid mutex when:
+
+* Data is immutable
+* Each goroutine has its own data
+* Channels can model the problem better
+
+---
+
+#### Common Problems with Mutexes
+
+* Easy to forget `Unlock()`
+* Can cause **deadlocks** if locks are mismanaged
+* Harder to reason about in large codebases
+* Can reduce performance due to blocking
+
+Always prefer:
+
+```go
+defer mutex.Unlock()
+```
+
+right after `Lock()` to avoid mistakes.
+
+---
+
+#### Best Practices
+
+* Use mutexes only to protect **small critical sections**
+* Keep locked code minimal
+* Avoid nested locks
+* Use `sync.RWMutex` when reads are frequent and writes are rare
+
+---
+
+#### When to Avoid Mutexes
+
+* When data can be **owned by a single goroutine**
+* When communication patterns fit better
+* When order of operations matters more than shared state
+
+➡️ **Prefer channels when possible**
+
+Go philosophy:
+
+> “Don’t communicate by sharing memory; share memory by communicating.”
+
+---
+
+#### Debugging Tip
+
+Use the race detector to catch race conditions:
+
+```bash
+go run -race main.go
+```
+
+This tool helps identify unsafe concurrent memory access during development.
 
 ### Data Races
 
