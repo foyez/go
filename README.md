@@ -4,14 +4,27 @@
 
 Go is a **compiled, statically typed programming language** designed at Google in **2007** and **open-sourced in 2009**.
 
-Its main goals are:
+**Core Design Goals:**
+- **Simplicity**: Easy to learn, minimal keywords
+- **Performance**: Compiled to native machine code
+- **Concurrency**: Built-in support via goroutines and channels
+- **Productivity**: Fast compilation, strong tooling
 
-* Simplicity and readability
-* High performance
-* Built-in support for concurrency
-* Strong tooling and conventions
+**Key Characteristics:**
 
-Go is often used for **backend services, cloud systems, distributed systems, CLIs, and DevOps tooling**.
+| Feature | Description |
+|---------|-------------|
+| **Type System** | Statically typed with type inference |
+| **Compilation** | Compiles to single binary (no dependencies) |
+| **Memory Management** | Automatic garbage collection |
+| **Concurrency Model** | Goroutines (lightweight threads) and channels |
+| **Package Management** | Go modules (go.mod) |
+
+**Real-World Use Cases:**
+- Backend services (Docker, Kubernetes)
+- Cloud infrastructure (Terraform, Consul)
+- DevOps tools (GitHub CLI, Hugo)
+- Distributed systems (Prometheus, etcd)
 
 ---
 
@@ -61,6 +74,17 @@ Go is a **compiled language** that produces native machine code.
 * Slightly slower than C/C++ due to garbage collection
 * Excellent performance for servers and network applications
 
+```
+Go vs Interpreted Languages:
+- 10-100x faster than Python/Ruby/Node.js
+- Near C/C++ performance with safety guarantees
+
+Go vs JVM Languages:
+- Faster startup times (no JVM warmup)
+- Lower memory footprint
+- Single binary deployment
+```
+
 ---
 
 ### 4. Simple and Readable (Python-like)
@@ -105,7 +129,7 @@ Unlike Java, Go’s garbage collector is designed to have **low latency**, makin
 
 ---
 
-### 7. Built-in Concurrency Support
+### 7. Concurrency Made Simple
 
 Concurrency is a **core feature** of Go, not an add-on.
 
@@ -116,8 +140,14 @@ Key concepts:
 * **sync package**: Mutexes, WaitGroups, etc.
 
 ```go
-go fetchData()
-go processData()
+// Traditional threading (complex)
+Thread t = new Thread(new Runnable() {
+    public void run() { /* work */ }
+});
+t.start();
+
+// Go goroutines (simple)
+go doWork()
 ```
 
 Go can efficiently run **thousands or millions of concurrent tasks**.
@@ -190,7 +220,7 @@ Go excels at structuring concurrent programs safely and clearly.
 <details>
 <summary>View contents</summary>
 
-## Go vs C
+### Go vs C
 
 | Feature           | Go             | C                   |
 | ----------------- | -------------- | ------------------- |
@@ -216,7 +246,7 @@ Go excels at structuring concurrent programs safely and clearly.
 
 ---
 
-## Go vs C++
+### Go vs C++
 
 | Feature      | Go             | C++                     |
 | ------------ | -------------- | ----------------------- |
@@ -238,7 +268,7 @@ Go excels at structuring concurrent programs safely and clearly.
 
 ---
 
-## Go vs Java
+### Go vs Java
 
 | Feature        | Go              | Java    |
 | -------------- | --------------- | ------- |
@@ -264,7 +294,7 @@ Go excels at structuring concurrent programs safely and clearly.
 
 ---
 
-## Go vs Python
+### Go vs Python
 
 | Feature        | Go               | Python        |
 | -------------- | ---------------- | ------------- |
@@ -289,7 +319,7 @@ Go excels at structuring concurrent programs safely and clearly.
 
 ---
 
-## Go vs JavaScript (Node.js)
+### Go vs JavaScript (Node.js)
 
 | Feature       | Go               | Node.js         |
 | ------------- | ---------------- | --------------- |
@@ -311,7 +341,7 @@ Go excels at structuring concurrent programs safely and clearly.
 
 ---
 
-## Go vs Rust
+### Go vs Rust
 
 | Feature        | Go        | Rust                 |
 | -------------- | --------- | -------------------- |
@@ -335,13 +365,26 @@ Go excels at structuring concurrent programs safely and clearly.
 
 ---
 
-## When NOT to Choose Go
+## Decision Framework:
 
-Go may NOT be the best choice if:
+```
+Need maximum performance + no GC?
+Need low-level hardware access?
+  → Rust/C
 
-* You are doing **AI / ML** (Python is better)
-* You need **low-level hardware access** (C/Rust)
-* You are building **UI-heavy apps** (JavaScript)
+Need simplicity + good performance?
+  → Go
+
+Need data science/AI/ML?
+  → Python is better
+
+Need enterprise ecosystem?
+  → Java
+
+Need full-stack JavaScript?
+Need to build UI-heavy apps?
+  → Javascript/Node.js
+```
 
 ---
 
@@ -360,6 +403,63 @@ Go may NOT be the best choice if:
 ---
 
 </details>
+
+## Practice Questions
+
+**Fill in the Blanks:**
+
+1. Go is a __________ typed language, meaning types are known at compile time.
+2. Go compiles to a __________ binary with no external dependencies.
+3. The Go concurrency primitive is called a __________.
+4. Go's memory is managed by automatic __________ collection.
+
+**True/False:**
+
+1. ⬜ Go requires a virtual machine like Java
+2. ⬜ Go supports inheritance for object-oriented programming
+3. ⬜ Go's concurrency is based on goroutines and channels
+4. ⬜ Go is slower than Python for computational tasks
+
+**Multiple Choice:**
+
+1. What is the main advantage of Go over Java?
+   - A) Larger ecosystem
+   - B) Faster startup and lower memory usage
+   - C) Better IDE support
+   - D) More language features
+
+2. Which scenario is Go NOT ideal for?
+   - A) Building microservices
+   - B) Machine learning research
+   - C) Writing CLI tools
+   - D) Creating web servers
+
+---
+
+**Answers:**
+
+<details>
+<summary>View answers</summary>
+
+**Fill in the Blanks:**
+1. statically
+2. single
+3. goroutine
+4. garbage
+
+**True/False:**
+1. ❌ False (Go compiles to native code)
+2. ❌ False (Go uses composition, not inheritance)
+3. ✅ True
+4. ❌ False (Go is significantly faster)
+
+**Multiple Choice:**
+1. **B** - Faster startup and lower memory usage
+2. **B** - Machine learning research (Python is better)
+
+</details>
+
+---
 
 ## Go Setup
 
@@ -7384,6 +7484,7 @@ for i := 0; i < 10; i++ {
 - [Go Blog](https://blog.golang.org/)
 - [Clean Go Article](https://github.com/Pungyeon/clean-go-article)
 - [How To Code in Go](https://www.digitalocean.com/community/tutorial_series/how-to-code-in-go)
+- [Google Style Guide](https://google.github.io/styleguide/go/)
 
 ### Video Tutorials
 
