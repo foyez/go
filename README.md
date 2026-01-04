@@ -2107,6 +2107,86 @@ Errors / debugging   → log
 
 </details>
 
+### Practice Questions
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+**Fill in the Blanks:**
+
+1. A package name should be __________, single-word, and match the directory name.
+2. Variables starting with an __________ letter are exported (public).
+3. The __________ value for an uninitialized int is 0.
+4. The `%__` format verb prints the type of a variable.
+
+**True/False:**
+
+1. ⬜ Go allows implicit type conversion between int and float64
+2. ⬜ Strings in Go are immutable
+3. ⬜ The `len()` function returns the number of Unicode characters in a string
+4. ⬜ Variables declared with `:=` can only be used inside functions
+
+**Multiple Choice:**
+
+1. Which is the correct way to iterate over Unicode characters?
+   - A) `for i := 0; i < len(s); i++`
+   - B) `for i, c := range s`
+   - C) `for c in s`
+   - D) `for each c in s`
+
+2. What is the zero value for a pointer?
+   - A) 0
+   - B) ""
+   - C) nil
+   - D) undefined
+
+**Code Output:**
+
+```go
+var x int
+var y = 10
+z := 20
+
+fmt.Printf("%d %d %d", x, y, z)
+```
+
+What is printed?
+
+---
+
+**Answers:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Fill in the Blanks:**
+1. lowercase
+2. uppercase
+3. zero
+4. T
+
+**True/False:**
+1. ❌ False (explicit conversion required)
+2. ✅ True
+3. ❌ False (returns bytes, not characters)
+4. ✅ True
+
+**Multiple Choice:**
+1. **B** - `for i, c := range s` (iterates over runes)
+2. **C** - nil
+
+**Code Output:**
+```
+0 10 20
+```
+(x gets zero value 0, y and z are initialized)
+
+---
+
+</details>
+
+</details>
+
 ## Control Structures: If & Else
 
 Go uses `if`, `else if`, and `else` for conditional logic.
