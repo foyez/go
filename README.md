@@ -406,6 +406,9 @@ Need to build UI-heavy apps?
 
 ## Practice Questions
 
+<details>
+<summary>View contents</summary>
+
 **Fill in the Blanks:**
 
 1. Go is a __________ typed language, meaning types are known at compile time.
@@ -459,6 +462,8 @@ Need to build UI-heavy apps?
 
 </details>
 
+</details>
+
 ---
 
 ## Go Setup
@@ -493,59 +498,44 @@ Go uses environment variables to locate:
 * Your workspace
 * Compiled binaries
 
+```bash
+go env
+```
+
+**Important environment variables:**
+- `GOROOT`: Go installation directory
+- `GOPATH`: Workspace for Go code (legacy, less used with modules)
+- `GOMODCACHE`: Module cache location
+
+---
+
+#### Environment Configuration
+
 #### Bash Shell
 
 ```bash
 # ~/.bash_profile or ~/.bashrc
 
-# Set the workspace path
-export GOPATH=$HOME/go-workspace # change this if needed
+# Go binary path
+export PATH=$PATH:/usr/local/go/bin
 
-# Add Go binaries to PATH
-export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin
+# Personal Go binaries
+export PATH=$PATH:$HOME/go/bin
 ```
 
-#### Fish Shell
-
+Apply changes:
 ```bash
-# ~/.config/fish/config.fish
-
-# Set the workspace path
-set -x GOPATH $HOME/go-workspace # change this if needed
-
-# Add Go binaries to PATH
-set -x PATH $PATH /usr/local/go/bin $GOPATH/bin
+source ~/.bashrc
 ```
 
 Why this matters:
 
-* `$GOPATH/bin` allows running installed Go tools
+* `$HOME/go/bin` allows running installed Go tools
 * `/usr/local/go/bin` allows running the Go compiler
 
 ---
 
-### 3. Install & Run `godoc`
-
-```bash
-$ go install golang.org/x/tools/cmd/godoc@latest
-
-# Run documentation server
-$ godoc -http :8000
-```
-
-Visit:
-
-* `http://localhost:8000/pkg` → Standard library docs
-* `http://localhost:8000/pkg/your-module` → Your project docs
-
-Why this matters:
-
-* Offline documentation
-* Learn Go idiomatically
-
----
-
-### 4. Update Go Version
+### 3. Update Go Version
 
 Remove old version:
 
@@ -558,48 +548,108 @@ Then install the latest version from:
 
 ---
 
-### 5. VS Code Setup
+### 4. VS Code Setup
 
-Install extensions:
+**Required Extension:**
+- **Go** (official): `golang.go`
 
-* **Go** (official): [https://marketplace.visualstudio.com/items?itemName=golang.go](https://marketplace.visualstudio.com/items?itemName=golang.go)
-* **Proto3** (for gRPC): [https://marketplace.visualstudio.com/items?itemName=zxh404.vscode-proto3](https://marketplace.visualstudio.com/items?itemName=zxh404.vscode-proto3)
+**Recommended Extensions:**
+- **Error Lens**: Inline error display
+- **Better Comments**: Enhanced comment highlighting
+- **Proto3**: for gRPC
 
-`settings.json`
+**VS Code Settings (`settings.json`):**
 
 ```json
 {
   "[go]": {
-    "editor.quickSuggestions": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    },
+	"editor.quickSuggestions": {
       "other": "off",
       "comments": "off",
       "strings": "off"
     }
   },
+  "go.useLanguageServer": true,
+  "go.lintTool": "golangci-lint",
+  "go.lintOnSave": "package",
+  "go.testFlags": ["-v", "-race"],
+  "go.buildTags": "",
   "go.toolsManagement.autoUpdate": true,
-  "go.testFlags": ["-v", "-count=1"],
   "protoc": {
     "options": ["--proto_path=proto"]
   }
 }
 ```
 
+**Install Go Tools:**
+
+Press `Cmd+Shift+P` (Mac) or `Ctrl+Shift+P` (Windows/Linux), then:
+```
+Go: Install/Update Tools
+```
+
+Select all tools and install.
+
 ---
 
 </details>
 
-## Create a Go Project
+## Project Example
 
 <details>
 <summary>View contents</summary>
 
-```bash
-# Create project directory
-$ mkdir hello
-$ cd hello
+**Modern Go uses modules** (not GOPATH):
 
-# Initialize module
-$ go mod init github.com/foyez/hello
+```bash
+# Create project directory (anywhere, not just in GOPATH)
+mkdir myproject
+cd myproject
+
+# Initialize Go module
+go mod init github.com/username/myproject
+
+# This creates go.mod file
+```
+
+**Project Structure:**
+```
+myproject/
+├── go.mod          # Module definition
+├── go.sum          # Dependency checksums
+├── main.go         # Entry point
+├── internal/       # Private packages
+│   └── util/
+└── pkg/            # Public packages
+    └── api/
+```
+
+**main.go:**
+```go
+package main
+
+import "fmt"
+
+func main() {
+	fmt.Println("Hello, World!")
+}
+```
+
+**Run it:**
+```bash
+go run main.go
+# Output: Hello, World!
+```
+
+**Build it:**
+```bash
+go build
+./hello
+# Output: Hello, World!
 ```
 
 Why Go Modules:
@@ -611,9 +661,59 @@ Why Go Modules:
 `go.mod`
 
 ```go
-module github.com/foyez/hello // module path
+module github.com/username/myproject // module path
 
 go 1.18 // minimum Go version
+```
+
+---
+
+</details>
+
+## Essential Go Commands
+
+<details>
+<summary>View contents</summary>
+
+```bash
+# Run program
+go run main.go
+
+# Build binary
+go build                    # Creates ./myproject
+go build -o custom-name     # Custom binary name
+
+# Install binary to $GOPATH/bin
+go install
+
+# Format code (ALWAYS use this)
+go fmt ./...
+
+# Static analysis
+go vet ./...
+
+# View documentation
+go doc fmt.Println
+go doc -http :8080  # Start local doc server
+
+# Manage dependencies
+go get package@version
+go mod tidy         # Clean up dependencies
+go mod download     # Download dependencies
+
+# Testing
+go test ./...
+go test -v -cover ./...
+go test -race ./...  # Race condition detection
+
+# View documentation
+go doc fmt.Println
+
+# Install dependency or tool
+go install golang.org/x/lint/golint@latest
+
+# Run linter
+golint
 ```
 
 ---
@@ -676,36 +776,63 @@ Why capitalization matters:
 
 </details>
 
-## Common Go Commands
+## Practice Questions
 
 <details>
 <summary>View contents</summary>
 
-```bash
-# Run program
-go run main.go
+**Fill in the Blanks:**
 
-# Build binary
-go build
+1. The command to initialize a Go module is `go __________ init`.
+2. The `go __________` command formats Go code automatically.
+3. Go modules are defined in a file named __________.
+4. The `go __________` command runs static analysis on code.
 
-# Format code
-go fmt main.go
+**True/False:**
 
-# List packages
-go list
+1. ⬜ Go requires code to be in the GOPATH directory
+2. ⬜ `go fmt` should be run before committing code
+3. ⬜ `go build` creates an executable binary
+4. ⬜ VS Code requires manual Go tool installation
 
-# Static analysis
-go vet
+**Multiple Choice:**
 
-# View documentation
-go doc fmt.Println
+1. Which command runs tests with race detection?
+   - A) `go test -v`
+   - B) `go test -race`
+   - C) `go test -cover`
+   - D) `go test -bench`
 
-# Install dependency or tool
-go install golang.org/x/lint/golint@latest
+2. Where should private packages be placed?
+   - A) `pkg/`
+   - B) `internal/`
+   - C) `private/`
+   - D) `src/`
 
-# Run linter
-golint
-```
+---
+
+**Answers**:
+
+<details>
+<summary>View answers</summary>
+
+**Fill in the Blanks:**
+1. mod
+2. fmt
+3. go.mod
+4. vet
+
+**True/False:**
+1. ❌ False (modules work anywhere)
+2. ✅ True (always format before commit)
+3. ✅ True
+4. ❌ False (VS Code can install them automatically)
+
+**Multiple Choice:**
+1. **B** - `go test -race`
+2. **B** - `internal/` (cannot be imported by external packages)
+
+</details>
 
 ---
 
