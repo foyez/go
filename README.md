@@ -1752,6 +1752,143 @@ string`
 
 </details>
 
+## Strings
+
+In Go, strings are:
+
+* **Immutable sequences of bytes**
+* **UTF-8 encoded**
+* Internally a **read-only byte slice**
+
+<details>
+<summary>View contents</summary>
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/strings)**
+
+**`len(string)` counts bytes, not characters:**
+
+```go
+len("hello") // 5
+len("ক")     // 3
+```
+
+Because:
+
+* Strings are UTF-8 encoded
+* Non-ASCII characters use multiple bytes
+
+---
+
+**Indexing a string returns a byte:**
+
+```go
+p("hello"[1]) // 101
+s := "Hello"
+
+// Indexing returns bytes
+fmt.Println(s[0])  // 72 (byte value, not character)
+
+// To convert to character:
+fmt.Println(string(s[0])) // E
+```
+
+Explanation:
+
+* `'H'` → ASCII value `72`
+* Type is `byte`, not `string`
+
+---
+
+**Concatenation & multi-line string:**
+
+```go
+s := "Hello"
+
+// Concatenation
+s2 := s + " - Go" // Hello - Go
+
+// Multi-line strings
+s3 := `This is a
+multi-line
+string`
+```
+
+**Iterating Strings Safely (Unicode):**
+
+```go
+s := "Hello, 世界"
+
+// Iterate over bytes (WRONG for Unicode)
+for i := 0; i < len(s); i++ {
+	fmt.Printf("%c ", s[i])
+}
+// Output: H e l l o ,   ä ¸  ç  ...
+
+// Iterate over runes (CORRECT for Unicode)
+for i, r := range s {
+	fmt.Printf("%d: %c\n", i, r)
+}
+// Output:
+// 0: H
+// 1: e
+// 2: l
+// 3: l
+// 4: o
+// 5: ,
+// 6:  
+// 7: 世
+// 10: 界
+```
+
+* `range` iterates over **runes**, not bytes
+* Correct way to handle Unicode
+
+---
+
+**String Immutability:**
+
+❌ This is invalid:
+
+```go
+s := "hello"
+s[0] = 'H' // compile-time error
+```
+
+✅ Correct approach:
+
+```go
+s = "Hello"
+```
+
+---
+
+**Common String Operations:**
+
+```go
+import "strings"
+
+strings.Contains("hello", "ll")        // true
+strings.HasPrefix("hello", "he")       // true
+strings.HasSuffix("hello", "lo")       // true
+strings.Split("a,b,c", ",")            // ["a", "b", "c"]
+strings.Join([]string{"a", "b"}, "-")  // "a-b"
+strings.ToUpper("hello")               // "HELLO"
+strings.Replace("hello", "l", "L", -1) // "heLLo"
+strings.Replace("fooo", "o", "O", 2)   // "fOOo"
+
+strings.Count("test", "t")             // 2
+strings.Index("test", "t")             // 0
+strings.LastIndex("test", "t")         // 3
+strings.Repeat("a", 5)                 // aaaaa
+len("hello")                           // 5
+"hello"[1]                             // 101 (byte value of 'e')
+"Let's" + " - Go"                      // Let's - Go
+```
+
+---
+
+</details>
+
 ## Input and Output
 
 This section explains how Go handles **output (printing)** and **input (reading data)** using the `fmt` and `os` packages.
@@ -3372,7 +3509,9 @@ fmt.Println(evens)  // [2 4 6]
 
 </details>
 
-## Arrays
+## Data Structures
+
+### Arrays
 
 Arrays have a **fixed length** and store elements of the same type.
 
@@ -3381,50 +3520,56 @@ Arrays have a **fixed length** and store elements of the same type.
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/arrays)**
 
-### Declaring arrays
+**Fixed-length sequences of elements:**
 
 ```go
-// ARRAY
-// [number]T
-// A slice type has a specific length
-var arr [3]float64
+// Declaration
+var arr [5]int  // Array of 5 integers, zero-initialized
 fmt.Println(arr) // [0 0 0]
+
+// Initialization
+arr1 := [3]int{1, 2, 3}
+arr2 := [...]int{1, 2, 3, 4}  // Compiler counts length
+
+// Access elements
+arr1[0] = 10 // set element
+value := arr1[0] // read element
 ```
 
-* Length is part of the type
-* Zero values are assigned automatically
-
----
-
-### Accessing elements
+**Important Characteristics:**
+- **Length is part of the type**: `[3]int` and `[5]int` are different types
+- **Arrays are values**: Assigning copies all elements
+- **Passing to functions copies the array**
 
 ```go
-arr[1] = 23               // set element
-element := arr[1]         // read element
-fmt.Println(arr, element) // [0 23 0] 23
+func modify(arr [3]int) {
+	arr[0] = 100  // Modifies copy, not original
+}
+
+a := [3]int{1, 2, 3}
+modify(a)
+fmt.Println(a)  // [1 2 3] (unchanged)
 ```
 
----
-
-### Declaring and initializing
-
+**Use pointer to modify:**
 ```go
-scores := [3]float64{9, 1.5, 2.2}
-fmt.Println(scores)
+func modify(arr *[3]int) {
+	arr[0] = 100  // Modifies original
+}
+
+a := [3]int{1, 2, 3}
+modify(&a)
+fmt.Println(a)  // [100 2 3]
 ```
 
----
-
-### Compiler-determined length
+**Compiler-determined length:**
 
 ```go
 arrNotMax := [...]int{2, 3, 4}
 fmt.Println(arrNotMax, len(arrNotMax)) // [2 3 4] 3
 ```
 
----
-
-### Slicing an array
+**Slicing an array:**
 
 ```go
 fruits := [5]string{"banana", "pear", "apple", "orange", "peach"}
@@ -3439,9 +3584,7 @@ fmt.Println(len(splicedFruits)) // 2
 fmt.Println(cap(splicedFruits)) // 4
 ```
 
----
-
-### Append behavior
+**Append behavior:**
 
 ```go
 fruitsToAdd := append(splicedFruits, "cherry", "pineapple", "guava")
@@ -3452,29 +3595,30 @@ fruitsToAdd := append(splicedFruits, "cherry", "pineapple", "guava")
   * A **new underlying array** is allocated
   * Capacity usually **doubles**
 
----
-
-### Prepend (not built-in)
+**Prepend (not built-in):**
 
 ```go
 nums := []int{1, 2, 3}
 nums = append([]int{0}, nums...)
 ```
 
----
-
-### Multidimensional array
+**Multidimensional array:**
 
 ```go
 multi := [2][3]int{{1, 2, 3}, {5, 6, 7}}
 fmt.Println(multi) // [[1 2 3] [5 6 7]]
 ```
 
+**When to Use Arrays:**
+- Known, fixed size at compile time
+- Performance-critical code (avoid heap allocation)
+- **Generally prefer slices** for flexibility
+
 ---
 
 </details>
 
-## Slices
+### Slices
 
 Slices are **more flexible than arrays** and are used almost everywhere in Go.
 
@@ -3601,7 +3745,7 @@ addFruits("banana", "pineapple")
 
 </details>
 
-## Maps
+### Maps
 
 In Go, a **map** is a built-in data type that stores **key–value pairs**.
 It is similar to:
@@ -3775,144 +3919,7 @@ for key, val := range users {
 
 </details>
 
-## Strings
-
-In Go, strings are:
-
-* **Immutable sequences of bytes**
-* **UTF-8 encoded**
-* Internally a **read-only byte slice**
-
-<details>
-<summary>View contents</summary>
-
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/strings)**
-
-**`len(string)` counts bytes, not characters:**
-
-```go
-len("hello") // 5
-len("ক")     // 3
-```
-
-Because:
-
-* Strings are UTF-8 encoded
-* Non-ASCII characters use multiple bytes
-
----
-
-**Indexing a string returns a byte:**
-
-```go
-p("hello"[1]) // 101
-s := "Hello"
-
-// Indexing returns bytes
-fmt.Println(s[0])  // 72 (byte value, not character)
-
-// To convert to character:
-fmt.Println(string(s[0])) // E
-```
-
-Explanation:
-
-* `'H'` → ASCII value `72`
-* Type is `byte`, not `string`
-
----
-
-**Concatenation & multi-line string:**
-
-```go
-s := "Hello"
-
-// Concatenation
-s2 := s + " - Go" // Hello - Go
-
-// Multi-line strings
-s3 := `This is a
-multi-line
-string`
-```
-
-**Iterating Strings Safely (Unicode):**
-
-```go
-s := "Hello, 世界"
-
-// Iterate over bytes (WRONG for Unicode)
-for i := 0; i < len(s); i++ {
-	fmt.Printf("%c ", s[i])
-}
-// Output: H e l l o ,   ä ¸  ç  ...
-
-// Iterate over runes (CORRECT for Unicode)
-for i, r := range s {
-	fmt.Printf("%d: %c\n", i, r)
-}
-// Output:
-// 0: H
-// 1: e
-// 2: l
-// 3: l
-// 4: o
-// 5: ,
-// 6:  
-// 7: 世
-// 10: 界
-```
-
-* `range` iterates over **runes**, not bytes
-* Correct way to handle Unicode
-
----
-
-**String Immutability:**
-
-❌ This is invalid:
-
-```go
-s := "hello"
-s[0] = 'H' // compile-time error
-```
-
-✅ Correct approach:
-
-```go
-s = "Hello"
-```
-
----
-
-**Common String Operations:**
-
-```go
-import "strings"
-
-strings.Contains("hello", "ll")        // true
-strings.HasPrefix("hello", "he")       // true
-strings.HasSuffix("hello", "lo")       // true
-strings.Split("a,b,c", ",")            // ["a", "b", "c"]
-strings.Join([]string{"a", "b"}, "-")  // "a-b"
-strings.ToUpper("hello")               // "HELLO"
-strings.Replace("hello", "l", "L", -1) // "heLLo"
-strings.Replace("fooo", "o", "O", 2)   // "fOOo"
-
-strings.Count("test", "t")             // 2
-strings.Index("test", "t")             // 0
-strings.LastIndex("test", "t")         // 3
-strings.Repeat("a", 5)                 // aaaaa
-len("hello")                           // 5
-"hello"[1]                             // 101 (byte value of 'e')
-"Let's" + " - Go"                      // Let's - Go
-```
-
----
-
-</details>
-
-## Structs
+### Structs
 
 A **struct** is a composite data type that groups together variables (fields) under one name.
 
@@ -4008,7 +4015,7 @@ fmt.Println(user.FirstName)
 
 </details>
 
-## Pointers
+### Pointers
 
 A **pointer** stores the **memory address** of a variable instead of a copy of its value.
 
