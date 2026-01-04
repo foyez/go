@@ -1429,278 +1429,588 @@ Most production Go teams use `testify`.
 
 </details>
 
-## Printing and Getting User Input
+## Package Structure
+
+**Every Go file starts with a package declaration:**
+
+```go
+package main  // Executable package (must have main function)
+
+package mylib  // Library package
+```
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+**Package Naming Rules (Google Style):**
+- Use **lowercase**, **single-word** names
+- Package name = directory name
+- Avoid underscores or mixed caps
+
+```
+✅ Good:
+   package http
+   package json
+   package user
+
+❌ Bad:
+   package HTTP
+   package jsonParser
+   package user_service
+```
+
+**Importing Packages:**
+
+```go
+package main
+
+import (
+	"fmt"           // Standard library
+	"net/http"      // Standard library (nested)
+	
+	"github.com/gorilla/mux"  // External package
+	"example.com/myproject/internal/util"  // Internal package
+)
+```
+
+**Import Aliases:**
+
+```go
+import (
+	"fmt"
+	str "strings"  // Alias to avoid naming conflicts
+)
+
+func main() {
+	str.ToUpper("hello")
+}
+```
+
+**Import Side Effects (rare):**
+
+```go
+import _ "image/png"  // Registers PNG decoder without using package
+```
+
+---
+
+</details>
+
+## Visibility Rules
+
+**Capitalization determines visibility:**
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+```go
+package user
+
+// Exported (public) - accessible from other packages
+type User struct {
+	Name string  // Exported field
+	Age  int     // Exported field
+}
+
+// Unexported (private) - only accessible within this package
+type session struct {
+	token string  // Unexported field
+}
+
+// Exported function
+func CreateUser(name string) *User {
+	return &User{Name: name}
+}
+
+// Unexported function
+func validateEmail(email string) bool {
+	return true
+}
+```
+
+**Key Rule:**
+```
+Uppercase first letter = Exported (public)
+Lowercase first letter = Unexported (private)
+```
+
+---
+
+</details>
+
+## Variables and Constants
+
+Variables store values that can be used and modified during program execution.
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+### Variable Declaration
+
+**Method 1: Explicit Type**
+```go
+var name string = "Alice"
+var age int = 30
+var isActive bool = true
+```
+
+**Method 2: Type Inference**
+```go
+var name = "Alice"  // Type inferred as string
+var age = 30        // Type inferred as int
+```
+
+**Method 3: Short Declaration (inside functions only)**
+```go
+name := "Alice"
+age := 30
+```
+
+**Multiple Variable Declaration:**
+```go
+var x, y int = 1, 2
+a, b := "hello", true
+
+var (
+	name   string = "Alice"
+	age    int    = 30
+	active bool   = true
+)
+```
+
+### Zero Values
+
+**Variables without initialization get zero values:**
+
+```go
+var i int       // 0
+var f float64   // 0.0
+var s string    // "" (empty string)
+var b bool      // false
+var p *int      // nil
+var sl []int    // nil
+var m map[string]int  // nil
+```
+
+**Real-World Example:**
+```go
+type Counter struct {
+	value int  // Automatically 0
+}
+
+c := Counter{}
+fmt.Println(c.value)  // Output: 0
+```
+
+### Constants
+
+**Constants are immutable:**
+
+```go
+const Pi = 3.14159
+const MaxConnections = 100
+
+// Multiple constants
+const (
+	StatusOK    = 200
+	StatusError = 500
+)
+
+// Typed constants
+const MaxRetries int = 3
+
+// iota (auto-incrementing)
+const (
+	Sunday = iota  // 0
+	Monday         // 1
+	Tuesday        // 2
+)
+```
+
+**Why use constants:**
+- Prevent accidental modification
+- Improve code readability
+- Enable compiler optimizations
+
+---
+
+</details>
+
+## Data Types
+
+Go is a **statically typed language**, meaning variable types are known at compile time.
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+### Basic Types
+
+```go
+// Integers
+int, int8, int16, int32, int64      // Signed
+uint, uint8, uint16, uint32, uint64 // Unsigned
+
+// Floating-point
+float32, float64
+
+// Complex numbers
+complex64, complex128
+
+// String
+string
+
+// Boolean
+bool
+
+// Byte (alias for uint8)
+byte
+
+// Rune (alias for int32, represents Unicode code point)
+rune
+```
+
+| Name        | Type Name                                                              | Examples                   |
+| ----------- | ---------------------------------------------------------------------- | -------------------------- |
+| **INTEGER** | int, int8, int16, int32, int64<br/>uint, uint8, uint16, uint32, uint64 | var age int = 20           |
+| **FLOAT**   | float32, float64                                                       | var gpa float64 = 3.4      |
+| **STRING**  | string                                                                 | var fruit string = "mango" |
+| **BOOLEAN** | bool                                                                   | var adult bool = age > 18  |
+
+---
+
+**Platform-dependent types:**
+- `int` and `uint` are 32 bits on 32-bit systems, 64 bits on 64-bit systems
+
+---
+
+**Boolean Operators:**
+
+```go
+&&  // AND
+||  // OR
+!   // NOT
+< <= > >= == !=
+```
+
+```go
+var adult bool = age >= 18
+```
+
+---
+
+**Identify type:**
+
+```go
+reflect.TypeOf(6) // int
+```
+
+Useful for debugging and learning, not common in production code.
+
+---
+
+### Type Conversion
+
+**Go requires explicit conversion:**
+
+```go
+var i int = 42
+var f float64 = float64(i)  // Must convert explicitly
+var u uint = uint(f)
+var value float64 = float64(10) + 5.5 // 15.5
+
+// ❌ This won't compile:
+// var f float64 = i
+```
+
+**Real-World Example:**
+```go
+func calculateAverage(nums []int) float64 {
+	sum := 0
+	for _, n := range nums {
+		sum += n
+	}
+	return float64(sum) / float64(len(nums))  // Must convert to float64
+}
+```
+
+---
+
+### Strings
+
+**Strings are immutable sequences of bytes.**
+
+```go
+s := "Hello, 世界"
+
+// Multi-line strings
+s3 := `This is a
+multi-line
+string`
+```
+
+---
+
+</details>
+
+## Input and Output
 
 This section explains how Go handles **output (printing)** and **input (reading data)** using the `fmt` and `os` packages.
 
 <details>
-<summary>View contents</summary>
+<summary><strong>View contents</strong></summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/printing)**
 
-### Print
+### Printing
 
-Go provides three main print functions for writing output to the **standard output (stdout)**, usually the terminal.
-
-```go
-fmt.Print()
-fmt.Println()
-fmt.Printf()
-```
-
-#### Key points
+**Print:**
 
 * Print output to the **stdout console**
 * Return:
 
   * Number of bytes written
   * An error (`error`)
-* The returned error is usually ignored in beginner-level code
-
----
-
-#### Examples
 
 ```go
-name := "Zohan"
+import "fmt"
 
-fmt.Print("Hello, ", name, "\n")
-fmt.Println("Hello,", name)
-fmt.Printf("Hello, %s\n", name)
+// Print without newline
+fmt.Print("Hello")
+
+// Print with newline
+fmt.Println("Hello")
+
+// Formatted print
+fmt.Printf("Name: %s, Age: %d\n", "Alice", 30)
 ```
 
-#### Difference between Print, Println, and Printf
+**Common Format Verbs:**
 
-| Function | Newline | Formatting |
-| -------- | ------- | ---------- |
-| Print    | ❌ No    | ❌ No       |
-| Println  | ✅ Yes   | ❌ No       |
-| Printf   | ❌ No    | ✅ Yes      |
+| Verb | Type | Example |
+|------|------|---------|
+| `%v` | Default format | `%v` → `{Name:Alice Age:30}` |
+| `%+v` | Struct with field names | `%+v` → `{Name:Alice Age:30}` |
+| `%#v` | Go-syntax representation | `%#v` → `main.User{Name:"Alice", Age:30}` |
+| `%T` | Type | `%T` → `main.User` |
+| `%d` | Integer | `%d` → `42` |
+| `%f` | Float | `%f` → `3.141593`, `%.2f` → `3.14` |
+| `%s` | String | `%s` → `hello` |
+| `%q` | Quoted string | `%q` → `"hello"` |
+| `%t` | Boolean | `%t` → `true` |
+| `%p` | Pointer | `%p` → `0xc0000b2000` |
 
----
-
-#### Format specifiers with `Printf`
-
+**Example:**
 ```go
-s := Student{
-	ID:   1,
-	Name: "John Doe",
+type User struct {
+	Name string
+	Age  int
 }
 
-fmt.Printf("%s\n", "Hello")              // string
-fmt.Printf("%d\n", -34)                  // decimal integer
-fmt.Printf("%+d\n", 4)                   // always show sign
-fmt.Printf("%t\n", false)                // boolean
-fmt.Printf("%f, %.2f\n", 3.1416, 3.1416) // float (default & precision)
-fmt.Printf("%v\n", s)                    // value
-fmt.Printf("%+v\n", s)                   // value with field names
-fmt.Printf("%T\n", s)                    // type
+u := User{Name: "Alice", Age: 30}
+
+fmt.Printf("%v\n", u)   // {Alice 30}
+fmt.Printf("%+v\n", u)  // {Name:Alice Age:30}
+fmt.Printf("%#v\n", u)  // main.User{Name:"Alice", Age:30}
+fmt.Printf("%T\n", u)   // main.User
 ```
-
-#### Common format verbs
-
-| Verb  | Meaning            |
-| ----- | ------------------ |
-| `%s`  | string             |
-| `%d`  | integer            |
-| `%f`  | float              |
-| `%t`  | boolean            |
-| `%v`  | value              |
-| `%+v` | struct with fields |
-| `%T`  | type               |
 
 ---
 
-### Fprint
+**String Formatting (without printing):**
 
 ```go
-fmt.Fprint()
-fmt.Fprintln()
-fmt.Fprintf()
+msg := fmt.Sprintf("User: %s, Age: %d", "Alice", 30)
+// msg = "User: Alice, Age: 30"
 ```
-
-#### What they do
-
-* Print output to an **external writer**, not stdout
-* Commonly used with:
-
-  * Files
-  * Network connections
-  * HTTP responses
-
-```go
-fmt.Fprintln(file, "Hello file")
-```
-
-#### Key points
-
-* Require an `io.Writer`
-* Return number of bytes written and an error
-* Useful in real-world applications (files, logs, servers)
 
 ---
 
-### Sprint
+### Reading Input
+
+Go reads user input from **standard input (`stdin`)** using functions from the `fmt` package and utilities from `bufio`.
+
+**Scan:**
 
 ```go
-fmt.Sprint()
-fmt.Sprintln()
-fmt.Sprintf()
+import "fmt"
+
+var name string
+fmt.Print("Enter your name: ")
+fmt.Scan(&name)  // Reads until whitespace
+fmt.Println("Hello,", name)
 ```
 
-#### What they do
-
-* **Do NOT print anything**
-* Return formatted output as a **string**
-* Useful when you need formatted data stored in a variable
+**Reading Lines (with bufio):**
 
 ```go
-msg := fmt.Sprintf("Hello, %s", name)
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strings"
+  "log"
+)
+
+func main() {
+	reader := bufio.NewReader(os.Stdin)
+	
+	fmt.Print("Enter text: ")
+	text, err := reader.ReadString('\n')
+  if err != nil {
+    log.Fatal(err)
+  }
+	text = strings.TrimSpace(text)  // Remove newline
+	
+	fmt.Println("You entered:", text)
+}
 ```
-
-#### Use cases
-
-* Logging
-* Building strings
-* Returning formatted messages from functions
 
 ---
 
-### Log Printing (`log` package)
+**Reading Multiple Values:**
 
-Go provides the built-in `log` package for **structured, timestamped output**, mainly used for:
+```go
+var a, b int
+fmt.Print("Enter two numbers: ")
+fmt.Scanf("%d %d", &a, &b)
+fmt.Println("Sum:", a+b)
+```
 
-* Debugging
-* Errors and warnings
-* Application logs (servers, CLIs, services)
+**Command-Line Arguments (`os.Args`):**
 
-Unlike `fmt`, `log` is **opinionated** and designed for **production usage**.
+* Reads arguments passed from the command line
+* Returns a slice of strings (`[]string`)
+
+```go
+import (
+	"fmt"
+	"os"
+)
+
+func main() {
+	// os.Args[0] is program name
+	// os.Args[1:] are actual arguments
+	
+	if len(os.Args) < 2 {
+		fmt.Println("Usage: program <arg>")
+		os.Exit(1)
+	}
+	
+	arg := os.Args[1]
+	fmt.Println("Argument:", arg)
+}
+```
+
+```bash
+go run main.go hello
+# Output: Argument: hello
+```
 
 ---
 
-### Basic Log Functions
+### Less Common Input & Output
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+### `fmt.Fprint / Fprintln / Fprintf`
+
+* Writes output to an io.Writer ((e.g., a file, `os.Stdout`, `os.Stderr`))
+* Returns (bytesWritten, error)
+* Used with files, network connections, HTTP responses
 
 ```go
-log.Print()
-log.Println()
-log.Printf()
+import (
+	"fmt"
+	"os"
+)
+
+fmt.Fprint(writer, "Hello")           // no newline
+fmt.Fprintln(writer, "Hello")         // with newline
+fmt.Fprintf(writer, "Age: %d", age)   // formatted
 ```
 
-#### Key points
+Common writers:
 
-* Print to **stderr** by default (not stdout)
-* Automatically include:
+```go
+os.Stdout   // terminal output
+os.Stderr   // error output
+*os.File    // files
+```
 
-  * Date
-  * Time
-* Return no values
+#### Example: Printing to stdout
+
+```go
+fmt.Fprint(os.Stdout, "Hello")
+fmt.Fprintln(os.Stdout, "Hello")
+fmt.Fprintf(os.Stdout, "Name: %s\n", "Alice")
+```
+
+#### Example: Printing to a file
+
+```go
+file, _ := os.Create("output.txt")
+defer file.Close()
+
+fmt.Fprintln(file, "Hello File")
+fmt.Fprintf(file, "Score: %d\n", 100)
+```
+
+> **Use `fmt` for user-facing output (CLI, results, messages).**
+
+---
+
+## 2. Logging (`log` package)
+
+* Opinionated logging for production
+* Writes to stderr by default
+* Automatically adds date & time
 * Safe for concurrent use
 
----
-
-#### Examples
+Basic usage:
 
 ```go
-import "log"
-
-log.Print("application started")
+log.Print("app started")
 log.Println("user logged in")
-log.Printf("user %s logged in", "Foyez")
+log.Printf("user %s logged in", name)
 ```
 
-#### Example output
+Example output:
 
-```sh
-2025/01/01 10:15:30 application started
-2025/01/01 10:15:30 user logged in
-2025/01/01 10:15:30 user Foyez logged in
+```
+2025/01/01 10:15:30 app started
 ```
 
----
-
-### Log vs fmt (When to use which?)
-
-| Feature            | fmt    | log    |
-| ------------------ | ------ | ------ |
-| Timestamp          | ❌ No   | ✅ Yes  |
-| Output stream      | stdout | stderr |
-| Production logging | ❌      | ✅      |
-| Formatting         | ✅      | ✅      |
-
-**Rule of thumb**
-
-* Use `fmt` → user-facing output
-* Use `log` → developer/system messages
-
----
-
-### Fatal and Panic Logging
-
-The `log` package provides helpers that **terminate the program**.
-
-#### `log.Fatal`
+### Fatal & Panic Logs
 
 ```go
-log.Fatal("failed to connect to database")
+log.Fatal("error")  // prints + os.Exit(1), deferred funcs NOT run
+log.Panic("error")  // prints + panic(), deferred funcs DO run
 ```
 
-* Prints the log message
-* Calls `os.Exit(1)`
-* Deferred functions are **NOT executed**
+| Function  | Stops program | Deferred runs |
+| --------- | ------------- | ------------- |
+| log.Fatal | Yes           | No            |
+| log.Panic | Yes           | Yes           |
 
 ---
 
-#### `log.Panic`
-
-```go
-log.Panic("unexpected state")
-```
-
-* Prints the log message
-* Calls `panic()`
-* Deferred functions **ARE executed**
-
----
-
-#### Comparison
-
-| Function  | Program stops | Deferred calls |
-| --------- | ------------- | -------------- |
-| log.Fatal | ✅ Yes         | ❌ No           |
-| log.Panic | ✅ Yes         | ✅ Yes          |
-
----
-
-### Customizing Log Output
-
-#### Change log prefix
+### Customizing Logs
 
 ```go
 log.SetPrefix("INFO: ")
-log.Println("server started")
-```
-
-```sh
-INFO: 2025/01/01 10:20:00 server started
-```
-
----
-
-#### Change log flags
-
-```go
 log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 ```
 
-#### Common flags
+Common flags:
 
-| Flag                | Description           |
-| ------------------- | --------------------- |
-| `log.Ldate`         | Date                  |
-| `log.Ltime`         | Time                  |
-| `log.Lmicroseconds` | Microsecond precision |
-| `log.Lshortfile`    | File name and line    |
-| `log.Llongfile`     | Full file path        |
+```go
+log.Ldate        // date
+log.Ltime        // time
+log.Lmicroseconds // Microsecond precision
+log.Lshortfile   // file:line
+log.Llongfile // Full file path
+```
 
 ---
 
@@ -1720,167 +2030,31 @@ log.SetOutput(file)
 log.Println("logging to file")
 ```
 
-#### Important notes
-
-* Logs are written to `app.log`
-* Common in production systems
-* `io.Writer` based (same as `fmt.Fprint`)
+> `log` uses `io.Writer` internally (same idea as `fmt.Fprint`).
 
 ---
 
-### log vs fmt vs println
+### fmt vs log
 
-| Use case        | Recommended |
-| --------------- | ----------- |
-| CLI output      | fmt         |
-| Debug info      | log         |
-| Errors          | log         |
-| Learning/demo   | fmt         |
-| Production apps | log         |
-
----
-
-### Scan (Getting User Input)
-
-Go reads user input from **standard input (`stdin`)** using functions from the `fmt` package and utilities from `bufio`.
-
----
-
-### fmt.Scan Family
-
-```go
-fmt.Scan()
-fmt.Scanln()
-fmt.Scanf()
+```text
+fmt → user output (CLI, results)
+log → system/debug/error messages
 ```
 
-#### Common characteristics
-
-* Read input from **stdin**
-* Store values using **pointers**
-* Return:
-
-  * Number of items successfully scanned
-  * An error (`error`)
-* Input is **space-separated** by default
+| Feature    | fmt | log         |
+| ---------- | --- | ----------- |
+| Timestamp  | No  | Yes         |
+| Stdout     | Yes | No (stderr) |
+| Production | No  | Yes         |
 
 ---
 
-### fmt.Scan
+## 3. Reading Input (`fmt.Fscan`)
 
-```go
-var name string
-fmt.Scan(&name)
-fmt.Println("Hello,", name)
-```
+* Reads from any io.Reader (stdin, file, network)
+* Faster and more flexible than fmt.Scan
 
-#### Behavior
-
-* Reads input until **space or newline**
-* Best for simple, single-value input
-
-Example input:
-
-```sh
-Zayan
-```
-
----
-
-### fmt.Scanln
-
-```go
-var name string
-fmt.Scanln(&name)
-fmt.Println("Hello,", name)
-```
-
-#### Behavior
-
-* Reads input until **newline**
-* Fails if extra input remains on the same line
-* Useful when you expect exactly one line of input
-
----
-
-### fmt.Scanf
-
-```go
-var name string
-fmt.Scanf("%s", &name)
-fmt.Println("Hello,", name)
-```
-
-#### Behavior
-
-* Reads input based on a **format string**
-* Similar to `fmt.Printf`, but for input
-
-Example:
-
-```go
-var age int
-fmt.Scanf("%d", &age)
-```
-
----
-
-### Important Rule ⚠️
-
-❌ `Scan`, `Scanln`, and `Scanf` **do NOT print prompts**
-
-You must print prompts explicitly:
-
-```go
-fmt.Print("Enter your name: ")
-fmt.Scan(&name)
-```
-
----
-
-### Common Input Pitfalls
-
-* Forgetting `&` (pointer)
-* Mixing `Scan` and `Scanln`
-* Leaving unread newline characters
-* Using `Scan` for multi-word input
-
----
-
-### Reading Multi-word Input (bufio.Reader)
-
-`fmt.Scan` **cannot read spaces inside strings**.
-
-For full-line input, use `bufio.Reader`.
-
-```go
-in := bufio.NewReader(os.Stdin)
-
-line, err := in.ReadString('\n')
-if err != nil {
-	log.Fatal(err)
-}
-
-fmt.Println("You entered:", line)
-```
-
----
-
-### fmt.Fscan (Recommended for Competitive Programming & CLIs)
-
-`fmt.Fscan` reads input from any **`io.Reader`**, not just stdin.
-
-```go
-fmt.Fscan()
-fmt.Fscanln()
-fmt.Fscanf()
-```
-
----
-
-### Using fmt.Fscan with bufio.Reader
-
-This is the **most flexible and performant approach**.
+### Recommended Pattern
 
 ```go
 in := bufio.NewReader(os.Stdin)
@@ -1891,288 +2065,45 @@ fmt.Fscan(in, &n)
 fmt.Println("Number:", n)
 ```
 
-#### Why this is preferred
-
-* Faster than `fmt.Scan`
-* Works well with large inputs
-* Avoids common newline issues
-* Standard pattern in real-world Go code
-
----
-
-### Reading Multiple Values
+Multiple values:
 
 ```go
-in := bufio.NewReader(os.Stdin)
-
 var a, b int
 fmt.Fscan(in, &a, &b)
-
 fmt.Println(a + b)
 ```
 
 Input:
 
-```sh
+```
 10 20
 ```
 
 ---
 
-### fmt.Fscan vs fmt.Scan
+### Scan vs Fscan
 
-| Feature          | Scan       | Fscan           |
-| ---------------- | ---------- | --------------- |
-| Input source     | stdin only | any `io.Reader` |
-| Performance      | slower     | faster          |
-| Flexibility      | limited    | high            |
-| Real-world usage | learning   | production      |
+| Feature      | Scan       | Fscan         |
+| ------------ | ---------- | ------------- |
+| Input source | stdin only | any io.Reader |
+| Speed        | slower     | faster        |
+| Usage        | learning   | real-world    |
 
 ---
 
 ### When to Use What
 
-| Scenario                 | Recommended    |
-| ------------------------ | -------------- |
-| Simple learning examples | `fmt.Scan`     |
-| Multi-word input         | `bufio.Reader` |
-| Large / repeated input   | `fmt.Fscan`    |
-| Files / network input    | `fmt.Fscan`    |
-
----
-
-### os.Args (Command-line Arguments)
-
-#### What is `os.Args`?
-
-* Reads arguments passed from the command line
-* Returns a slice of strings (`[]string`)
-* Indexing starts at **0**
-
-```go
-import "os"
-
-arguments := os.Args
-```
-
-#### Important details
-
-| Index        | Value                |
-| ------------ | -------------------- |
-| `os.Args[0]` | Program name         |
-| `os.Args[1]` | First user argument  |
-| `os.Args[2]` | Second user argument |
-
----
-
-#### Example
-
-```sh
-go run main.go 10 20
-```
-
-```go
-// os.Args[1] -> "10"
-// os.Args[2] -> "20"
-```
-
-⚠️ Values are **strings**, conversion is required:
-
-```go
-num, _ := strconv.Atoi(os.Args[1])
+```text
+Simple learning      → fmt.Scan
+Large input / CP     → bufio + fmt.Fscan
+Files / network      → fmt.Fscan
+CLI output           → fmt
+Errors / debugging   → log
 ```
 
 ---
 
 </details>
-
-## Types
-
-Go is a **statically typed language**, meaning variable types are known at compile time.
-
-<details>
-<summary>View contents</summary>
-
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/types)**
-
-### Built-in Types
-
-| Name        | Type Name                                                              | Examples                   |
-| ----------- | ---------------------------------------------------------------------- | -------------------------- |
-| **INTEGER** | int, int8, int16, int32, int64<br/>uint, uint8, uint16, uint32, uint64 | var age int = 20           |
-| **FLOAT**   | float32, float64                                                       | var gpa float64 = 3.4      |
-| **STRING**  | string                                                                 | var fruit string = "mango" |
-| **BOOLEAN** | bool                                                                   | var adult bool = age > 18  |
-
-
-❌ Unsigned integers **cannot store negative values**
-
-```go
-var count uint = 5     // valid
-// var count uint = -5 // compile-time error
-```
-
----
-
-### Boolean Operators
-
-```go
-&&  // AND
-||  // OR
-!   // NOT
-< <= > >= == !=
-```
-
-```go
-var adult bool = age >= 18
-```
-
----
-
-### Identifying and Converting Types
-
-#### Identify type
-
-```go
-reflect.TypeOf(6) // int
-```
-
-Useful for debugging and learning, not common in production code.
-
----
-
-#### Type conversion
-
-Go does **not** perform implicit type conversion.
-
-```go
-float64(10) + 5.5 // 15.5
-```
-
-❌ This will fail:
-
-```go
-10 + 5.5
-```
-
-Reason:
-
-* `10` is `int`
-* `5.5` is `float64`
-
----
-
-</details>
-
-## Variables
-
-Variables store values that can be used and modified during program execution.
-
-<details>
-<summary>View contents</summary>
-
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/variables)**
-
-### Variable Declaration
-
-```go
-package main
-
-import "fmt"
-
-// var variableName type = value
-// can declare outside and inside of a function
-var name string = "Zayan"
-
-func main() {
-	// Infer variable type
-	var age = 20
-
-	// variables without assigning value
-	// return default value
-	// int: 0, float: 0.0, string: "", bool: false
-	var salary int
-
-	// value cannot be changed/re-assigned
-	const birthPlace = "Bangladesh"
-
-	// variables in only function
-	funcVar := "can't declare outside of a function"
-
-	// multiple variables
-	one, two := 1, "two"
-
-	fmt.Println(name, age, salary)
-	fmt.Println(birthPlace)
-	fmt.Println(funcVar)
-	fmt.Println(one, two)
-}
-```
-
----
-
-### Key Concepts
-
-#### `var` keyword
-
-* Used for **explicit variable declaration**
-* Can be declared:
-
-  * At **package level**
-  * Inside functions
-
-```go
-var age int = 20
-```
-
----
-
-#### Type inference
-
-```go
-var age = 20
-```
-
-* Go infers the type (`int`)
-* Cleaner and commonly used
-
----
-
-#### Zero values
-
-When a variable is declared without assignment, Go assigns a **zero value**:
-
-| Type   | Zero value |
-| ------ | ---------- |
-| int    | 0          |
-| float  | 0.0        |
-| string | ""         |
-| bool   | false      |
-
----
-
-#### Short variable declaration `:=`
-
-```go
-funcVar := "only inside function"
-```
-
-* Only works **inside functions**
-* Infers type automatically
-* Most commonly used in Go
-
----
-
-#### Constants
-
-```go
-const birthPlace = "Bangladesh"
-```
-
-* Value **cannot be reassigned**
-* Must be known at compile time
-
----
 
 </details>
 
@@ -3041,7 +2972,7 @@ for key, val := range users {
 
 In Go, strings are:
 
-* **Immutable**
+* **Immutable sequences of bytes**
 * **UTF-8 encoded**
 * Internally a **read-only byte slice**
 
@@ -3050,42 +2981,7 @@ In Go, strings are:
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/strings)**
 
-### Common String Operations (`strings` package)
-
-```go
-package main
-
-import (
-	"fmt"
-	s "strings"
-)
-
-var p = fmt.Println
-
-func main() {
-	p(s.Contains("test", "es"))        // true
-	p(s.Count("test", "t"))            // 2
-	p(s.HasPrefix("test", "te"))       // true
-	p(s.HasSuffix("test", "st"))       // true
-	p(s.Index("test", "t"))            // 0
-	p(s.LastIndex("test", "t"))        // 3
-	p(s.Join([]string{"a", "b"}, "-")) // a-b
-	p(s.Repeat("a", 5))                // aaaaa
-	p(s.Replace("fooo", "o", "O", -1)) // fOOO
-	p(s.Replace("fooo", "o", "O", 2))  // fOOo
-	p(s.Split("a-b-c", "-"))           // [a b c]
-	p(s.ToLower("TEST"))               // test
-	p(s.ToUpper("test"))               // TEST
-	p(len("hello"))                    // 5
-	p("hello"[1])                      // 101 (byte value of 'e')
-}
-```
-
----
-
-### Important String Details ⚠️
-
-#### `len(string)` counts bytes, not characters
+**`len(string)` counts bytes, not characters:**
 
 ```go
 len("hello") // 5
@@ -3099,31 +2995,65 @@ Because:
 
 ---
 
-#### Indexing a string returns a byte
+**Indexing a string returns a byte:**
 
 ```go
 p("hello"[1]) // 101
+s := "Hello"
+
+// Indexing returns bytes
+fmt.Println(s[0])  // 72 (byte value, not character)
+
+// To convert to character:
+fmt.Println(string(s[0])) // E
 ```
 
 Explanation:
 
-* `'e'` → ASCII value `101`
+* `'H'` → ASCII value `72`
 * Type is `byte`, not `string`
-
-To convert to character:
-
-```go
-p(string("hello"[1])) // e
-```
 
 ---
 
-### Iterating Strings Safely (Unicode)
+**Concatenation & multi-line string:**
 
 ```go
-for _, r := range "কুমিল্লা" {
-	fmt.Printf("%c\n", r)
+s := "Hello"
+
+// Concatenation
+s2 := s + " - Go" // Hello - Go
+
+// Multi-line strings
+s3 := `This is a
+multi-line
+string`
+```
+
+**Iterating Strings Safely (Unicode):**
+
+```go
+s := "Hello, 世界"
+
+// Iterate over bytes (WRONG for Unicode)
+for i := 0; i < len(s); i++ {
+	fmt.Printf("%c ", s[i])
 }
+// Output: H e l l o ,   ä ¸  ç  ...
+
+// Iterate over runes (CORRECT for Unicode)
+for i, r := range s {
+	fmt.Printf("%d: %c\n", i, r)
+}
+// Output:
+// 0: H
+// 1: e
+// 2: l
+// 3: l
+// 4: o
+// 5: ,
+// 6:  
+// 7: 世
+// 10: 界
 ```
 
 * `range` iterates over **runes**, not bytes
@@ -3131,7 +3061,7 @@ for _, r := range "কুমিল্লা" {
 
 ---
 
-### String Immutability
+**String Immutability:**
 
 ❌ This is invalid:
 
@@ -3144,6 +3074,31 @@ s[0] = 'H' // compile-time error
 
 ```go
 s = "Hello"
+```
+
+---
+
+**Common String Operations:**
+
+```go
+import "strings"
+
+strings.Contains("hello", "ll")        // true
+strings.HasPrefix("hello", "he")       // true
+strings.HasSuffix("hello", "lo")       // true
+strings.Split("a,b,c", ",")            // ["a", "b", "c"]
+strings.Join([]string{"a", "b"}, "-")  // "a-b"
+strings.ToUpper("hello")               // "HELLO"
+strings.Replace("hello", "l", "L", -1) // "heLLo"
+strings.Replace("fooo", "o", "O", 2)   // "fOOo"
+
+strings.Count("test", "t")             // 2
+strings.Index("test", "t")             // 0
+strings.LastIndex("test", "t")         // 3
+strings.Repeat("a", 5)                 // aaaaa
+len("hello")                           // 5
+"hello"[1]                             // 101 (byte value of 'e')
+"Let's" + " - Go"                      // Let's - Go
 ```
 
 ---
