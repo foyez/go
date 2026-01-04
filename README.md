@@ -404,7 +404,7 @@ Need to build UI-heavy apps?
 
 </details>
 
-## Practice Questions
+## Practice Questions (Go Basics)
 
 <details>
 <summary>View contents</summary>
@@ -776,7 +776,7 @@ Why capitalization matters:
 
 </details>
 
-## Practice Questions
+## Practice Questions (Essential Commands)
 
 <details>
 <summary>View contents</summary>
@@ -2107,7 +2107,7 @@ Errors / debugging   → log
 
 </details>
 
-### Practice Questions
+## Practice Questions (Packages, Variables, Data Types, etc.)
 
 <details>
 <summary><strong>View contents</strong></summary>
@@ -2625,7 +2625,7 @@ func divide(a, b float64) (float64, error) {
 
 </details>
 
-### Practice Questions
+## Practice Questions (Control Structures and Loops)
 
 <details>
 <summary><strong>View contents</strong></summary>
@@ -2715,109 +2715,192 @@ func fizzBuzz(n int) string {
 
 </details>
 
-## Functions
+## Functions and Methods
 
 Functions are reusable blocks of code that perform a specific task.
 Go functions are **strongly typed**, support **multiple return values**, and treat functions as **first-class citizens**.
 
+A **method** is a function with a **receiver**.
+
 <details>
-<summary>View contents</summary>
+<summary><strong>View contents</strong></summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/funtions)**
 
-### Basic function
+### Function Basics
 
+#### Function Declaration
+
+**Basic Syntax:**
 ```go
-func printAge() {
-	fmt.Println(10)
+func functionName(param1 type1, param2 type2) returnType {
+	// function body
+	return value
 }
 ```
 
-* No parameters
-* No return value
-
----
-
-### Function with parameters and return type
+**Examples:**
 
 ```go
-func printAge(age int) int {
-	return age
+// No parameters, no return
+func sayHello() {
+	fmt.Println("Hello")
+}
+
+// With parameters and return
+func add(a int, b int) int {
+	return a + b
+}
+
+// Shortened parameter list (same type)
+func multiply(a, b int) int {
+	return a * b
+}
+
+// Multiple return values
+func divide(a, b float64) (float64, error) {
+	if b == 0 {
+		return 0, errors.New("division by zero")
+	}
+	return a / b, nil
 }
 ```
 
-* Parameters must have types
-* Return type is declared after parameters
+#### Multiple Return Values
+
+**Common Pattern: (value, error)**
+
+```go
+import (
+	"errors"
+	"os"
+)
+
+func readFile(path string) (string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// Usage
+content, err := readFile("config.txt")
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(content)
+```
+
+**Multiple Values:**
+```go
+func getUserInfo(id int) (string, int, bool) {
+	return "Alice", 30, true
+}
+
+name, age, active := getUserInfo(1)
+```
+
+**Ignoring Return Values:**
+```go
+// Ignore error (NOT recommended in production)
+data, _ := os.ReadFile("file.txt")
+
+// Ignore all but one
+_, _, active := getUserInfo(1)
+```
 
 ---
 
-### Returning multiple values
+### Named Return Values
 
-One of Go’s most powerful features.
+**Named returns are pre-declared in the signature:**
 
 ```go
-func printAge(age int) (string, int) {
-	return "name", age
-}
-
-func main() {
-	name, age := printAge(10)
+func divide(a, b float64) (result float64, err error) {
+	if b == 0 {
+		err = errors.New("division by zero")
+		return  // Naked return (returns result and err)
+	}
+	result = a / b
+	return  // Naked return
 }
 ```
 
-### Why this is useful
+**When to use:**
+- ✅ Short functions (improves documentation)
+- ✅ Error handling patterns
+- ❌ Long functions (can be confusing)
 
-* Returning `(value, error)`
-* Cleaner than exceptions
-* Common Go pattern
+**Google Style Recommendation:**
+- Use named returns sparingly
+- Prefer explicit returns in complex functions
 
----
-
-### Named return values
-
+**Example:**
 ```go
-func printAge(age1, age2 int) (ageOfBob, ageOfSally int) {
-	ageOfBob = age1
-	ageOfSally = age2
+// Good: Clear and concise
+func getData() (value int, err error) {
+	if err = validate(); err != nil {
+		return
+	}
+	value = fetchValue()
 	return
 }
+
+// Better: Explicit returns for complex logic
+func processData() (int, error) {
+	if err := validate(); err != nil {
+		return 0, err
+	}
+	
+	value := fetchValue()
+	return value, nil
+}
 ```
-
-#### Key points
-
-* Return variables are pre-declared
-* `return` without arguments returns current values
-* Useful for documentation, but overuse can reduce clarity
 
 ---
 
-### Variadic functions (unknown number of arguments)
+### Variadic Functions (unknown number of arguments)
+
+**Accept unlimited arguments:**
 
 ```go
-func average(ages ...int) float64 {
+func sum(nums ...int) int {
 	total := 0
-
-	// ages - treated as slice
-	for _, age := range ages {
-		total += age
+  // n - treated as slice
+	for _, n := range nums {
+		total += n
 	}
-
-	return float64(total) / float64(len(ages))
+	return total
 }
 
-func main() {
-	fmt.Println(average(10, 20, 32))
+// Usage
+fmt.Println(sum(1, 2, 3))        // 6
+fmt.Println(sum(1, 2, 3, 4, 5))  // 15
 
-	nums := []int{10, 20, 32}
-	// unpack or spread
-	fmt.Println(average(nums...))
-}
+// Spread or unpack slice into variadic function
+values := []int{1, 2, 3}
+fmt.Println(sum(values...))      // 6
 ```
 
-#### Key points
+**Real-World Example:**
 
-* Variadic parameters are treated as slices
-* Only **one variadic parameter**, and it must be last
+```go
+import "fmt"
+
+func logError(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	fmt.Println("[ERROR]", msg)
+}
+
+logError("User %s not found", "Alice")
+logError("Invalid input: %d", 42)
+```
+
+**Rules:**
+- Variadic parameters are treated as slices
+- Variadic parameter must be **last**
+- Only **one** variadic parameter per function
 
 ---
 
@@ -2842,7 +2925,9 @@ func foo(n2 int) {
 
 ---
 
-### Functions as first-class values
+### Functions as Values
+
+**Functions are first-class citizens:**
 
 Functions can be:
 
@@ -2852,43 +2937,438 @@ Functions can be:
 
 ---
 
-#### Passing function as argument
+**Assign function to variable:**
 
 ```go
-func print(n int, fn func(int)) {
-	fn(n)
+// Assign function to variable
+var add func(int, int) int = func(a, b int) int {
+	return a + b
 }
 
-print(6, func(val int) {
-	fmt.Println(val) // 6
-})
+result := add(3, 4)  // 7
 ```
 
 ---
 
-#### Returning a function (closure)
+**Passing functions as arguments:**
 
 ```go
-func add(n1 int) func(int) int {
-	fn := func(n2 int) int {
-		return n1 + n2
-	}
-	return fn
+func apply(f func(int, int) int, a, b int) int {
+	return f(a, b)
 }
 
-// n1 is in the closure of fn()
+multiply := func(a, b int) int {
+	return a * b
+}
 
-sum := add(1)
-fmt.Println(sum(5)) // 6
-fmt.Println(sum(2)) // 3
+result := apply(multiply, 3, 4)  // 12
 ```
 
-### Important concept: Closure
+---
+
+**Returning functions:**
+
+```go
+func multiplier(factor int) func(int) int {
+	return func(x int) int {
+		return x * factor
+	}
+}
+
+// "factor" is in the closure of "func(x int) int"
+
+double := multiplier(2)
+triple := multiplier(3)
+
+fmt.Println(double(5))  // 10
+fmt.Println(triple(5))  // 15
+```
+
+---
+
+### Closures
+
+**Functions can capture variables from outer scope:**
+
+```go
+func counter() func() int {
+	count := 0
+	return func() int {
+		count++
+		return count
+	}
+}
+
+// "count" is in the closure of "func() int"
+
+c1 := counter()
+fmt.Println(c1())  // 1
+fmt.Println(c1())  // 2
+fmt.Println(c1())  // 3
+
+c2 := counter()
+fmt.Println(c2())  // 1 (separate counter)
+```
 
 When functions are passed or returned, **their environment comes with them**.
-`n1` remains available even after `add` finishes execution.
+`count` remains available even after `counter` finishes execution.
+
+**Real-World Example (HTTP middleware):**
+
+```go
+import "net/http"
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("%s %s", r.Method, r.URL.Path)
+		next.ServeHTTP(w, r)
+	})
+}
+```
 
 ---
+
+### Defer
+
+A `defer` statement delays execution of a function **until the surrounding function returns**.
+
+#### Key Rules
+
+1. Deferred calls execute in **LIFO order** (stack)
+2. Arguments are **evaluated immediately**
+3. Execution happens **even after panic**
+
+#### Common Uses of `defer`
+
+* Closing files
+* Unlocking mutexes
+* Database cleanup
+* Recovering from panics
+
+---
+
+**Defer executes a function call AFTER the surrounding function returns:**
+
+```go
+func processFile(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()  // Guaranteed to run when function exits
+	
+	// Work with file
+	// Even if error occurs, file.Close() will be called
+	return nil
+}
+```
+
+**Multiple Defers (LIFO order):**
+
+```go
+func example() {
+	defer fmt.Println("First")
+	defer fmt.Println("Second")
+	defer fmt.Println("Third")
+	fmt.Println("Main")
+}
+
+// Output:
+// Main
+// Third
+// Second
+// First
+```
+
+**Defer with Arguments (evaluated immediately):**
+
+```go
+func example() {
+	x := 10
+	defer fmt.Println(x)  // x is evaluated NOW (10)
+	x = 20
+	fmt.Println(x)
+}
+
+// Output:
+// 20
+// 10
+```
+
+**Real-World Patterns:**
+
+```go
+// Resource cleanup
+func readDatabase() error {
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	
+	// Query database
+	return nil
+}
+
+// Mutex unlock
+func updateCounter(mu *sync.Mutex, counter *int) {
+	mu.Lock()
+	defer mu.Unlock()  // Always unlocks, even if panic
+	
+	*counter++
+}
+
+// Transaction rollback
+func transfer(db *sql.DB, from, to int, amount float64) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()  // Rollback if Commit is not called
+	
+	// ... perform transfer operations
+	
+	return tx.Commit()  // Overrides rollback
+}
+```
+
+---
+
+### Methods
+
+A **method** is a function with a **receiver**.
+
+**Syntax:**
+
+```go
+func (r ReceiverType) funcName(parameters) (results)
+```
+
+---
+
+**Methods vs Functions:**
+
+* Functions operate on values passed as arguments
+* Methods are **called on a value of a specific type**
+
+---
+
+**Example:**
+
+```go
+type address struct {
+	email   string
+	zipCode int
+}
+
+type User struct {
+	name string
+	age  int
+	address
+}
+
+// Function Version
+func updateUserName(u *User, name string) {
+	u.name = name
+}
+
+// Method Version
+func (u *User) UpdateName(name string) {
+	// (*u).name = name
+	u.name = name
+}
+
+// Usage
+func main() {
+	user := User{
+		name: "Manam",
+		age: 25,
+		address: address{
+			email: "manam@email.com",
+			zipCode: 34000,
+		},
+	}
+
+	updateUserName(&user, "Chayon")
+
+	// (&user).UpdateName("Chayon")
+	user.UpdateName("Chayon")
+}
+```
+
+---
+
+**Methods are functions with a receiver:**
+
+```go
+type Rectangle struct {
+	Width  float64
+	Height float64
+}
+
+// Value receiver
+func (r Rectangle) Area() float64 {
+	return r.Width * r.Height
+}
+
+// Pointer receiver
+func (r *Rectangle) Scale(factor float64) {
+	r.Width *= factor
+	r.Height *= factor
+}
+
+// Usage
+rect := Rectangle{Width: 10, Height: 5}
+fmt.Println(rect.Area())  // 50
+
+rect.Scale(2)
+fmt.Println(rect.Area())  // 200 (modified)
+```
+
+**Why Methods Matter:**
+
+* Better readability
+* Encapsulation
+* Enables interfaces
+* Object-oriented style without classes
+
+#### Value vs Pointer Receivers
+
+**Value Receiver:**
+- Receives a **copy** of the struct
+- Cannot modify original struct
+- Use when struct is **small** and method doesn't need to modify it
+
+**Pointer Receiver:**
+- Receives a **reference** to the struct
+- Can modify original struct
+- Use when:
+  - Method needs to modify struct
+  - Receiver (struct) is **large** (avoid copying)
+  - Consistency (if any method uses pointer receiver, use it for all)
+
+**Example:**
+
+```go
+type Counter struct {
+	Value int
+}
+
+// Value receiver - doesn't modify original
+func (c Counter) GetValue() int {
+	return c.Value
+}
+
+// Pointer receiver - modifies original
+func (c *Counter) Increment() {
+	c.Value++
+}
+
+func main() {
+	counter := Counter{Value: 0}
+	
+	counter.Increment()  // Go auto-converts to (&counter).Increment()
+	fmt.Println(counter.GetValue())  // 1
+}
+```
+
+**Google Style Recommendation:**
+- **Consistency**: If any method uses pointer receiver, use pointer receivers for **all** methods on that type
+- Prevents confusion about which methods modify the receiver
+
+---
+
+</details>
+
+## Practice Questions (Functions and Methods)
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+**Fill in the Blanks:**
+
+1. Functions in Go can return __________ values.
+2. A __________ receiver is used when a method needs to modify the struct.
+3. The `defer` keyword executes a function after the surrounding function __________.
+4. A function that accepts unlimited arguments uses the __________ parameter syntax.
+
+**True/False:**
+
+1. ⬜ Named return values are always better than explicit returns
+2. ⬜ Deferred functions execute in LIFO (last-in-first-out) order
+3. ⬜ Value receivers receive a copy of the struct
+4. ⬜ A function can have multiple variadic parameters
+
+**Multiple Choice:**
+
+1. What does this print?
+   ```go
+   func test() {
+       defer fmt.Print("1")
+       defer fmt.Print("2")
+       fmt.Print("3")
+   }
+   test()
+   ```
+   - A) 123
+   - B) 321
+   - C) 312
+   - D) 213
+
+2. When should you use a pointer receiver?
+   - A) Always
+   - B) When the struct is small
+   - C) When you need to modify the struct
+   - D) Never
+
+**Code Challenge:**
+
+Write a function that takes a slice of integers and a filter function, then returns a new slice with only elements that pass the filter.
+
+---
+
+**Answers:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Fill in the Blanks:**
+1. multiple
+2. pointer
+3. returns
+4. variadic
+
+**True/False:**
+1. ❌ False (use named returns sparingly)
+2. ✅ True
+3. ✅ True
+4. ❌ False (only one, and it must be last)
+
+**Multiple Choice:**
+1. **C** - 312 (prints 3, then defers execute in reverse: 2, then 1)
+2. **C** - When you need to modify the struct (also for large structs)
+
+**Code Challenge:**
+```go
+func filter(nums []int, fn func(int) bool) []int {
+	result := []int{}
+	for _, n := range nums {
+		if fn(n) {
+			result = append(result, n)
+		}
+	}
+	return result
+}
+
+// Usage
+nums := []int{1, 2, 3, 4, 5, 6}
+evens := filter(nums, func(n int) bool { return n%2 == 0 })
+fmt.Println(evens)  // [2 4 6]
+```
+
+---
+
+</details>
 
 </details>
 
@@ -2897,7 +3377,7 @@ When functions are passed or returned, **their environment comes with them**.
 Arrays have a **fixed length** and store elements of the same type.
 
 <details>
-<summary>View contents</summary>
+<summary><strong>View contents</strong></summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/arrays)**
 
@@ -3121,7 +3601,7 @@ addFruits("banana", "pineapple")
 
 </details>
 
-## Maps / Object / Dictionary
+## Maps
 
 In Go, a **map** is a built-in data type that stores **key–value pairs**.
 It is similar to:
@@ -3871,61 +4351,6 @@ Common panic scenarios:
 
 ---
 
-### Defer
-
-A `defer` statement delays execution of a function **until the surrounding function returns**.
-
-#### Key Rules
-
-1. Deferred calls execute in **LIFO order** (stack)
-2. Arguments are **evaluated immediately**
-3. Execution happens **even after panic**
-
----
-
-#### Example
-
-```go
-func main(){
-	let country := "Bangladesh"
-
-	defer fmt.Println(country)
-	defer fmt.Println("love")
-	country = "Australia"
-
-	fmt.Println("I")
-}
-
-// I
-// love
-// Bangladesh
-```
-
-#### Explanation
-
-* `country` is evaluated at `defer` time → `"Bangladesh"`
-* Deferred calls run **after** `main()` completes
-* Last deferred call runs first
-
----
-
-#### Common Uses of `defer`
-
-* Closing files
-* Unlocking mutexes
-* Database cleanup
-* Recovering from panics
-
-```go
-file, err := os.Open("test.txt")
-if err != nil {
-	return err
-}
-defer file.Close()
-```
-
----
-
 ### Recover
 
 `recover()` allows a program to **regain control after a panic**.
@@ -4059,136 +4484,6 @@ defer func() {
   * Gracefully shutting down a service
 
 * Don’t use `recover` to **silently ignore bugs**, otherwise you’re hiding problems.
-
----
-
-</details>
-
-## Methods
-
-A **method** is a function with a **receiver**.
-
-<details>
-<summary>View contents</summary>
-
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/methods)**
-
-### Syntax
-
-```go
-func (r ReceiverType) funcName(parameters) (results)
-```
-
----
-
-## Methods vs Functions
-
-* Functions operate on values passed as arguments
-* Methods are **called on a value of a specific type**
-
----
-
-### Example
-
-```go
-type address struct {
-	email   string
-	zipCode int
-}
-
-type User struct {
-	name string
-	age  int
-	address
-}
-```
-
----
-
-### Function Version
-
-```go
-func updateUserName(u *User, name string) {
-	u.name = name
-}
-```
-
----
-
-### Method Version
-
-```go
-func (u *User) UpdateName(name string) {
-	// (*u).name = name
-	u.name = name
-}
-```
-
----
-
-### Usage
-
-```go
-func main() {
-	user := User{
-		name: "Manam",
-		age: 25,
-		address: address{
-			email: "manam@email.com",
-			zipCode: 34000,
-		},
-	}
-
-	updateUserName(&user, "Chayon")
-
-	// (&user).UpdateName("Chayon")
-	user.UpdateName("Chayon")
-}
-```
-
----
-
-### Why Methods Matter
-
-* Better readability
-* Encapsulation
-* Enables interfaces
-* Object-oriented style without classes
-
----
-
-### Pointer Receivers
-
-#### When should we use pointer receivers?
-
-1. When the method **modifies receiver data**
-2. When the receiver is **large** (avoid copying)
-3. For **consistency**
-
----
-
-#### Automatic Addressing
-
-```go
-user.UpdateName("Chayon")
-```
-
-Even though `UpdateName` expects `*User`, Go automatically does:
-
-```go
-(&user).UpdateName("Chayon")
-```
-
----
-
-#### Good Practices
-
-✔ Choose **one** receiver type:
-
-1. All pointer receivers, **or**
-2. All value receivers
-
-🚫 Avoid mixing unless there is a strong reason
 
 ---
 
