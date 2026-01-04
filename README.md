@@ -2196,43 +2196,88 @@ Go uses `if`, `else if`, and `else` for conditional logic.
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/control)**
 
-### Basic if–else
+**Basic Syntax:**
 
 ```go
-package main
+if condition {
+	// code
+}
 
-import (
-	"fmt"
-)
+if condition {
+	// code
+} else {
+	// code
+}
 
-func main() {
-	var age = 10
-
-	if age < 18 {
-		fmt.Println("younger")
-	} else if age == 18 {
-		fmt.Println("adult")
-	} else {
-		fmt.Println("elder")
-	}
-```
-
----
-
-### If with short statement
-
-```go
-	if name := "Farah"; name != "Farhan" {
-		fmt.Println("She is Farah")
-	}
+if condition1 {
+	// code
+} else if condition2 {
+	// code
+} else {
+	// code
 }
 ```
 
-#### Key points
+**Important:**
+- **No parentheses** around condition
+- **Braces are mandatory** (even for single-line blocks)
 
-* Variable `name` exists **only inside the if block**
-* Helps reduce variable scope
-* Common Go pattern
+**Examples:**
+
+```go
+age := 20
+
+if age >= 18 {
+	fmt.Println("Adult")
+} else {
+	fmt.Println("Minor")
+}
+
+// With multiple conditions
+if age < 13 {
+	fmt.Println("Child")
+} else if age < 18 {
+	fmt.Println("Teenager")
+} else {
+	fmt.Println("Adult")
+}
+```
+
+### if with Initialization
+
+**Short variable declaration in if:**
+
+```go
+if err := doSomething(); err != nil {
+	// err only exists in this if-else block
+	return err
+}
+// err doesn't exist here
+```
+
+**Real-World Example:**
+
+```go
+import "os"
+
+// Good: err scoped to if block
+if file, err := os.Open("config.txt"); err != nil {
+	fmt.Println("Error:", err)
+} else {
+	defer file.Close()
+	// use file
+}
+
+// Bad: err pollutes outer scope
+file, err := os.Open("config.txt")
+if err != nil {
+	// ...
+}
+```
+
+**Google Style Guide Recommendation:**
+- Use initialization in `if` to limit variable scope
+- Reduces variable pollution in outer scope
 
 ---
 
@@ -2247,65 +2292,99 @@ Go’s `switch` is **more powerful and flexible** than many other languages.
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/control)**
 
-### Switch with expression
+**Basic Switch:**
 
 ```go
-switch city := "Cumilla"; city {
-case "Dhaka", "Cumilla", "Sylhet":
-	fmt.Println("You live in", city)
+day := "Monday"
+
+switch day {
+case "Monday":
+	fmt.Println("Start of the week")
+case "Friday":
+	fmt.Println("End of the week")
+case "Saturday", "Sunday":
+	fmt.Println("Weekend!")
 default:
-	fmt.Println("You're not from around here")
+	fmt.Println("Midweek")
 }
 ```
 
-* Multiple values per case allowed
-* No `break` needed (automatic)
+**Key Differences from C/Java:**
+- **No `break` needed** (no fall-through by default)
+- Can switch on any comparable type
+- Multiple values per case
 
----
-
-### Switch without expression (acts like if–else)
+**Switch Without Expression (replaces if-else chains):**
 
 ```go
-var age int = 30
+age := 25
 
 switch {
+case age < 13:
+	fmt.Println("Child")
 case age < 18:
-	fmt.Println("young")
-case age > 18 && age <= 40:
-	fmt.Println("adult")
+	fmt.Println("Teenager")
+case age < 65:
+	fmt.Println("Adult")
 default:
-	fmt.Println("elder")
+	fmt.Println("Senior")
 }
 ```
 
-* Each case is a boolean expression
-* Very readable alternative to long `if-else` chains
-
----
-
-### `fallthrough` behavior
+**Switch with Initialization:**
 
 ```go
-var num int = 9
-
-switch {
-case num != 10:
-	fmt.Println("Does not equal 10")
-	fallthrough // check other case after matching this case
-case num < 10:
-	fmt.Println("Less than 10")
-case num > 10:
-	fmt.Println("Greater than 10")
+switch day := time.Now().Weekday(); day {
+case time.Saturday, time.Sunday:
+	fmt.Println("Weekend")
 default:
-	fmt.Println("Is 10")
+	fmt.Println("Weekday")
 }
 ```
 
-#### Important
+**Type Switch (checking interface types):**
 
-* `fallthrough` forces execution of the **next case**
-* It **does not re-check conditions**
-* Use sparingly
+```go
+func describe(i interface{}) {
+	switch v := i.(type) {
+	case int:
+		fmt.Println("Integer:", v)
+	case string:
+		fmt.Println("String:", v)
+	case bool:
+		fmt.Println("Boolean:", v)
+	default:
+		fmt.Println("Unknown type")
+	}
+}
+
+describe(42)      // Integer: 42
+describe("hello") // String: hello
+```
+
+**Fallthrough (explicit fall-through):**
+
+```go
+// Rare! Usually avoid fallthrough
+n := 3
+
+switch n {
+case 1:
+	fmt.Println("One")
+	fallthrough  // Continues to next case
+case 2:
+	fmt.Println("Two")
+case 3:
+	fmt.Println("Three")
+	fallthrough
+default:
+	fmt.Println("End")
+}
+
+// Output:
+// Three
+// End
+```
 
 ---
 
@@ -2313,59 +2392,53 @@ default:
 
 ## Loops
 
-Go has **only one loop keyword**: `for`.
-But it supports multiple patterns.
+Go has **only one loop keyword**: `for`. But it supports multiple patterns.
 
 <details>
-<summary>View contents</summary>
+<summary><strong>View contents</strong></summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/loops)**
 
-### Basic for loop
+### Traditional for Loop
 
 ```go
-fmt.Println("Basic for loop")
-for i := 1; i <= 5; i++ {
-	fmt.Print(i)
+for i := 0; i < 5; i++ {
+	fmt.Println(i)
 }
+// Output: 0 1 2 3 4
 ```
 
 * Initialization; condition; increment
 
 ---
 
-### Similar to while loop
+### While-style Loop
 
 ```go
-fmt.Println("\nSimilar to while loop")
-j := 1
-
-for j <= 5 {
-	fmt.Print(j)
-	j++
+i := 0
+for i < 5 {
+	fmt.Println(i)
+	i++
 }
 ```
 
-* No `while` keyword in Go
-
 ---
 
-### Infinite loop
+### Infinite Loop
 
 ```go
-fmt.Println("\nInfinite loop")
 num := 1
 
 for {
 	num = num + 2
 
-	if num == 7 {
+	if num == 5 {
 		continue
 	}
 
 	fmt.Print(num)
 
-	if num == 11 {
+	if num == 7 {
 		break
 	}
 }
@@ -2379,7 +2452,6 @@ for {
 ### Basic for loop iteration (string bytes)
 
 ```go
-fmt.Println("\nBasic for loop iteration")
 var name = "Farah"
 
 for i := 0; i < len(name); i++ {
@@ -2387,84 +2459,259 @@ for i := 0; i < len(name); i++ {
 }
 ```
 
-⚠️ Iterates over **bytes**, not Unicode characters
+* Iterates over **bytes**, not Unicode characters
 
 ---
 
-### String iteration (Unicode-safe)
+### Range-based Loop
+
+**Basic for loop:**
 
 ```go
-fmt.Println("\nString iteration")
-var myCity = "কুমিল্লা"
+for i := range 5 {
+	fmt.Println(i)
+}
+// Output: 0 1 2 3 4
+```
 
-for index, letter := range myCity {
-	if index%2 == 0 {
-		fmt.Printf("Index: %d, Letter:%#U\n", index, letter)
-	}
+**Slice/Array:**
+```go
+nums := []int{10, 20, 30}
+
+for i, v := range nums {
+	fmt.Printf("Index: %d, Value: %d\n", i, v)
+}
+
+// Ignore index
+for _, v := range nums {
+	fmt.Println(v)
+}
+
+// Only index
+for i := range nums {
+	fmt.Println(i)
 }
 ```
 
-* `range` iterates over **runes (Unicode code points)**
-* Correct way to iterate strings with non-ASCII characters
-
----
-
-### Slice or Array iteration
-
+**Map:**
 ```go
-fmt.Println("\nSlice or Array iteration")
-cities := []string{"Dhaka", "Cumilla"}
+scores := map[string]int{"Alice": 90, "Bob": 85}
 
-for _, city := range cities {
-	fmt.Printf("%s ", city)
+for name, score := range scores {
+	fmt.Printf("%s: %d\n", name, score)
+}
+
+// Only keys
+for name := range scores {
+	fmt.Println(name)
 }
 ```
 
-* `_` ignores index
-* Most common loop style in Go
+* Map iteration order is **random**
 
 ---
 
-### Map iteration
-
+**String (iterates over runes):**
 ```go
-fmt.Println("\nMap iteration")
-results := map[string]float64{
-	"Farah":   3.4,
-	"Laaibah": 3.3,
-	"Zayan":   3.5,
-}
-
-for key, value := range results {
-	fmt.Println(key, value)
+for i, r := range "Hello, 世界" {
+	fmt.Printf("%d: %c\n", i, r)
 }
 ```
 
-⚠️ Map iteration order is **random**
-
----
-
-### Channel iteration
-
+**Channel:**
 ```go
-fmt.Println("\nChannel iteration")
-
 ch := make(chan int)
+
 go func() {
 	ch <- 1
 	ch <- 2
 	close(ch)
 }()
 
-for n := range ch {
-	fmt.Println(n)
+for val := range ch {
+	fmt.Println(val)
 }
 ```
 
 * `range` receives values until channel is closed
-* Common pattern in concurrent Go programs
+
+#### Loop Control
+
+**break:**
+```go
+for i := 0; i < 10; i++ {
+	if i == 5 {
+		break  // Exit loop
+	}
+	fmt.Println(i)
+}
+```
+
+**continue:**
+```go
+for i := 0; i < 5; i++ {
+	if i == 2 {
+		continue  // Skip this iteration
+	}
+	fmt.Println(i)
+}
+// Output: 0 1 3 4
+```
+
+**Labeled break (breaking nested loops):**
+```go
+outer:
+for i := 0; i < 3; i++ {
+	for j := 0; j < 3; j++ {
+		if i == 1 && j == 1 {
+			break outer  // Breaks outer loop
+		}
+		fmt.Printf("(%d,%d) ", i, j)
+	}
+}
+```
 
 ---
+
+### Common Patterns
+
+#### Early Return Pattern (Google Style)
+
+**Preferred:**
+```go
+func processUser(id int) error {
+	user, err := getUser(id)
+	if err != nil {
+		return err  // Early return
+	}
+	
+	if !user.Active {
+		return errors.New("user inactive")  // Early return
+	}
+	
+	// Happy path - no nesting
+	return saveUser(user)
+}
+```
+
+**Avoid:**
+```go
+// Bad: Nested if statements
+func processUser(id int) error {
+	user, err := getUser(id)
+	if err == nil {
+		if user.Active {
+			return saveUser(user)
+		} else {
+			return errors.New("user inactive")
+		}
+	}
+	return err
+}
+```
+
+#### Guard Clauses
+
+```go
+func divide(a, b float64) (float64, error) {
+	if b == 0 {
+		return 0, errors.New("division by zero")  // Guard clause
+	}
+	return a / b, nil
+}
+```
+
+---
+
+</details>
+
+### Practice Questions
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+**Fill in the Blanks:**
+
+1. In Go, switch statements do NOT require __________ to prevent fall-through.
+2. The __________ keyword skips the current iteration of a loop.
+3. To iterate over a map's keys and values, use `for __, __ := range map`.
+4. An if statement with initialization limits variable __________ to the if block.
+
+**True/False:**
+
+1. ⬜ Parentheses around if conditions are optional in Go
+2. ⬜ Go's for loop can function as a while loop
+3. ⬜ Multiple values can be tested in a single case of a switch
+4. ⬜ The range loop over strings iterates over bytes
+
+**Multiple Choice:**
+
+1. What does this loop print?
+   ```go
+   for i := 0; i < 3; i++ {
+       if i == 1 {
+           continue
+       }
+       fmt.Print(i)
+   }
+   ```
+   - A) 0 1 2
+   - B) 0 2
+   - C) 1 2
+   - D) 0 1
+
+2. Which is the correct way to create an infinite loop?
+   - A) `for (;;)`
+   - B) `while (true)`
+   - C) `for {}`
+   - D) `loop {}`
+
+**Code Challenge:**
+
+Write a function that returns "Fizz" for multiples of 3, "Buzz" for multiples of 5, "FizzBuzz" for multiples of both, or the number as a string otherwise.
+
+---
+
+**Answers:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Fill in the Blanks:**
+1. break
+2. continue
+3. key, value
+4. scope
+
+**True/False:**
+1. ❌ False (parentheses are not allowed)
+2. ✅ True
+3. ✅ True
+4. ❌ False (iterates over runes/Unicode characters)
+
+**Multiple Choice:**
+1. **B** - 0 2 (skips 1 due to continue)
+2. **C** - `for {}`
+
+**Code Challenge:**
+```go
+func fizzBuzz(n int) string {
+	switch {
+	case n%15 == 0:
+		return "FizzBuzz"
+	case n%3 == 0:
+		return "Fizz"
+	case n%5 == 0:
+		return "Buzz"
+	default:
+		return strconv.Itoa(n)
+	}
+}
+```
+
+---
+
+</details>
 
 </details>
 
