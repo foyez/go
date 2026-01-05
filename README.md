@@ -400,11 +400,11 @@ Need to build UI-heavy apps?
 | Rust       | Safe system programming       |
 | JavaScript | Web apps                      |
 
----
-
 </details>
 
-## Practice Questions (Go Basics)
+---
+
+### Practice Questions (Go Basics)
 
 <details>
 <summary>View contents</summary>
@@ -772,11 +772,11 @@ Why capitalization matters:
 * Uppercase → exported (public)
 * Lowercase → unexported (private)
 
----
-
 </details>
 
-## Practice Questions (Essential Commands)
+---
+
+### Practice Questions (Essential Commands)
 
 <details>
 <summary>View contents</summary>
@@ -2420,13 +2420,13 @@ CLI output           → fmt
 Errors / debugging   → log
 ```
 
+</details>
+
+</details>
+
 ---
 
-</details>
-
-</details>
-
-## Practice Questions (Packages, Variables, Data Types, etc.)
+### Practice Questions (Packages, Variables, Data Types, etc.)
 
 <details>
 <summary><strong>View contents</strong></summary>
@@ -2940,11 +2940,11 @@ func divide(a, b float64) (float64, error) {
 }
 ```
 
----
-
 </details>
 
-## Practice Questions (Control Structures and Loops)
+---
+
+### Practice Questions (Control Structures and Loops)
 
 <details>
 <summary><strong>View contents</strong></summary>
@@ -3595,11 +3595,11 @@ func main() {
 - **Consistency**: If any method uses pointer receiver, use pointer receivers for **all** methods on that type
 - Prevents confusion about which methods modify the receiver
 
----
-
 </details>
 
-## Practice Questions (Functions and Methods)
+---
+
+### Practice Questions (Functions and Methods)
 
 <details>
 <summary><strong>View contents</strong></summary>
@@ -4494,7 +4494,7 @@ Use value receivers when:
 
 ---
 
-### Practice Questions
+#### Practice Questions (Data structures)
 
 <details>
 <summary><strong>View contents</strong></summary>
@@ -5021,7 +5021,7 @@ func main() {
 
 </details>
 
-### Practice Questions (Interfaces)
+#### Practice Questions (Interfaces)
 
 <details>
 <summary><strong>View contents</strong></summary>
@@ -5135,225 +5135,439 @@ This design forces developers to **handle errors explicitly**, making programs m
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/errors)**
 
-### Error
+### Error Basics
 
-An **error** indicates that something went wrong, **but the program can usually continue**.
-
-#### Characteristics
-
-* Returned as the **last return value**
-* Must be **checked explicitly**
-* Does **not crash** the program by default
+**Errors are values:**
 
 ```go
+// Built-in error interface
 type error interface {
 	Error() string
 }
+
+// Creating errors
+import "errors"
+
+err1 := errors.New("something went wrong")
+err2 := fmt.Errorf("user %s not found", "Alice")
 ```
 
-Any type that implements `Error() string` satisfies the `error` interface.
+**Standard error handling pattern:**
+
+```go
+result, err := doSomething()
+if err != nil {
+	// Handle error
+	return err
+}
+// Use result
+```
 
 ---
 
-#### Example
+### Error Handling Patterns
 
+#### Early Return (Google Style)
+
+**Preferred:**
 ```go
-err := funcReturnError()
-
-if err != nil {
-	fmt.Println(err.Error())
+func processUser(id int) error {
+	user, err := getUser(id)
+	if err != nil {
+		return fmt.Errorf("getting user: %w", err)
+	}
+	
+	if !user.Active {
+		return errors.New("user is inactive")
+	}
+	
+	if err := saveUser(user); err != nil {
+		return fmt.Errorf("saving user: %w", err)
+	}
+	
+	return nil
 }
 ```
 
-💡 **Idiomatic Go**
-
+**Avoid:**
 ```go
-if err != nil {
+// Bad: Nested if statements
+func processUser(id int) error {
+	user, err := getUser(id)
+	if err == nil {
+		if user.Active {
+			err = saveUser(user)
+			if err == nil {
+				return nil
+			}
+		}
+	}
 	return err
 }
 ```
 
----
+#### Error Wrapping (Go 1.13+)
 
-### Panic
-
-A **panic** is a runtime error that:
-
-* Immediately stops normal execution
-* Unwinds the stack
-* Executes deferred functions
-* Crashes the program if not recovered
-
-#### When to Panic
-
-* Programmer mistakes (nil pointer dereference)
-* Impossible states
-* Unrecoverable errors
-
-🚫 **Do NOT use panic for normal error handling**
-
----
-
-#### Example
+**Wrap errors to preserve context:**
 
 ```go
-panic(err.Error())
+import (
+	"errors"
+	"fmt"
+)
+
+func readConfig() error {
+	_, err := os.ReadFile("config.json")
+	if err != nil {
+		return fmt.Errorf("reading config: %w", err)
+	}
+	return nil
+}
+
+func initialize() error {
+	if err := readConfig(); err != nil {
+		return fmt.Errorf("initialization failed: %w", err)
+	}
+	return nil
+}
+
+// Error chain preserved:
+// initialization failed: reading config: open config.json: no such file or directory
 ```
 
-Common panic scenarios:
-
-* Accessing out-of-bounds slice index
-* Dereferencing a nil pointer
-* Explicit `panic()`
-
----
-
-### Error vs Panic
-
-| Error             | Panic                    |
-| ----------------- | ------------------------ |
-| Recoverable       | Unrecoverable            |
-| Returned as value | Stops program            |
-| Must be handled   | Crashes if not recovered |
-| Expected failures | Programming bugs         |
-
----
-
-### Recover
-
-`recover()` allows a program to **regain control after a panic**.
-
-#### Important Rules
-
-* Only works **inside a deferred function**
-* Stops the panic and resumes normal execution
-* Returns the value passed to `panic()`
-
----
-
-#### Example
+**Unwrapping errors:**
 
 ```go
-func recoverFromPanic() {
-	if r := recover(); r != nil {
-		fmt.Println(r)
-	}
+err := initialize()
+if errors.Is(err, os.ErrNotExist) {
+	fmt.Println("Config file doesn't exist")
+}
+
+var pathErr *os.PathError
+if errors.As(err, &pathErr) {
+	fmt.Println("Path error:", pathErr.Path)
 }
 ```
 
+---
+
+### Custom Errors
+
+**Struct-based errors:**
+
 ```go
-func main() {
-	defer recoverFromPanic()
+type ValidationError struct {
+	Field   string
+	Message string
+}
 
-	for i := 0; i < 5; i++ {
-		fmt.Println(i)
+func (e ValidationError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Field, e.Message)
+}
 
-		if i == 2 {
-			panic("PANIC!")
+func validateEmail(email string) error {
+	if !strings.Contains(email, "@") {
+		return ValidationError{
+			Field:   "email",
+			Message: "must contain @ symbol",
 		}
 	}
+	return nil
 }
 
-// 0
-// 1
-// 2
-// PANIC!
-```
-
-#### Explanation
-
-* Panic happens at `i == 2`
-* Deferred `recoverFromPanic()` executes
-* Panic is handled → program does not crash
-
----
-
-#### Best Practice
-
-* Use `recover` only in **top-level goroutines**
-* Never silently ignore panics
-
-##### 1. “Use `recover` only in **top-level goroutines**”
-
-**What it means:**
-
-* A **goroutine** is a lightweight thread of execution in Go.
-* Every goroutine has its own **call stack**. If a panic happens inside a goroutine **and isn’t recovered there**, it **kills the whole program**.
-* “Top-level” here means the **main goroutine** or any goroutine that you explicitly control and launch.
-
-**Example of good usage:**
-
-```go
-func main() {
-    go safeGoroutine()
-    fmt.Println("Main continues...")
-}
-
-func safeGoroutine() {
-    defer func() {
-        if r := recover(); r != nil {
-            fmt.Println("Recovered in goroutine:", r)
-        }
-    }()
-
-    panic("Something went wrong in goroutine")
+// Usage
+err := validateEmail("invalid")
+if err != nil {
+	var valErr ValidationError
+	if errors.As(err, &valErr) {
+		fmt.Printf("Validation failed for %s: %s\n", valErr.Field, valErr.Message)
+	}
 }
 ```
 
-* Panic happens in the goroutine
-* `defer` + `recover` catches it **inside that goroutine**
-* Program continues; main goroutine is safe
-
-**Why “top-level”?**
-If you try to `recover` **deep inside nested function calls**, it may not work as expected, because `recover` only stops **panics in the same goroutine where it’s deferred**.
-
----
-
-##### 2. “Never silently ignore panics”
-
-**What it means:**
-
-* A panic usually indicates a **serious bug** or unexpected condition.
-* If you recover from it **without logging, handling, or reporting**, you may **hide real issues**, making debugging very hard.
-
-**Bad example:**
+**Sentinel errors (predefined errors):**
 
 ```go
-defer func() {
-    recover() // silently ignoring
-}()
+var (
+	ErrNotFound     = errors.New("not found")
+	ErrUnauthorized = errors.New("unauthorized")
+	ErrInvalidInput = errors.New("invalid input")
+)
+
+func getUser(id int) (*User, error) {
+	// ...
+	return nil, ErrNotFound
+}
+
+// Check with errors.Is
+user, err := getUser(123)
+if errors.Is(err, ErrNotFound) {
+	fmt.Println("User not found")
+}
 ```
 
-* You catch the panic but **do nothing**
-* Bug remains, program continues in an inconsistent state
+---
 
-**Good example:**
+### Panic and Recover
+
+**Panic stops normal execution:**
 
 ```go
-defer func() {
-    if r := recover(); r != nil {
-        fmt.Println("Recovered from panic:", r)
-        // optionally log to file, report error, clean resources
-    }
-}()
+func mustConnect(url string) *Connection {
+	conn, err := connect(url)
+	if err != nil {
+		panic(err)  // Rarely used; prefer returning errors
+	}
+	return conn
+}
 ```
 
-* Panic is **handled responsibly**
-* Program can continue safely
+**When to panic:**
+- **Programmer errors** (nil pointer dereference, out-of-bounds)
+- **Initialization failures** in `init()` or `main()`
+- **Never in library code** (return errors instead)
+
+**Recovering from panic:**
+
+```go
+func safeExecute() {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered from panic:", r)
+		}
+	}()
+	
+	panic("something went wrong")
+	fmt.Println("This won't execute")
+}
+
+safeExecute()
+fmt.Println("Program continues")
+
+// Output:
+// Recovered from panic: something went wrong
+// Program continues
+```
+
+**Real-world example (HTTP server):**
+
+```go
+func handler(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Panic recovered: %v", r)
+			http.Error(w, "Internal Server Error", 500)
+		}
+	}()
+	
+	// Handler logic that might panic
+}
+```
 
 ---
 
-**Rule of thumb:**
+### Error Handling Best Practices
 
-* Only use `recover` when you **can handle the panic meaningfully**, like:
+**1. Return errors, don't panic**
 
-  * Cleaning resources (closing files, network connections)
-  * Logging errors
-  * Gracefully shutting down a service
+```go
+// Good
+func divide(a, b float64) (float64, error) {
+	if b == 0 {
+		return 0, errors.New("division by zero")
+	}
+	return a / b, nil
+}
 
-* Don’t use `recover` to **silently ignore bugs**, otherwise you’re hiding problems.
+// Bad
+func divide(a, b float64) float64 {
+	if b == 0 {
+		panic("division by zero")
+	}
+	return a / b
+}
+```
+
+**2. Add context when wrapping**
+
+```go
+// Good: Clear error chain
+func loadConfig() error {
+	data, err := os.ReadFile("config.yaml")
+	if err != nil {
+		return fmt.Errorf("loading config file: %w", err)
+	}
+	
+	var cfg Config
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return fmt.Errorf("parsing config: %w", err)
+	}
+	
+	return nil
+}
+
+// Error message:
+// loading config file: parsing config: yaml: line 5: mapping values are not allowed
+```
+
+**3. Handle errors at appropriate level**
+
+```go
+// Low-level: Return errors
+func fetchData() ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("fetching data: %w", err)
+	}
+	defer resp.Body.Close()
+	return io.ReadAll(resp.Body)
+}
+
+// High-level: Decide what to do with errors
+func processData() {
+	data, err := fetchData()
+	if err != nil {
+		log.Printf("Failed to fetch data: %v", err)
+		// Retry, use cache, or return error
+		return
+	}
+	// Process data
+}
+```
+
+**4. Use named error types for specific handling**
+
+```go
+type NetworkError struct {
+	Op  string
+	Err error
+}
+
+func (e NetworkError) Error() string {
+	return fmt.Sprintf("network error during %s: %v", e.Op, e.Err)
+}
+
+func (e NetworkError) Unwrap() error {
+	return e.Err
+}
+
+// Usage
+err := doRequest()
+var netErr NetworkError
+if errors.As(err, &netErr) {
+	// Retry on network errors
+	time.Sleep(time.Second)
+	err = doRequest()
+}
+```
+
+</details>
 
 ---
+
+### Practice Questions (Error Handling)
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+**Fill in the Blanks:**
+
+1. The `fmt.Errorf` function with `%w` verb is used to __________ errors.
+2. The `errors.__________()` function checks if an error matches a specific value.
+3. The `__________` keyword stops normal execution and begins panicking.
+4. A `defer` statement with `recover()` can __________ from a panic.
+
+**True/False:**
+
+1. ⬜ Panics should be used for normal error handling in Go
+2. ⬜ Error wrapping with %w preserves the error chain
+3. ⬜ Library code should return errors, not panic
+4. ⬜ The errors.As function is used to check error values
+
+**Multiple Choice:**
+
+1. What is the recommended pattern for error handling?
+   - A) Nested if-else statements
+   - B) Early return with error checks
+   - C) Panic for all errors
+   - D) Ignore errors
+
+2. When should you use panic?
+   - A) For all error conditions
+   - B) For validation errors
+   - C) For unrecoverable initialization failures
+   - D) For user input errors
+
+**Code Challenge:**
+
+Write a function that validates a user struct and returns a custom error type with details about which field failed validation.
+
+---
+
+### Answers
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Fill in the Blanks:**
+1. wrap
+2. Is
+3. panic
+4. recover
+
+**True/False:**
+1. ❌ False (return errors instead)
+2. ✅ True
+3. ✅ True
+4. ❌ False (errors.As is for type assertions; errors.Is checks values)
+
+**Multiple Choice:**
+1. **B** - Early return with error checks
+2. **C** - For unrecoverable initialization failures
+
+**Code Challenge:**
+```go
+type ValidationError struct {
+	Field   string
+	Message string
+}
+
+func (e ValidationError) Error() string {
+	return fmt.Sprintf("validation failed: %s - %s", e.Field, e.Message)
+}
+
+type User struct {
+	Name  string
+	Email string
+	Age   int
+}
+
+func (u User) Validate() error {
+	if u.Name == "" {
+		return ValidationError{Field: "name", Message: "cannot be empty"}
+	}
+	if !strings.Contains(u.Email, "@") {
+		return ValidationError{Field: "email", Message: "must contain @"}
+	}
+	if u.Age < 0 || u.Age > 150 {
+		return ValidationError{Field: "age", Message: "must be between 0 and 150"}
+	}
+	return nil
+}
+
+// Usage
+user := User{Name: "", Email: "test@example.com", Age: 25}
+if err := user.Validate(); err != nil {
+	var valErr ValidationError
+	if errors.As(err, &valErr) {
+		fmt.Printf("Field: %s, Error: %s\n", valErr.Field, valErr.Message)
+	}
+}
+```
+
+---
+
+</details>
 
 </details>
 
@@ -5362,7 +5576,7 @@ defer func() {
 A **type assertion** extracts the **concrete value** from an interface.
 
 <details>
-<summary>View contents</summary>
+<summary><strong>View contents</strong></summary>
 
 ### Syntax
 
