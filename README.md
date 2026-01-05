@@ -1431,6 +1431,20 @@ Most production Go teams use `testify`.
 
 ## Package Structure
 
+A **package** in Go is a way to **organize code**.
+It groups related variables, functions, types, and constants together.
+
+Think of a package like a **folder of related code**.
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+**Examples of built-in packages:**
+
+* `fmt` → printing and formatting
+* `math` → math functions
+* `net/http` → web servers and HTTP
+
 **Every Go file starts with a package declaration:**
 
 ```go
@@ -1438,9 +1452,6 @@ package main  // Executable package (must have main function)
 
 package mylib  // Library package
 ```
-
-<details>
-<summary><strong>View contents</strong></summary>
 
 **Package Naming Rules (Google Style):**
 - Use **lowercase**, **single-word** names
@@ -1458,6 +1469,12 @@ package mylib  // Library package
    package jsonParser
    package user_service
 ```
+
+**Special package: `main`:**
+
+* `package main` is used for **executable programs**
+* It must contain a `main()` function
+* Other packages are **reusable libraries**
 
 **Importing Packages:**
 
@@ -1492,47 +1509,191 @@ func main() {
 import _ "image/png"  // Registers PNG decoder without using package
 ```
 
+### Creating your own Go package
+
+**Example project structure:**
+
+```
+myproject/
+│
+├── go.mod
+├── main.go
+└── mathutils/
+    └── mathutils.go
+```
+
+---
+
+**Step 1: Create the package file**
+
+**mathutils/mathutils.go**
+
+```go
+package mathutils
+
+func Add(a int, b int) int {
+	return a + b
+}
+
+func Subtract(a int, b int) int {
+	return a - b
+}
+```
+
+### Important rules
+
+* The folder name **does not have to** match the package name, but it usually should
+* Functions starting with a **capital letter** are **exported** (public)
+* Lowercase names are **private** to the package
+
+---
+
+**2. Importing and using a package**
+
+`go.mod`
+
+```go
+module myproject
+
+go 1.22
+```
+
+`main.go`
+
+```go
+package main
+
+import (
+	"fmt"
+	"myproject/mathutils"
+)
+
+func main() {
+	fmt.Println(mathutils.Add(5, 3))
+	fmt.Println(mathutils.Subtract(10, 4))
+}
+```
+
+### Key points
+
+* Import path = **module name + folder name**
+* Exported functions must start with a **capital letter**
+* Use `packageName.FunctionName`
+
 ---
 
 </details>
 
 ## Visibility Rules
 
-**Capitalization determines visibility:**
+- **If a name starts with a capital letter, it is exported (public).**
+- **If a name starts with a lowercase letter, it is unexported (private).**
+
+This applies to:
+
+* functions
+* variables
+* constants
+* structs
+* struct fields
+* interfaces
+* methods
 
 <details>
 <summary><strong>View contents</strong></summary>
+
+**Exported (visible outside the package):**
+
+```go
+package mathutils
+
+// Exported (public) - accessible from other packages
+func Add(a, b int) int {
+	return a + b
+}
+
+// Unexported (private) - only accessible within this package
+func validateNumber(num string) bool {
+	return true
+}
+
+var Pi = 3.14 // Exported variable
+var a = 10 // Unexported variable
+```
+
+Can be used in another package:
+
+```go
+mathutils.Add(2, 3)
+fmt.Println(mathutils.Pi)
+
+mathutils.validateNumber("3") // ❌ compile error
+mathutils.a // ❌ compile error
+```
+
+---
+
+**Struct field visibility (very common pitfall):**
 
 ```go
 package user
 
 // Exported (public) - accessible from other packages
 type User struct {
-	Name string  // Exported field
-	Age  int     // Exported field
-}
-
-// Unexported (private) - only accessible within this package
-type session struct {
-	token string  // Unexported field
-}
-
-// Exported function
-func CreateUser(name string) *User {
-	return &User{Name: name}
-}
-
-// Unexported function
-func validateEmail(email string) bool {
-	return true
+	Name  string // Exported field
+	age   int    // Unexported field
 }
 ```
 
-**Key Rule:**
+From another package:
+
+```go
+user.Name = "Alice" // ✅
+user.age = 20       // ❌ compile error
 ```
-Uppercase first letter = Exported (public)
-Lowercase first letter = Unexported (private)
+
+⚠️ This is **extremely important** when using:
+
+* JSON encoding
+* databases
+* reflection
+
+Example:
+
+```go
+type User struct {
+	Name string `json:"name"`
+	age  int    `json:"age"`
+}
 ```
+
+`age` will **NOT** appear in JSON output.
+
+---
+
+**Best practices:**
+
+- Export only what users need
+- Keep internal helpers lowercase
+- Use comments for exported names (required for docs)
+
+Example:
+
+```go
+// Add returns the sum of a and b.
+func Add(a, b int) int {
+	return a + b
+}
+```
+
+---
+
+**Quick summary:**
+
+* **Capital letter = public**
+* **Lowercase letter = private**
+* Visibility is **package-level**
+* Struct fields must be exported to be accessible or encoded
 
 ---
 
