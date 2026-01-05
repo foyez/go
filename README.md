@@ -167,54 +167,6 @@ Go can efficiently run **thousands or millions of concurrent tasks**.
 
 </details>
 
-## Parallelism vs Multithreading vs Concurrency
-
-<details>
-<summary>View contents</summary>
-
-### Parallelism
-
-Running multiple tasks **at the same time** on multiple CPU cores.
-
-Example:
-
-* Downloading
-* Uploading
-* Rendering
-
-All happening simultaneously.
-
----
-
-### Multithreading
-
-Using multiple OS threads to do work concurrently.
-
-Example:
-
-* Watching a YouTube video
-* Commenting
-* Loading recommendations
-
-Go handles threads internally so developers don’t manage them directly.
-
----
-
-### Concurrency (Go’s Core Strength)
-
-Concurrency means **handling many tasks at once**, but not necessarily executing them simultaneously.
-
-Example:
-
-* Multiple users booking tickets
-* Multiple users editing the same document
-
-Go excels at structuring concurrent programs safely and clearly.
-
----
-
-</details>
-
 ## Go vs Other Languages
 
 <details>
@@ -861,569 +813,6 @@ Why this matters:
 * Easier to learn
 * Easier to read
 * Less hidden behavior
-
----
-
-</details>
-
-## TDD with Go (Test-Driven Development)
-
-Test-Driven Development (TDD) is a development approach where you **write tests before writing production code**.
-The goal is to let tests **drive the design and behavior** of your code.
-
-<details>
-<summary>View contents</summary>
-
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/tddWithGo)**
-
-### 1. Write the test first
-
-We start by writing a test for functionality that **does not exist yet**.
-
-#### `hello_test.go`
-
-```go
-package hello
-
-import "testing"
-
-// exported if it begins with a capital letter
-func TestHello(t *testing.T) {
-	t.Run("saying hello to people", func(t *testing.T) {
-		got := Hello("Foyez")
-		want := "Hello, Foyez"
-
-		if got != want {
-			t.Errorf("got %q want %q", got, want)
-		}
-	})
-}
-```
-
-#### Key concepts
-
-* Test files **must end with** `_test.go`
-* Tests live in the **same package** as the code (`package hello`)
-* `TestHello`:
-
-  * Must start with `Test`
-  * Takes `*testing.T`
-* `t.Run`:
-
-  * Creates a **subtest**
-  * Makes tests easier to read and extend later
-
-#### Run the test
-
-```sh
-go test
-```
-
-#### Output
-
-```sh
-./hello_test.go:7:10: undefined: Hello
-```
-
-This is **expected**.
-The test fails because `Hello` does not exist yet.
-
-This is the **first success in TDD**:
-
-> The test correctly tells us what is missing.
-
----
-
-### 2. Write the minimal code to make the test compile
-
-Now we write the **smallest possible code** to satisfy the compiler.
-
-#### `hello.go`
-
-```go
-package hello
-
-func Hello(name string) string {
-	return ""
-}
-```
-
-#### Run the test again
-
-```sh
-go test
-```
-
-#### Output
-
-```sh
-hello_test.go:11: got "" want "Hello, Foyez"
-```
-
-The test **runs and fails**, which is exactly what we want.
-
-At this stage:
-
-* Compiler errors are gone
-* Logic is still incorrect
-
----
-
-### 3. Write enough code to make the test pass
-
-Now we implement just enough logic to satisfy the test.
-
-```go
-func Hello(name string) string {
-	return "Hello, " + name
-}
-```
-
-#### Run the test
-
-```sh
-go test
-```
-
-#### Output
-
-```sh
-PASS
-ok      hello   0.004s
-```
-
-🎉 The test passes.
-
----
-
-### 4. Commit the code
-
-Once tests are passing, **commit the working state**.
-
-```sh
-git commit -m "add Hello() - greeting to people"
-```
-
-Why commit now?
-
-* You have a **green (passing) test**
-* This is a stable checkpoint
-
----
-
-### 5. Refactor (without changing behavior)
-
-Refactoring means:
-
-> Improve code structure **without changing behavior**
-
-Since we already have tests, refactoring is **safe**.
-
-#### `hello.go`
-
-```go
-package hello
-
-const englishHelloPrefix = "Hello, "
-
-func Hello(name string) string {
-	return englishHelloPrefix + name
-}
-```
-
-#### Improve the test for readability and reuse
-
-#### `hello_test.go`
-
-```go
-package hello
-
-import "testing"
-
-func TestHello(t *testing.T) {
-	assertErrorMessage := func(t testing.TB, got, want string) {
-		t.Helper()
-
-		if got != want {
-			t.Errorf("got %q want %q", got, want)
-		}
-	}
-
-	t.Run("saying hello to people", func(t *testing.T) {
-		got := Hello("Foyez")
-		want := "Hello, Foyez"
-		assertErrorMessage(t, got, want)
-	})
-}
-```
-
-#### Important details
-
-* `testing.TB`:
-
-  * Interface implemented by both `*testing.T` and `*testing.B`
-* `t.Helper()`:
-
-  * Marks this function as a helper
-  * Error line numbers point to the **test**, not the helper
-
-#### Run tests again
-
-```sh
-go test
-```
-
-```sh
-PASS
-ok      hello   0.004s
-```
-
----
-
-### 6. Amend the git commit
-
-Since refactoring didn’t change behavior, we **amend the previous commit**.
-
-```sh
-git commit --amend
-```
-
-This keeps git history clean.
-
----
-
-### TDD Workflow Summary
-
-1. Write a test
-2. Make the compiler pass
-3. Run the test and see it fail
-4. Write enough code to make it pass
-5. Refactor
-6. Repeat
-
----
-
-### 7. Add a Benchmark test
-
-Benchmarks measure **performance**, not correctness.
-
-```go
-func BenchmarkHello(b *testing.B) {
-	if testing.Short() {
-		b.Skip("skipping benchmark in short mode.")
-	}
-
-	for i := 0; i < b.N; i++ {
-		Hello("Zayan")
-	}
-}
-```
-
-#### Notes
-
-* `b.N` is automatically adjusted by Go
-* `testing.Short()` allows skipping benchmarks in quick test runs
-
-#### Run benchmark
-
-```sh
-go test -v --bench . --benchmem
-```
-
-#### Output
-
-```sh
-BenchmarkHello    2000000000          0.46 ns/op
-```
-
-This means:
-
-* The function ran **2,000,000,000 times**
-* Each call took **~0.46 nanoseconds**
-* Extremely fast, as expected
-
----
-
-### 8. Add Example tests (documentation + tests)
-
-Example tests:
-
-* Act as **tests**
-* Appear in **Go documentation**
-* Must match output exactly
-
-```go
-func ExampleHello() {
-	greeting := Hello("Zayan")
-	fmt.Println(greeting)
-	// Output: Hello, Zayan
-}
-
-func ExampleHello_second() {
-	greeting := Hello("Farah")
-	fmt.Println(greeting)
-	// Output: Hello, Farah
-}
-```
-
-#### Run examples
-
-```sh
-go test -v
-```
-
-```sh
-=== RUN   TestHello
-=== RUN   TestHello/saying_hello_to_people
---- PASS: TestHello (0.00s)
-    --- PASS: TestHello/saying_hello_to_people (0.00s)
-=== RUN   ExampleHello
---- PASS: ExampleHello (0.00s)
-=== RUN   ExampleHello_second
---- PASS: ExampleHello_second (0.00s)
-```
-
----
-
-### Using `testify` for Cleaner Unit Tests in Go
-
-Go’s standard `testing` package is powerful and minimal, but as tests grow, you often repeat:
-
-* Equality checks
-* Error handling
-* Failure messages
-
-[`testify`](https://github.com/stretchr/testify) solves this by providing:
-
-* Better assertions
-* Cleaner syntax
-* More readable test failures
-
----
-
-#### 1. Install Testify
-
-Add `testify` to your project using Go modules:
-
-```sh
-go get github.com/stretchr/testify
-```
-
-This adds it to `go.mod` automatically.
-
----
-
-#### 2. Why use `testify/assert`?
-
-Compare this:
-
-##### Standard library
-
-```go
-if got != want {
-	t.Errorf("got %q want %q", got, want)
-}
-```
-
-##### With `testify`
-
-```go
-assert.Equal(t, want, got)
-```
-
-Benefits:
-
-* Less boilerplate
-* Better failure output
-* Easier to read and maintain
-
----
-
-#### 3. Rewrite existing test using `testify/assert`
-
-##### `hello_test.go`
-
-```go
-package hello
-
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
-
-func TestHello(t *testing.T) {
-	t.Run("saying hello to people", func(t *testing.T) {
-		got := Hello("Foyez")
-		want := "Hello, Foyez"
-
-		assert.Equal(t, want, got)
-	})
-}
-```
-
-##### What `assert.Equal` does
-
-* Compares expected (`want`) and actual (`got`)
-* Automatically fails the test if they differ
-* Prints a **clear diff-style error message**
-
----
-
-#### 4. `assert` vs `require`
-
-Testify provides two main assertion packages:
-
-| Package   | Behavior                               |
-| --------- | -------------------------------------- |
-| `assert`  | Fails the test but continues execution |
-| `require` | Fails the test and stops immediately   |
-
-##### Example difference
-
-```go
-assert.Equal(t, want, got)
-```
-
-* Test continues even if this fails
-
-```go
-require.Equal(t, want, got)
-```
-
-* Test stops immediately if this fails
-
-##### Use cases
-
-* Use `assert` when multiple checks are independent
-* Use `require` when later checks depend on earlier ones
-
----
-
-#### 5. Using `require` in tests
-
-```go
-package hello
-
-import (
-	"testing"
-
-	"github.com/stretchr/testify/require"
-)
-
-func TestHello(t *testing.T) {
-	t.Run("saying hello to people", func(t *testing.T) {
-		got := Hello("Foyez")
-		want := "Hello, Foyez"
-
-		require.Equal(t, want, got)
-	})
-}
-```
-
----
-
-#### 6. Table-driven tests with Testify (recommended)
-
-Table-driven tests are the **idiomatic Go way** to test multiple cases.
-
-```go
-func TestHello_TableDriven(t *testing.T) {
-	tests := []struct {
-		name string
-		input string
-		want  string
-	}{
-		{
-			name:  "normal name",
-			input: "Foyez",
-			want:  "Hello, Foyez",
-		},
-		{
-			name:  "another name",
-			input: "Zayan",
-			want:  "Hello, Zayan",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := Hello(tt.input)
-			assert.Equal(t, tt.want, got)
-		})
-	}
-}
-```
-
-##### Why this is powerful
-
-* Easy to add new test cases
-* No duplicated test logic
-* Clear test intent
-
----
-
-#### 7. Assertions commonly used in real projects
-
-```go
-assert.Equal(t, expected, actual)
-assert.NotEqual(t, a, b)
-
-assert.Nil(t, err)
-assert.NotNil(t, value)
-
-assert.True(t, condition)
-assert.False(t, condition)
-
-assert.Len(t, collection, 3)
-assert.Contains(t, "hello world", "world")
-```
-
-These replace many `if` statements and manual error messages.
-
----
-
-#### 8. Using Testify with Benchmarks (important note)
-
-⚠️ **Do not use assertions inside benchmarks**
-
-Benchmarks should measure **performance only**.
-
-Correct benchmark (unchanged):
-
-```go
-func BenchmarkHello(b *testing.B) {
-	if testing.Short() {
-		b.Skip("skipping benchmark in short mode.")
-	}
-
-	for i := 0; i < b.N; i++ {
-		Hello("Zayan")
-	}
-}
-```
-
----
-
-#### 9. Should you always use Testify?
-
-##### Pros
-
-* Cleaner and more expressive tests
-* Better error messages
-* Faster test writing
-
-##### Cons
-
-* External dependency
-* Slightly less “pure stdlib”
-
-##### Recommendation
-
-* ✅ Use `testify` in **application code**
-* ⚠️ Stdlib is fine for **very small libraries**
-
-Most production Go teams use `testify`.
 
 ---
 
@@ -7000,6 +6389,1010 @@ func main() {
 
 </details>
 
+## Testing
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+### Test Basics
+
+**Test files end with `_test.go`:**
+
+```go
+// math.go
+package math
+
+func Add(a, b int) int {
+	return a + b
+}
+
+// math_test.go
+package math
+
+import "testing"
+
+func TestAdd(t *testing.T) {
+	result := Add(2, 3)
+	expected := 5
+	
+	if result != expected {
+		t.Errorf("Add(2, 3) = %d; want %d", result, expected)
+	}
+}
+```
+
+**Run tests:**
+
+```bash
+go test                  # Current package
+go test ./...            # All packages
+go test -v               # Verbose
+go test -run TestAdd     # Run specific test
+go test -cover           # Coverage report
+go test -race            # Race detection
+```
+
+---
+
+### Table-Driven Tests
+
+**Idiomatic Go testing pattern:**
+
+```go
+func TestAdd(t *testing.T) {
+	tests := []struct {
+		name     string
+		a, b     int
+		expected int
+	}{
+		{"positive numbers", 2, 3, 5},
+		{"negative numbers", -2, -3, -5},
+		{"mixed signs", -2, 3, 1},
+		{"with zero", 5, 0, 5},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Add(tt.a, tt.b)
+			if result != tt.expected {
+				t.Errorf("Add(%d, %d) = %d; want %d", 
+					tt.a, tt.b, result, tt.expected)
+			}
+		})
+	}
+}
+```
+
+**Benefits:**
+- Easy to add new cases
+- Self-documenting
+- Subtests for better output
+
+---
+
+### Testing Generic Functions (Go 1.18+)
+
+**Test generic functions with multiple types:**
+
+```go
+func Max[T constraints.Ordered](a, b T) T {
+    if a > b {
+        return a
+    }
+    return b
+}
+
+func TestMax(t *testing.T) {
+    // Test with int
+    t.Run("int", func(t *testing.T) {
+        result := Max(10, 20)
+        if result != 20 {
+            t.Errorf("Max(10, 20) = %d; want 20", result)
+        }
+    })
+    
+    // Test with float64
+    t.Run("float64", func(t *testing.T) {
+        result := Max(3.14, 2.71)
+        if result != 3.14 {
+            t.Errorf("Max(3.14, 2.71) = %f; want 3.14", result)
+        }
+    })
+    
+    // Test with string
+    t.Run("string", func(t *testing.T) {
+        result := Max("apple", "banana")
+        if result != "banana" {
+            t.Errorf("Max(apple, banana) = %s; want banana", result)
+        }
+    })
+}
+```
+
+**Table-driven test for generics:**
+
+```go
+func TestMaxTableDriven(t *testing.T) {
+    t.Run("int", func(t *testing.T) {
+        tests := []struct {
+            name     string
+            a, b     int
+            expected int
+        }{
+            {"positive", 10, 20, 20},
+            {"negative", -5, -10, -5},
+            {"equal", 5, 5, 5},
+        }
+        
+        for _, tt := range tests {
+            t.Run(tt.name, func(t *testing.T) {
+                result := Max(tt.a, tt.b)
+                if result != tt.expected {
+                    t.Errorf("got %d; want %d", result, tt.expected)
+                }
+            })
+        }
+    })
+    
+    // Similar tests for float64, string, etc.
+}
+```
+
+---
+
+### Test Helpers
+
+**Use `t.Helper()` to mark helper functions:**
+
+```go
+func assertEqual(t *testing.T, got, want int) {
+	t.Helper()  // Error line points to caller, not this line
+	
+	if got != want {
+		t.Errorf("got %d; want %d", got, want)
+	}
+}
+
+func TestAdd(t *testing.T) {
+	result := Add(2, 3)
+	assertEqual(t, result, 5)  // Error points here if fails
+}
+```
+
+---
+
+### Mocking and Interfaces
+
+**Test through interfaces:**
+
+```go
+// production code
+type UserStore interface {
+	GetUser(id int) (*User, error)
+}
+
+type UserService struct {
+	store UserStore
+}
+
+func (s *UserService) GetUserName(id int) (string, error) {
+	user, err := s.store.GetUser(id)
+	if err != nil {
+		return "", err
+	}
+	return user.Name, nil
+}
+
+// test code
+type MockUserStore struct {
+	users map[int]*User
+}
+
+func (m *MockUserStore) GetUser(id int) (*User, error) {
+	user, ok := m.users[id]
+	if !ok {
+		return nil, errors.New("user not found")
+	}
+	return user, nil
+}
+
+func TestGetUserName(t *testing.T) {
+	mock := &MockUserStore{
+		users: map[int]*User{
+			1: {Name: "Alice"},
+		},
+	}
+	
+	service := &UserService{store: mock}
+	
+	name, err := service.GetUserName(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	
+	if name != "Alice" {
+		t.Errorf("got %q; want %q", name, "Alice")
+	}
+}
+```
+
+---
+
+### Benchmarks
+
+**Measure performance:**
+
+```go
+func BenchmarkAdd(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Add(2, 3)
+	}
+}
+
+func BenchmarkAddParallel(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			Add(2, 3)
+		}
+	})
+}
+```
+
+**Run benchmarks:**
+
+```bash
+go test -bench .              # All benchmarks
+go test -bench BenchmarkAdd   # Specific benchmark
+go test -bench . -benchmem    # Memory allocation stats
+go test -bench . -cpuprofile=cpu.prof  # CPU profiling
+```
+
+**Output:**
+```
+BenchmarkAdd-8          1000000000               0.25 ns/op
+BenchmarkAddParallel-8  5000000000               0.24 ns/op
+```
+
+---
+
+### Example Tests (Documentation)
+
+**Tests that appear in godoc:**
+
+```go
+func ExampleAdd() {
+	result := Add(2, 3)
+	fmt.Println(result)
+	// Output: 5
+}
+
+func ExampleAdd_negative() {
+	result := Add(-2, -3)
+	fmt.Println(result)
+	// Output: -5
+}
+```
+
+**Requirements:**
+- Function name: `Example<FunctionName>`
+- `// Output:` comment required
+- Output must match exactly (including whitespace)
+
+---
+
+### Test Coverage
+
+**Generate coverage report:**
+
+```bash
+go test -cover                          # Basic coverage
+go test -coverprofile=coverage.out      # Save report
+go tool cover -html=coverage.out        # View in browser
+go test -coverprofile=coverage.out -covermode=atomic  # Atomic mode
+```
+
+**Coverage directives:**
+
+```go
+// TestMain runs before/after all tests
+func TestMain(m *testing.M) {
+	// Setup
+	code := m.Run()
+	// Teardown
+	os.Exit(code)
+}
+```
+
+---
+
+### Testing Best Practices (Google Style)
+
+**1. Test behavior, not implementation**
+
+```go
+// Good: Tests public API
+func TestUserService_CreateUser(t *testing.T) {
+	service := NewUserService()
+	user, err := service.CreateUser("Alice", "alice@example.com")
+	
+	if err != nil {
+		t.Fatal(err)
+	}
+	if user.Name != "Alice" {
+		t.Errorf("got name %q; want %q", user.Name, "Alice")
+	}
+}
+
+// Bad: Tests internal implementation
+func TestUserService_createUserInternal(t *testing.T) {
+	// ...
+}
+```
+
+**2. Use table-driven tests**
+
+**3. Keep tests independent**
+
+```go
+// Bad: Tests depend on order
+func TestCreateUser(t *testing.T) {
+	// Creates user with ID 1
+}
+
+func TestGetUser(t *testing.T) {
+	// Assumes user 1 exists from previous test
+}
+
+// Good: Each test sets up its own state
+func TestGetUser(t *testing.T) {
+	user := createTestUser(t)
+	result := getUser(user.ID)
+	// ...
+}
+```
+
+**4. Fail fast with t.Fatal**
+
+```go
+func TestProcess(t *testing.T) {
+	data, err := loadData()
+	if err != nil {
+		t.Fatal(err)  // Stop test if data can't be loaded
+	}
+	
+	// Continue with tests that need data
+}
+```
+
+---
+
+### TDD with Go (Test-Driven Development)
+
+Test-Driven Development (TDD) is a development approach where you **write tests before writing production code**.
+The goal is to let tests **drive the design and behavior** of your code.
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/tddWithGo)**
+
+### 1. Write the test first
+
+We start by writing a test for functionality that **does not exist yet**.
+
+#### `hello_test.go`
+
+```go
+package hello
+
+import "testing"
+
+// exported if it begins with a capital letter
+func TestHello(t *testing.T) {
+	t.Run("saying hello to people", func(t *testing.T) {
+		got := Hello("Foyez")
+		want := "Hello, Foyez"
+
+		if got != want {
+			t.Errorf("got %q want %q", got, want)
+		}
+	})
+}
+```
+
+#### Key concepts
+
+* Test files **must end with** `_test.go`
+* Tests live in the **same package** as the code (`package hello`)
+* `TestHello`:
+
+  * Must start with `Test`
+  * Takes `*testing.T`
+* `t.Run`:
+
+  * Creates a **subtest**
+  * Makes tests easier to read and extend later
+
+#### Run the test
+
+```sh
+go test
+```
+
+#### Output
+
+```sh
+./hello_test.go:7:10: undefined: Hello
+```
+
+This is **expected**.
+The test fails because `Hello` does not exist yet.
+
+This is the **first success in TDD**:
+
+> The test correctly tells us what is missing.
+
+---
+
+### 2. Write the minimal code to make the test compile
+
+Now we write the **smallest possible code** to satisfy the compiler.
+
+#### `hello.go`
+
+```go
+package hello
+
+func Hello(name string) string {
+	return ""
+}
+```
+
+#### Run the test again
+
+```sh
+go test
+```
+
+#### Output
+
+```sh
+hello_test.go:11: got "" want "Hello, Foyez"
+```
+
+The test **runs and fails**, which is exactly what we want.
+
+At this stage:
+
+* Compiler errors are gone
+* Logic is still incorrect
+
+---
+
+### 3. Write enough code to make the test pass
+
+Now we implement just enough logic to satisfy the test.
+
+```go
+func Hello(name string) string {
+	return "Hello, " + name
+}
+```
+
+#### Run the test
+
+```sh
+go test
+```
+
+#### Output
+
+```sh
+PASS
+ok      hello   0.004s
+```
+
+🎉 The test passes.
+
+---
+
+### 4. Commit the code
+
+Once tests are passing, **commit the working state**.
+
+```sh
+git commit -m "add Hello() - greeting to people"
+```
+
+Why commit now?
+
+* You have a **green (passing) test**
+* This is a stable checkpoint
+
+---
+
+### 5. Refactor (without changing behavior)
+
+Refactoring means:
+
+> Improve code structure **without changing behavior**
+
+Since we already have tests, refactoring is **safe**.
+
+#### `hello.go`
+
+```go
+package hello
+
+const englishHelloPrefix = "Hello, "
+
+func Hello(name string) string {
+	return englishHelloPrefix + name
+}
+```
+
+#### Improve the test for readability and reuse
+
+#### `hello_test.go`
+
+```go
+package hello
+
+import "testing"
+
+func TestHello(t *testing.T) {
+	assertErrorMessage := func(t testing.TB, got, want string) {
+		t.Helper()
+
+		if got != want {
+			t.Errorf("got %q want %q", got, want)
+		}
+	}
+
+	t.Run("saying hello to people", func(t *testing.T) {
+		got := Hello("Foyez")
+		want := "Hello, Foyez"
+		assertErrorMessage(t, got, want)
+	})
+}
+```
+
+#### Important details
+
+* `testing.TB`:
+
+  * Interface implemented by both `*testing.T` and `*testing.B`
+* `t.Helper()`:
+
+  * Marks this function as a helper
+  * Error line numbers point to the **test**, not the helper
+
+#### Run tests again
+
+```sh
+go test
+```
+
+```sh
+PASS
+ok      hello   0.004s
+```
+
+---
+
+### 6. Amend the git commit
+
+Since refactoring didn’t change behavior, we **amend the previous commit**.
+
+```sh
+git commit --amend
+```
+
+This keeps git history clean.
+
+---
+
+### TDD Workflow Summary
+
+1. Write a test
+2. Make the compiler pass
+3. Run the test and see it fail
+4. Write enough code to make it pass
+5. Refactor
+6. Repeat
+
+---
+
+### 7. Add a Benchmark test
+
+Benchmarks measure **performance**, not correctness.
+
+```go
+func BenchmarkHello(b *testing.B) {
+	if testing.Short() {
+		b.Skip("skipping benchmark in short mode.")
+	}
+
+	for i := 0; i < b.N; i++ {
+		Hello("Zayan")
+	}
+}
+```
+
+#### Notes
+
+* `b.N` is automatically adjusted by Go
+* `testing.Short()` allows skipping benchmarks in quick test runs
+
+#### Run benchmark
+
+```sh
+go test -v --bench . --benchmem
+```
+
+#### Output
+
+```sh
+BenchmarkHello    2000000000          0.46 ns/op
+```
+
+This means:
+
+* The function ran **2,000,000,000 times**
+* Each call took **~0.46 nanoseconds**
+* Extremely fast, as expected
+
+---
+
+### 8. Add Example tests (documentation + tests)
+
+Example tests:
+
+* Act as **tests**
+* Appear in **Go documentation**
+* Must match output exactly
+
+```go
+func ExampleHello() {
+	greeting := Hello("Zayan")
+	fmt.Println(greeting)
+	// Output: Hello, Zayan
+}
+
+func ExampleHello_second() {
+	greeting := Hello("Farah")
+	fmt.Println(greeting)
+	// Output: Hello, Farah
+}
+```
+
+#### Run examples
+
+```sh
+go test -v
+```
+
+```sh
+=== RUN   TestHello
+=== RUN   TestHello/saying_hello_to_people
+--- PASS: TestHello (0.00s)
+    --- PASS: TestHello/saying_hello_to_people (0.00s)
+=== RUN   ExampleHello
+--- PASS: ExampleHello (0.00s)
+=== RUN   ExampleHello_second
+--- PASS: ExampleHello_second (0.00s)
+```
+
+---
+
+### Using `testify` for Cleaner Unit Tests in Go
+
+Go’s standard `testing` package is powerful and minimal, but as tests grow, you often repeat:
+
+* Equality checks
+* Error handling
+* Failure messages
+
+[`testify`](https://github.com/stretchr/testify) solves this by providing:
+
+* Better assertions
+* Cleaner syntax
+* More readable test failures
+
+---
+
+#### 1. Install Testify
+
+Add `testify` to your project using Go modules:
+
+```sh
+go get github.com/stretchr/testify
+```
+
+This adds it to `go.mod` automatically.
+
+---
+
+#### 2. Why use `testify/assert`?
+
+Compare this:
+
+##### Standard library
+
+```go
+if got != want {
+	t.Errorf("got %q want %q", got, want)
+}
+```
+
+##### With `testify`
+
+```go
+assert.Equal(t, want, got)
+```
+
+Benefits:
+
+* Less boilerplate
+* Better failure output
+* Easier to read and maintain
+
+---
+
+#### 3. Rewrite existing test using `testify/assert`
+
+##### `hello_test.go`
+
+```go
+package hello
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestHello(t *testing.T) {
+	t.Run("saying hello to people", func(t *testing.T) {
+		got := Hello("Foyez")
+		want := "Hello, Foyez"
+
+		assert.Equal(t, want, got)
+	})
+}
+```
+
+##### What `assert.Equal` does
+
+* Compares expected (`want`) and actual (`got`)
+* Automatically fails the test if they differ
+* Prints a **clear diff-style error message**
+
+---
+
+#### 4. `assert` vs `require`
+
+Testify provides two main assertion packages:
+
+| Package   | Behavior                               |
+| --------- | -------------------------------------- |
+| `assert`  | Fails the test but continues execution |
+| `require` | Fails the test and stops immediately   |
+
+##### Example difference
+
+```go
+assert.Equal(t, want, got)
+```
+
+* Test continues even if this fails
+
+```go
+require.Equal(t, want, got)
+```
+
+* Test stops immediately if this fails
+
+##### Use cases
+
+* Use `assert` when multiple checks are independent
+* Use `require` when later checks depend on earlier ones
+
+---
+
+#### 5. Using `require` in tests
+
+```go
+package hello
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestHello(t *testing.T) {
+	t.Run("saying hello to people", func(t *testing.T) {
+		got := Hello("Foyez")
+		want := "Hello, Foyez"
+
+		require.Equal(t, want, got)
+	})
+}
+```
+
+---
+
+#### 6. Table-driven tests with Testify (recommended)
+
+Table-driven tests are the **idiomatic Go way** to test multiple cases.
+
+```go
+func TestHello_TableDriven(t *testing.T) {
+	tests := []struct {
+		name string
+		input string
+		want  string
+	}{
+		{
+			name:  "normal name",
+			input: "Foyez",
+			want:  "Hello, Foyez",
+		},
+		{
+			name:  "another name",
+			input: "Zayan",
+			want:  "Hello, Zayan",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Hello(tt.input)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+```
+
+##### Why this is powerful
+
+* Easy to add new test cases
+* No duplicated test logic
+* Clear test intent
+
+---
+
+#### 7. Assertions commonly used in real projects
+
+```go
+assert.Equal(t, expected, actual)
+assert.NotEqual(t, a, b)
+
+assert.Nil(t, err)
+assert.NotNil(t, value)
+
+assert.True(t, condition)
+assert.False(t, condition)
+
+assert.Len(t, collection, 3)
+assert.Contains(t, "hello world", "world")
+```
+
+These replace many `if` statements and manual error messages.
+
+---
+
+#### 8. Using Testify with Benchmarks (important note)
+
+⚠️ **Do not use assertions inside benchmarks**
+
+Benchmarks should measure **performance only**.
+
+Correct benchmark (unchanged):
+
+```go
+func BenchmarkHello(b *testing.B) {
+	if testing.Short() {
+		b.Skip("skipping benchmark in short mode.")
+	}
+
+	for i := 0; i < b.N; i++ {
+		Hello("Zayan")
+	}
+}
+```
+
+---
+
+#### 9. Should you always use Testify?
+
+##### Pros
+
+* Cleaner and more expressive tests
+* Better error messages
+* Faster test writing
+
+##### Cons
+
+* External dependency
+* Slightly less “pure stdlib”
+
+##### Recommendation
+
+* ✅ Use `testify` in **application code**
+* ⚠️ Stdlib is fine for **very small libraries**
+
+Most production Go teams use `testify`.
+
+</details>
+
+</details>
+
+---
+
+### Practice Questions (Testing)
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+**Fill in the Blanks:**
+
+1. Test files in Go must end with `__________`.
+2. The `t.__________()` method marks a function as a test helper.
+3. Benchmark functions must start with the word `__________`.
+4. The `// __________:` comment is required for Example tests.
+
+**True/False:**
+
+1. ⬜ Tests must be in the same package as the code they test
+2. ⬜ Table-driven tests are the idiomatic way to test in Go
+3. ⬜ Benchmarks measure the performance of code
+4. ⬜ Test files are compiled into the final binary
+
+**Multiple Choice:**
+
+1. What does `t.Run()` do?
+   - A) Runs all tests
+   - B) Creates a subtest
+   - C) Runs benchmarks
+   - D) Generates coverage
+
+2. When should you use `t.Fatal()` instead of `t.Error()`?
+   - A) Always
+   - B) Never
+   - C) When continuing the test makes no sense
+   - D) For benchmarks
+
+---
+
+### Answers
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Fill in the Blanks:**
+1. _test.go
+2. Helper
+3. Benchmark
+4. Output
+
+**True/False:**
+1. ❌ False (can be in `<package>_test` for black-box testing)
+2. ✅ True
+3. ✅ True
+4. ❌ False (excluded from production builds)
+
+**Multiple Choice:**
+1. **B** - Creates a subtest
+2. **C** - When continuing the test makes no sense
+
+---
+
+</details>
+
+</details>
+
 ## Web Servers
 
 Go has a **powerful, production-ready HTTP server built into the standard library**.
@@ -7010,74 +7403,467 @@ You do **not** need external frameworks to build fast and scalable web servers.
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/webServers)**
 
+### HTTP Server Basics
+
+**Simple HTTP server:**
+
 ```go
 package main
 
 import (
- "fmt"
- "log"
- "net/http"
+	"fmt"
+	"log"
+	"net/http"
 )
 
-func home(w http.ResponseWriter, req *http.Request) {
- fmt.Println("Home!")
- fmt.Fprint(w, "Home!")
-}
-
 func main() {
- http.HandleFunc("/", home)
+	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/about", aboutHandler)
+	
+	fmt.Println("Server starting on :8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
 
- fmt.Println("Server is running on port :8080")
- log.Fatal(http.ListenAndServe(":8080", nil))
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Welcome to the home page!")
+}
+
+func aboutHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "About page")
 }
 ```
 
-Explanation:
-
-* `http.ResponseWriter` → used to write the HTTP response
-* `*http.Request` → contains request data (method, headers, body, URL)
-* `fmt.Fprint` sends data back to the client
-* `http.HandleFunc("/", home)`
-  Registers the `/` route and associates it with the `home` handler
-* `http.ListenAndServe(":8080", nil)`
-  Starts an HTTP server on port `8080`
-* `nil` → uses the default multiplexer (`http.DefaultServeMux`)
-* `log.Fatal` → logs error and exits if server fails
-
-### Key Concepts
-
-#### 1. Routing
-
-Go uses a **request multiplexer** (router) internally.
-
-```go
-http.HandleFunc("/about", aboutHandler)
-```
-
-#### 2. Concurrency
-
-Each HTTP request is handled in its **own goroutine** automatically.
-
-> You do not need to manage threads manually.
-
-#### 3. Production Ready
-
-* Fast
-* Concurrent
-* Secure by default
-* Used internally by many Go services
+**Key Components:**
+- `http.ResponseWriter`: Write response
+- `*http.Request`: Read request
+- `http.HandleFunc`: Register route
+- `http.ListenAndServe`: Start server
 
 ---
 
-### When to Use Frameworks
+### Request Handling
 
-Use only when you need:
+**Reading request data:**
 
-* Middleware chaining
-* Advanced routing
-* Request validation helpers
+```go
+func handler(w http.ResponseWriter, r *http.Request) {
+	// Method
+	fmt.Println(r.Method)  // GET, POST, etc.
+	
+	// URL and path
+	fmt.Println(r.URL.Path)
+	
+	// Query parameters
+	name := r.URL.Query().Get("name")
+	
+	// Headers
+	userAgent := r.Header.Get("User-Agent")
+	
+	// Body (for POST/PUT)
+	body, err := io.ReadAll(r.Body)
+	defer r.Body.Close()
+	
+	// Form data
+	r.ParseForm()
+	email := r.FormValue("email")
+}
+```
 
-Otherwise, `net/http` is often enough.
+**Setting response:**
+
+```go
+func handler(w http.ResponseWriter, r *http.Request) {
+	// Set status code
+	w.WriteHeader(http.StatusOK)  // 200
+	
+	// Set headers
+	w.Header().Set("Content-Type", "application/json")
+	
+	// Write body
+	fmt.Fprintf(w, `{"message": "success"}`)
+}
+```
+
+---
+
+### Routing
+
+**ServeMux (built-in router):**
+
+```go
+func main() {
+	mux := http.NewServeMux()
+	
+	mux.HandleFunc("/", homeHandler)
+	mux.HandleFunc("/users/", usersHandler)  // Trailing slash matches /users/*
+	mux.HandleFunc("/api/v1/products", productsHandler)
+	
+	http.ListenAndServe(":8080", mux)
+}
+```
+
+**Custom handler (implements http.Handler):**
+
+```go
+type APIHandler struct {
+	db *sql.DB
+}
+
+func (h *APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Handle request
+}
+
+func main() {
+	handler := &APIHandler{db: db}
+	http.Handle("/api/", handler)
+	http.ListenAndServe(":8080", nil)
+}
+```
+
+---
+
+### Middleware
+
+**Function signature:**
+
+```go
+func middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Before request
+		next.ServeHTTP(w, r)
+		// After request
+	})
+}
+```
+
+**Logging middleware:**
+
+```go
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		
+		next.ServeHTTP(w, r)
+		
+		log.Printf("%s %s %v", r.Method, r.URL.Path, time.Since(start))
+	})
+}
+
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", homeHandler)
+	
+	// Wrap with middleware
+	handler := loggingMiddleware(mux)
+	
+	http.ListenAndServe(":8080", handler)
+}
+```
+
+**Authentication middleware:**
+
+```go
+func authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token := r.Header.Get("Authorization")
+		
+		if token != "valid-token" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		
+		next.ServeHTTP(w, r)
+	})
+}
+```
+
+**Chaining middleware:**
+
+```go
+func chain(h http.Handler, middleware ...func(http.Handler) http.Handler) http.Handler {
+	for i := len(middleware) - 1; i >= 0; i-- {
+		h = middleware[i](h)
+	}
+	return h
+}
+
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/", apiHandler)
+	
+	handler := chain(mux,
+		loggingMiddleware,
+		authMiddleware,
+		corsMiddleware,
+	)
+	
+	http.ListenAndServe(":8080", handler)
+}
+```
+
+---
+
+### JSON Handling
+
+**Encoding (struct to JSON):**
+
+```go
+type User struct {
+	ID    int    `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email,omitempty"`
+}
+
+func usersHandler(w http.ResponseWriter, r *http.Request) {
+	user := User{ID: 1, Name: "Alice", Email: "alice@example.com"}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+```
+
+**Decoding (JSON to struct):**
+
+```go
+func createUserHandler(w http.ResponseWriter, r *http.Request) {
+	var user User
+	
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	
+	// Process user
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(user)
+}
+```
+
+---
+
+### REST API Example
+
+```go
+type Product struct {
+	ID    int     `json:"id"`
+	Name  string  `json:"name"`
+	Price float64 `json:"price"`
+}
+
+var products = []Product{
+	{ID: 1, Name: "Laptop", Price: 999.99},
+	{ID: 2, Name: "Phone", Price: 599.99},
+}
+
+func main() {
+	mux := http.NewServeMux()
+	
+	mux.HandleFunc("GET /api/products", listProducts)
+	mux.HandleFunc("GET /api/products/{id}", getProduct)
+	mux.HandleFunc("POST /api/products", createProduct)
+	mux.HandleFunc("PUT /api/products/{id}", updateProduct)
+	mux.HandleFunc("DELETE /api/products/{id}", deleteProduct)
+	
+	log.Fatal(http.ListenAndServe(":8080", mux))
+}
+
+func listProducts(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(products)
+}
+
+func getProduct(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")  // Go 1.22+
+	
+	// Find product
+	for _, p := range products {
+		if strconv.Itoa(p.ID) == id {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(p)
+			return
+		}
+	}
+	
+	http.Error(w, "Product not found", http.StatusNotFound)
+}
+
+func createProduct(w http.ResponseWriter, r *http.Request) {
+	var product Product
+	
+	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	
+	product.ID = len(products) + 1
+	products = append(products, product)
+	
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(product)
+}
+```
+
+---
+
+### File Serving
+
+**Static files:**
+
+```go
+func main() {
+	// Serve files from ./static directory
+	fs := http.FileServer(http.Dir("./static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	
+	http.HandleFunc("/", homeHandler)
+	
+	http.ListenAndServe(":8080", nil)
+}
+```
+
+**File upload:**
+
+```go
+func uploadHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseMultipartForm(10 << 20)  // 10 MB max
+	
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+	
+	// Save file
+	dst, err := os.Create(filepath.Join("./uploads", header.Filename))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer dst.Close()
+	
+	io.Copy(dst, file)
+	
+	fmt.Fprintf(w, "File uploaded successfully")
+}
+```
+
+</details>
+
+---
+
+### Practice Questions (Web Servers)
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+**Fill in the Blanks:**
+
+1. The `http.__________` function registers a handler for a route.
+2. Middleware functions wrap an `http.__________` to add functionality.
+3. The `__________` package is used to encode and decode JSON.
+4. The `http.FileServer` function is used to serve __________ files.
+
+**True/False:**
+
+1. ⬜ Every HTTP handler must return a value
+2. ⬜ Middleware can modify both requests and responses
+3. ⬜ The http package supports HTTP/2 by default
+4. ⬜ ServeMux is thread-safe
+
+**Code Challenge:**
+
+Create a simple REST API for a todo list with endpoints to create, list, and delete todos using JSON.
+
+---
+
+### Answers
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Fill in the Blanks:**
+1. HandleFunc
+2. Handler
+3. json
+4. static
+
+**True/False:**
+1. ❌ False (handlers write to ResponseWriter)
+2. ✅ True
+3. ✅ True (since Go 1.6)
+4. ✅ True
+
+**Code Challenge:**
+```go
+type Todo struct {
+	ID        int    `json:"id"`
+	Title     string `json:"title"`
+	Completed bool   `json:"completed"`
+}
+
+var (
+	todos  = []Todo{}
+	nextID = 1
+	mu     sync.Mutex
+)
+
+func main() {
+	mux := http.NewServeMux()
+	
+	mux.HandleFunc("GET /todos", listTodos)
+	mux.HandleFunc("POST /todos", createTodo)
+	mux.HandleFunc("DELETE /todos/{id}", deleteTodo)
+	
+	log.Fatal(http.ListenAndServe(":8080", mux))
+}
+
+func listTodos(w http.ResponseWriter, r *http.Request) {
+	mu.Lock()
+	defer mu.Unlock()
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(todos)
+}
+
+func createTodo(w http.ResponseWriter, r *http.Request) {
+	var todo Todo
+	if err := json.NewDecoder(r.Body).Decode(&todo); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	
+	mu.Lock()
+	todo.ID = nextID
+	nextID++
+	todos = append(todos, todo)
+	mu.Unlock()
+	
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(todo)
+}
+
+func deleteTodo(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(r.PathValue("id"))
+	
+	mu.Lock()
+	defer mu.Unlock()
+	
+	for i, todo := range todos {
+		if todo.ID == id {
+			todos = append(todos[:i], todos[i+1:]...)
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+	}
+	
+	http.Error(w, "Todo not found", http.StatusNotFound)
+}
+```
+
+---
+
+</details>
 
 </details>
 
@@ -7086,7 +7872,7 @@ Otherwise, `net/http` is often enough.
 Go provides simple and safe file handling via the `os` and `io` packages.
 
 <details>
-<summary>View contents</summary>
+<summary><strong>View contents</strong></summary>
 
 ```go
 import (
@@ -7138,1075 +7924,441 @@ func removeFile(filename string) {
 * Use streaming (`os.Open`) for large files
 
 </details>
- 
-## Generate random numbers
- 
-<details>
-<summary>View contents</summary>
- 
-```go
-import (
- "math/rand"
- "time"
-)
- 
-source := rand.NewSource(time.Now().UnixNano())
-r := rand.New(source)
- 
-// genrate random number from 0 to n
-r.Intn(8) // n = 8
-```
- 
-</details>
 
-## Effective Go in short <sup>[ref](https://go.dev/doc/effective_go)</sup>
+## Best Practices (Google Style Guide)
 
 <details>
+<summary><strong>View contents</strong></summary>
 
-<summary>View contents</summary>
+### Naming Conventions
 
-### Formatting with `gofmt`
-
-<details>
-
-<summary>View contents</summary>
-
-Go uses `gofmt` to automatically format code, ensuring consistency across projects. Instead of manually aligning comments or indentation, developers rely on `gofmt`.
-
-#### Key Formatting Rules:
-
-1. **Indentation**: Uses **tabs**, not spaces.
-2. **Line Length**: No strict limit; wrap long lines if needed.
-3. **Parentheses**: Avoid unnecessary parentheses in control structures (`if`, `for`, `switch`).
-
-#### Example:
-
-**Before `gofmt`:**
-```go
-type T struct {
-    name string // name of the object
-    value int // its value
-}
-```
-
-**After `gofmt`:**
-```go
-type T struct {
-    name    string // name of the object
-    value   int    // its value
-}
-```
-
-To format code, run:
-```sh
-gofmt -w filename.go
-```
-Or use:
-```sh
-go fmt ./...
-```
-This keeps your code clean and readable without manual effort.
-
-</details>
-
-### Commentary
-
-<details>
-
-<summary>View contents</summary>
-
-Go supports both **C-style block comments (`/* */`)** and **C++-style line comments (`//`)**. 
-
-- **Line comments (`//`)** are the standard and widely used.
-- **Block comments (`/* */`)** are mainly for package documentation or temporarily disabling code.
-
-#### Example:
+**Packages:**
+- **Lowercase, single word**
+- No underscores or mixed caps
+- Name = directory name
 
 ```go
-package main
+✅ package user
+✅ package http
+✅ package json
 
-import "fmt"
-
-// Greet prints a welcome message.
-func Greet(name string) {
-    fmt.Println("Hello,", name)
-}
-
-/* 
-   This is a block comment.
-   It is useful for package-level documentation or disabling large sections of code.
-*/
-
-func main() {
-    Greet("Foyez") // Calling the Greet function
-}
+❌ package userService
+❌ package user_service
+❌ package Users
 ```
 
-**Doc comments** (before functions, structs, or packages) serve as the primary documentation.
+**Variables:**
+- **CamelCase** for exported
+- **camelCase** for unexported
+- Short names for small scopes
+- Descriptive names for large scopes
 
-For more details, check: [`go doc`](https://pkg.go.dev/cmd/doc).
-
-</details>
-
-### Names
-
-<details>
-
-<summary>View contents</summary>
-
-Go follows clear and consistent naming conventions for better readability and usability.
-
-#### 1️⃣ **Package Names**
-- Use **short, lowercase, single-word** names.
-- The package name should match its directory name.
-
-✅ **Example:**  
 ```go
-import "bytes" // Use bytes.Buffer, not bytes_package.Buffer
+✅ var userCount int
+✅ var u User  // Short scope
+✅ var db *sql.DB
+
+❌ var UserCount int  // Unexported
+❌ var user_count int
 ```
+
+**Functions:**
+- **CamelCase** for exported
+- **camelCase** for unexported
+- Verb-based names
+
 ```go
-import "encoding/base64" // Imported as base64, not encodingBase64
+✅ func GetUser(id int) (*User, error)
+✅ func validateEmail(email string) bool
+
+❌ func get_user(id int) (*User, error)
 ```
 
-#### 2️⃣ **Avoid Redundant Names**
-- Names should be **concise and meaningful**.
-- Use the **package name** as context.
+**Constants:**
+- **CamelCase** (not SCREAMING_CASE)
 
-✅ **Example:**  
 ```go
-buf := bufio.NewReader(input) // Not bufio.NewBufReader
-r := ring.New()               // Not ring.NewRing
+✅ const MaxRetries = 3
+✅ const defaultTimeout = time.Second
+
+❌ const MAX_RETRIES = 3
+❌ const DEFAULT_TIMEOUT = time.Second
 ```
-
-#### 3️⃣ **Getters & Setters**
-- Avoid `Get` in getter names.
-- Use **exported (uppercase) methods** for getters, and `SetX` for setters.
-
-✅ **Example:**  
-```go
-type User struct {
-    owner string
-}
-
-func (u *User) Owner() string { return u.owner }   // Not GetOwner()
-func (u *User) SetOwner(o string) { u.owner = o }  // Setter
-```
-```go
-user := User{}
-user.SetOwner("Foyez")
-fmt.Println(user.Owner()) // Reads naturally
-```
-
-#### 4️⃣ **Interface Naming**
-- **Single-method interfaces** should use `-er` suffix.
-
-✅ **Example:**  
-```go
-type Reader interface {
-    Read(p []byte) (n int, err error)
-}
-
-type Writer interface {
-    Write(p []byte) (n int, err error)
-}
-```
-
-#### 5️⃣ **Use MixedCaps Instead of Underscores**
-✅ **Example:**  
-```go
-type DataProcessor struct {}  // Not data_processor
-func ProcessData() {}         // Not process_data()
-```
-
-Following these conventions makes Go code **clean, idiomatic, and easy to read**.
-
-</details>
-
-### Semicolons
-
-<details>
-
-<summary>View contents</summary>
-
-Go automatically inserts semicolons (`;`) where needed, so they are **mostly invisible** in source code. The rule:  
-👉 If a line ends with an **identifier, literal, or certain tokens (`return`, `break`, `}` etc.)**, Go **inserts a semicolon**.
-
-#### ✅ **Examples:**
-```go
-x := 10  // Semicolon inserted automatically
-fmt.Println(x)  // Semicolon inserted automatically
-```
-
-#### **Semicolons in Loops**
-Semicolons are required **only in `for` loops**:
-```go
-for i := 0; i < 5; i++ {  // Semicolons required
-    fmt.Println(i)
-}
-```
-
-#### **Incorrect Brace Placement**
-🚨 **Wrong:**
-```go
-if x > 0  // Semicolon inserted → Unexpected behavior!
-{ 
-    fmt.Println("Positive") 
-}
-```
-✅ **Correct:**
-```go
-if x > 0 {  // No semicolon inserted
-    fmt.Println("Positive")
-}
-```
-
-**Conclusion:** Let Go handle semicolons **automatically**, except in `for` loops or multiple statements on one line.
-
-</details>
-
-### Control Structures
-
-<details>
-
-<summary>View contents</summary>
-
-Go's control structures are **similar to C** but with key differences:  
-✅ No `do` or `while`, just `for` loops  
-✅ `switch` is more flexible  
-✅ No parentheses `()` in conditions  
-✅ Braces `{}` are **mandatory**  
 
 ---
 
-#### **1. `if` Statement**  
-Braces `{}` are **always required**.  
-Optional **initialization** before condition.
+### Code Organization
 
-✅ **Example:**  
-```go
-if x := getValue(); x > 0 {  
-    fmt.Println("Positive:", x)
-}
+**Package structure:**
+
 ```
-✅ **No need for `else` if returning early:**  
+myapp/
+├── cmd/
+│   └── myapp/
+│       └── main.go      # Application entry point
+├── internal/            # Private application code
+│   ├── user/
+│   │   ├── user.go
+│   │   └── user_test.go
+│   └── auth/
+│       ├── auth.go
+│       └── auth_test.go
+├── pkg/                 # Public library code
+│   └── api/
+│       └── api.go
+├── go.mod
+└── go.sum
+```
+
+**File organization:**
+- Group related types/functions
+- Limit file size (~500 lines)
+- One concept per file
+
+---
+
+### Error Handling
+
+**Always check errors:**
+
 ```go
-f, err := os.Open("file.txt")  
+// Good
+f, err := os.Open("file.txt")
 if err != nil {
-    return err
+	return err
 }
-useFile(f)
+defer f.Close()
+
+// Bad
+f, _ := os.Open("file.txt")
 ```
 
----
+**Wrap errors with context:**
 
-#### **2. `for` Loop**  
-Go has **only `for`**, which works like `for`, `while`, and `forever` loops.
+```go
+// Good
+if err := process(); err != nil {
+	return fmt.Errorf("processing data: %w", err)
+}
 
-✅ **Standard `for` loop:**  
-```go
-for i := 0; i < 5; i++ {  
-    fmt.Println(i)
-}
-```
-✅ **While-like loop:**  
-```go
-for x > 0 {  
-    x--
-}
-```
-✅ **Infinite loop:**  
-```go
-for {  
-    fmt.Println("Running forever")
+// Bad
+if err := process(); err != nil {
+	return err  // No context
 }
 ```
 
-✅ **Loop over collections (array, slice, string, or map, or reading from a channel) using `range`:**  
+**Handle errors at appropriate level:**
+
 ```go
-for i, val := range arr {  
-    fmt.Println(i, val)
+// Low-level: Return errors
+func readFile() ([]byte, error) {
+	data, err := os.ReadFile("config.json")
+	if err != nil {
+		return nil, fmt.Errorf("reading config: %w", err)
+	}
+	return data, nil
 }
 
-for key, value := range oldMap {
-    newMap[key] = value
-}
-```
-If you only need the first item in the range (the key or index), drop the second:
-```go
-for key := range myMap {
-    if key.expired() {
-        delete(myMap, key)
-    }
-}
-```
-If you only need the second item in the range (the value), use the blank identifier, an underscore, to discard the first:
-```go
-for _, val := range arr { fmt.Println(val) }
-```
-
-✅ Go's `range` loop **automatically decodes UTF-8** and provides **rune values** (Unicode code points) instead of bytes.
-
-**Example:**  
-```go
-for pos, char := range "日本\x80語" { // \x80 is an invalid UTF-8 byte
-    fmt.Printf("character %#U starts at byte position %d\n", char, pos)
-}
-```
-🛠 **Output:**  
-```
-character U+65E5 '日' starts at byte position 0
-character U+672C '本' starts at byte position 3
-character U+FFFD '�' starts at byte position 6  // Invalid UTF-8 replaced
-character U+8A9E '語' starts at byte position 7
-```
-
-- `range` **extracts Unicode runes**, not raw bytes.
-- Invalid UTF-8 sequences are replaced with `U+FFFD (�)`.
-- **Positions refer to bytes, not runes**.
-
-✅  **Go Has No Comma Operator (`++` & `--` are Statements)** \
-In Go:
-- ✅ `++` and `--` are **statements, not expressions**  
-- 🚫 You **cannot** use them inside expressions like `x = y++ + z`  
-
-**Reverse an Array Using Parallel Assignment:**  
-```go
-for i, j := 0, len(a)-1; i < j; i, j = i+1, j-1 {
-    a[i], a[j] = a[j], a[i]  // Swap elements
+// High-level: Decide what to do
+func loadConfig() {
+	data, err := readFile()
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+	// Process data
 }
 ```
 
 ---
 
-#### **3. `switch` Statement**  
-✅ **No need for `break` (no fallthrough by default):**  
+### Concurrency
+
+**Use goroutines sparingly:**
+
 ```go
-switch x {
-case 1:
-    fmt.Println("One")
-case 2, 3:
-    fmt.Println("Two or Three")
-default:
-    fmt.Println("Other")
+// Good: Clear benefit
+go processInBackground()
+
+// Bad: Unnecessary complexity
+go fmt.Println("hello")
+```
+
+**Synchronize with channels or WaitGroups:**
+
+```go
+// Good
+func processConcurrently(items []Item) {
+	var wg sync.WaitGroup
+	for _, item := range items {
+		wg.Add(1)
+		go func(it Item) {
+			defer wg.Done()
+			process(it)
+		}(item)
+	}
+	wg.Wait()
 }
-```
-✅ **Can replace `if-else` chains:**  
-```go
-x := 5
-switch {
-case x >= 1 && x <= 4:
-  fmt.Println("Between 1 to 4")
-case x > 4:
-  fmt.Println("Greater than 4")
-default:
-  fmt.Println("Zero")
-}
-```
 
-✅ **Labeled `break` for loops:**  
-```go
-Loop:
-    for i := 0; i < 5; i++ {
-        for j := 0; j < 5; j++ {
-            if i+j > 5 {
-                fmt.Println("Print only one time")
-                break Loop // Exits outer loop
-            }
-        }
-    }
-```
-
----
-
-#### **4. `type switch` (Detect Dynamic Type)**  
-```go
-var i any = "hello"
-
-switch v := i.(type) {
-case int:
-    fmt.Println("Integer:", v)
-case string:
-    fmt.Println("String:", v)
-default:
-    fmt.Println("Unknown type")
+// Bad: No synchronization
+func processConcurrently(items []Item) {
+	for _, item := range items {
+		go process(item)
+	}
+	// Returns immediately!
 }
 ```
 
----
+**Prefer channels for communication:**
 
-</details>
-
-### **Functions**
-
-<details>
-
-<summary>View contents</summary>
-
-#### **1️⃣ Multiple Return Values**  
-Go allows functions to return multiple values, avoiding in-band error returns (like `-1` in C).
-
-✅ **Example:** `Write` method in `os` package  
 ```go
-func (file *File) Write(b []byte) (n int, err error)
-```
-Returns:
-- `n` → number of bytes written  
-- `err` → error (if not all bytes were written)
-
-✅ **Example:** Extracting an integer from a byte slice  
-```go
-func nextInt(b []byte, i int) (int, int) {
-    for ; i < len(b) && !isDigit(b[i]); i++ {}
-    x := 0
-    for ; i < len(b) && isDigit(b[i]); i++ {
-        x = x*10 + int(b[i]) - '0'
-    }
-    return x, i
+// Good
+func generator() <-chan int {
+	ch := make(chan int)
+	go func() {
+		defer close(ch)
+		for i := 0; i < 10; i++ {
+			ch <- i
+		}
+	}()
+	return ch
 }
-```
-Usage:
-```go
-for i := 0; i < len(b); {
-    x, i = nextInt(b, i)
-    fmt.Println(x)
+
+// Use
+for val := range generator() {
+	fmt.Println(val)
 }
 ```
 
 ---
 
-#### **2️⃣ Named Return Parameters**  
-Return variables can be **named**, making code more readable.
+### Function Design
 
-✅ **Example:** Naming `value` and `nextPos`
+**Short functions:**
+- Aim for <50 lines
+- One responsibility
+- Easy to test
+
+**Clear parameters:**
+
 ```go
-func nextInt(b []byte, pos int) (value, nextPos int) {
+// Good
+func CreateUser(name, email string, age int) (*User, error)
+
+// Bad: Too many parameters
+func CreateUser(name, email, address, city, country, phone string, age, zip int) (*User, error)
+
+// Better: Use struct
+type UserInput struct {
+	Name    string
+	Email   string
+	Address string
+	Age     int
+}
+
+func CreateUser(input UserInput) (*User, error)
 ```
-✅ **Example:** Simplifying `io.ReadFull`
+
+**Return errors last:**
+
 ```go
-func ReadFull(r Reader, buf []byte) (n int, err error) {
-    for len(buf) > 0 && err == nil {
-        var nr int
-        nr, err = r.Read(buf)
-        n += nr
-        buf = buf[nr:]
-    }
-    return  // Uses named return variables
+// Good
+func Process() (result string, err error)
+
+// Bad
+func Process() (err error, result string)
+```
+
+---
+
+### Comments
+
+**Package comments:**
+
+```go
+// Package user provides user management functionality.
+// It handles user creation, authentication, and authorization.
+package user
+```
+
+**Exported identifiers:**
+
+```go
+// User represents a user account.
+type User struct {
+	// ID is the unique identifier.
+	ID int
+	
+	// Name is the full name.
+	Name string
+}
+
+// CreateUser creates a new user account.
+func CreateUser(name string) (*User, error) {
+	// ...
+}
+```
+
+**Avoid obvious comments:**
+
+```go
+// Bad
+i := 0  // Set i to 0
+i++     // Increment i
+
+// Good (when needed)
+// Retry 3 times with exponential backoff
+for i := 0; i < 3; i++ {
+	// ...
 }
 ```
 
 ---
 
-#### **3️⃣ `defer` Statement (Delayed Execution)**  
-`defer` schedules a function to run **before the surrounding function exits**.
+### Testing
 
-✅ **Example:** Ensuring a file closes  
-```go
-func Contents(filename string) (string, error) {
-    f, err := os.Open(filename)
-    if err != nil {
-        return "", err
-    }
-    defer f.Close()  // Ensures file closes before return
-
-    var result []byte
-    buf := make([]byte, 100)
-    for {
-        n, err := f.Read(buf)
-        result = append(result, buf[:n]...)
-        if err == io.EOF {
-            break
-        } else if err != nil {
-            return "", err
-        }
-    }
-    return string(result), nil
-}
-```
-**Why use `defer`?**  
-✔ Guarantees cleanup (prevents leaks)  
-✔ Keeps code cleaner (close near open)  
-
-✅ **Example:** `defer` executes in LIFO order  
-```go
-for i := 0; i < 5; i++ {
-    defer fmt.Print(i, " ")
-}
-// Output: 4 3 2 1 0
-```
-
-✅ **Example:** Function Tracing  
-```go
-func trace(s string) string {
-    fmt.Println("entering:", s)
-    return s
-}
-
-func un(s string) {
-    fmt.Println("leaving:", s)
-}
-
-func a() {
-    defer un(trace("a"))
-    fmt.Println("in a")
-}
-
-func b() {
-    defer un(trace("b"))
-    fmt.Println("in b")
-    a()
-}
-
-func main() {
-    b()
-}
-```
-**Output:**  
-```
-entering: b  
-in b  
-entering: a  
-in a  
-leaving: a  
-leaving: b  
-```
-**Why use `defer`?**  
-✔ Ensures cleanup, even if function exits early  
-✔ Improves readability and maintainability 🚀
-
-</details>
-
-### **Data**
-
-<details>
-<summary>View contents</summary>
-
-**Memory Allocation: `new` vs. `make`**  
-
-<details>
-<summary>View contents</summary> 
-
-Go provides two built-in functions for memory allocation:  
-- **`new(T)`** → Allocates zeroed storage for a value of type `T` and returns `*T` (a pointer).  
-- **`make(T, args)`** → Initializes slices, maps, and channels, returning `T` (not a pointer).  
-
----
-
-### **Allocation with `new`**  
-✅ **Usage:**  
-- Allocates memory but does not initialize beyond zero values.  
-- Returns a **pointer** to the allocated type.  
-
-✅ **Example:** Allocating a struct  
-```go
-type SyncedBuffer struct {
-    lock   sync.Mutex
-    buffer bytes.Buffer
-}
-
-p := new(SyncedBuffer)  // Returns *SyncedBuffer
-var v SyncedBuffer      // Direct allocation, ready to use
-```
-✔ `p` is a pointer (`*SyncedBuffer`)  
-✔ `v` is a direct struct instance  
-
-✅ **Example:** Allocating an integer  
-```go
-p := new(int) // *int with zero value (0)
-fmt.Println(*p) // Prints 0
-```
----
-
-### **Constructors & Composite Literals**  
-✅ **When zero values aren’t enough, use a constructor.**  
-
-🔴 **Verbose version**  
-```go
-func NewFile(fd int, name string) *File {
-    if fd < 0 {
-        return nil
-    }
-    f := new(File)
-    f.fd = fd
-    f.name = name
-    return f
-}
-```
-✔ Can be **simplified** with **composite literals**  
-
-🟢 **Optimized version**  
-```go
-func NewFile(fd int, name string) *File {
-    if fd < 0 {
-        return nil
-    }
-    return &File{fd, name, nil, 0} // Allocates and initializes
-}
-```
-
-The fields of a composite literal are laid out in order and must all be present. However, by labeling the elements explicitly as field:value pairs, the initializers can appear in any order, with the missing ones left as their respective zero values. Thus we could say
-```go
-return &File{fd: fd, name: name}
-```
-
-✔ `&File{}` creates and returns an initialized struct  
-✔ Equivalent to `new(File)` but with initialization  
-
-✅ **Examples of composite literals:**  
-```go
-a := [...]string{0: "no error", 1: "Eio", 2: "invalid argument"} // Array
-s := []string{"no error", "Eio", "invalid argument"}             // Slice
-m := map[int]string{0: "no error", 1: "Eio", 2: "invalid argument"} // Map
-```
-
----
-
-### **Allocation with `make`**  
-✅ **`make` initializes slices, maps, and channels**  
-```go
-v := make([]int, 10, 100) // Length 10, capacity 100
-```
-✔ Allocates an array of 100 integers  
-✔ Creates a slice of length 10 referring to that array  
-
-✅ **Key difference:**  
-```go
-var p *[]int = new([]int) // *p == nil (rarely useful)
-var v  []int = make([]int, 100) // Allocates a slice of 100 ints
-```
-✔ `new([]int)` → Returns a pointer to an **empty** slice  
-✔ `make([]int, 100)` → Returns a **usable** slice of 100 ints  
-
-✅ **Idiomatic way:**  
-```go
-v := make([]int, 100) // Best practice
-```
-✔ Avoid unnecessary complexity  
-
-✅ **Other `make` examples:**  
-```go
-ch := make(chan int, 10)    // Buffered channel
-m := make(map[string]int)   // Empty map
-```
-✔ `make` initializes internal structures
-
-</details>
-
-### **Arrys**  
-
-<details>
-<summary>View contents</summary> 
-
-Arrays in Go differ from C-style arrays:  
-✔ **Arrays are values** → Assigning an array copies all elements.  
-✔ **Passing to a function copies the array** (unless using a pointer).  
-✔ **Array size is part of its type** → `[10]int` and `[20]int` are different types.  
-
----
-
-#### **1️⃣ Array Declaration & Initialization**  
-```go
-var a [3]int            // Zero-initialized: [0, 0, 0]
-b := [3]int{1, 2, 3}    // Explicit values
-c := [...]int{4, 5, 6}  // Compiler determines size
-```
-
----
-
-#### **2️⃣ Copying Arrays**  
-```go
-a := [3]int{1, 2, 3}
-b := a   // Creates a copy, modifying b won’t affect a
-b[0] = 10
-fmt.Println(a, b) // Output: [1 2 3] [10 2 3]
-```
-
----
-
-#### **3️⃣ Passing Arrays to Functions**  
-🔴 **By Value (copying entire array)**  
-```go
-func ModifyArray(arr [3]int) {
-    arr[0] = 100
-}
-a := [3]int{1, 2, 3}
-ModifyArray(a)
-fmt.Println(a)  // Output: [1 2 3] (unchanged)
-```
-  
-🟢 **By Reference (using pointers for efficiency)**  
-```go
-func ModifyArray(arr *[3]int) {
-    arr[0] = 100
-}
-a := [3]int{1, 2, 3}
-ModifyArray(&a)
-fmt.Println(a)  // Output: [100 2 3]
-```
-
----
-
-#### **4️⃣ Arrays vs. Slices**  
-✅ **Use slices for flexibility & efficiency**  
-```go
-array := [3]float64{7.0, 8.5, 9.1}
-slice := array[:]  // Convert to slice
-```
-✔ Slices are more idiomatic in Go  
-
----
-
-</details>
-
-### **Slices**  
-
-<details>
-<summary>View contents</summary> 
-
-Slices provide a **dynamic, flexible view** over arrays and are the preferred way to handle collections in Go.  
-
-✔ **Slices reference an underlying array** (modifications affect all references).  
-✔ **Passing a slice to a function allows modifications** without explicit pointers.  
-✔ **Slice length (`len`) and capacity (`cap`) can change dynamically.**  
-
----
-
-#### **1️⃣ Declaring & Initializing Slices**  
-```go
-var s []int              // nil slice (len=0, cap=0)
-s = []int{1, 2, 3}       // Initialized slice
-t := make([]int, 5, 10)  // Slice with len=5, cap=10
-```
-
----
-
-#### **2️⃣ Slicing an Array**  
-```go
-arr := [5]int{1, 2, 3, 4, 5}
-s := arr[1:4]  // Slice of [2, 3, 4]
-```
-
-🔹 **Slices hold references to arrays, so modifying `s` affects `arr`**  
-```go
-s[0] = 100
-fmt.Println(arr) // Output: [1 100 3 4 5]
-```
-
----
-
-#### **3️⃣ Passing Slices to Functions**  
-```go
-func modify(s []int) {
-    s[0] = 42
-}
-nums := []int{1, 2, 3}
-modify(nums)
-fmt.Println(nums) // Output: [42 2 3]
-```
-✔ No need to pass a pointer, as slices already reference the underlying array.  
-
----
-
-#### **4️⃣ Appending to Slices**  
-```go
-s := []int{1, 2}
-s = append(s, 3, 4, 5)  // Expands the slice
-fmt.Println(s) // Output: [1 2 3 4 5]
-```
-✔ If capacity is exceeded, Go automatically **allocates new memory**.  
-
----
-
-#### **5️⃣ Copying Slices**  
-```go
-src := []int{1, 2, 3}
-dst := make([]int, len(src))
-copy(dst, src)
-fmt.Println(dst) // Output: [1 2 3]
-```
-✔ `copy(dst, src)` copies **minimum of len(dst) and len(src)**.  
-
----
-
-#### **6️⃣ Two-Dimensional Slices**  
-🔹 **Independent inner slices:**  
-```go
-matrix := make([][]int, 3) // 3 rows
-for i := range matrix {
-    matrix[i] = make([]int, 4) // 4 columns
-}
-```
-🔹 **Single allocation for efficiency:**  
-```go
-matrix := make([][]int, 3)
-data := make([]int, 3*4) // 3 rows * 4 cols
-for i := range matrix {
-    matrix[i], data = data[:4], data[4:] // Slice the array into rows
-}
-```
-✔ **More efficient** but less flexible than independent allocation.  
-
----
-
-</details>
-
-### **Maps** 
-
-<details>
-<summary>View contents</summary> 
-
-Maps in Go provide an efficient **key-value** data structure with dynamic sizing.  
-
-✔ **Keys must support equality (`==`)** (e.g., strings, ints, structs).  
-✔ **Maps hold references** to an underlying structure (modifying inside a function affects the caller).  
-✔ **Accessing a non-existent key returns the zero value** of the value type.  
-
----
-
-#### **1️⃣ Declaring & Initializing Maps**  
-```go
-// Using map literals
-timeZone := map[string]int{
-    "UTC":  0,
-    "EST": -5 * 3600,
-    "CST": -6 * 3600,
-}
-
-// Using make()
-users := make(map[string]int) // Empty map
-```
-
----
-
-#### **2️⃣ Accessing & Modifying Maps**  
-```go
-timeZone["PST"] = -8 * 3600  // Add key-value pair
-offset := timeZone["EST"]    // Retrieve value
-fmt.Println(offset)          // Output: -18000
-```
-
-❌ **Accessing a non-existent key returns the zero value** (for int, it's `0`).  
-
----
-
-#### **3️⃣ Checking Key Existence (Comma-Ok Idiom)**  
-```go
-if offset, exists := timeZone["UTC"]; exists {
-    fmt.Println("Offset:", offset)
-}
-```
-✔ Helps differentiate between **"zero value"** and **"missing key"**.
-
-To test for presence in the map without worrying about the actual value, you can use the blank identifier (_) in place of the usual variable for the value.
+**Test file naming:**
 
 ```go
-_, exists := timeZone[tz]
+user.go       → user_test.go
+validator.go  → validator_test.go
 ```
 
----
+**Test function naming:**
 
-#### **4️⃣ Deleting Keys**  
 ```go
-delete(timeZone, "PST")  // Remove PST from map
+func TestFunctionName(t *testing.T)
+func TestStructName_MethodName(t *testing.T)
+func BenchmarkFunctionName(b *testing.B)
+func ExampleFunctionName()
 ```
-✔ Safe to call **even if the key doesn’t exist**.  
 
----
+**Use table-driven tests:**
 
-#### **5️⃣ Using Maps as Sets**  
 ```go
-attended := map[string]bool{"Ann": true, "Joe": true}
-if attended["Ann"] {
-    fmt.Println("Ann was at the meeting")
-}
-```
-✔ **Maps with `bool` values** can function as sets.  
-
----
-
-#### **6️⃣ Iterating Over a Map**  
-```go
-for key, value := range timeZone {
-    fmt.Println("Key:", key, "Value:", value)
+func TestProcess(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    string
+		wantErr bool
+	}{
+		{"valid input", "test", "TEST", false},
+		{"empty input", "", "", true},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Process(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Process() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Process() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
 ```
 
 ---
 
-</details>
+### Performance
 
-### **Printing**
+**Use pointers for large structs:**
 
-<details>
-<summary>View contents</summary> 
-
-Go’s `fmt` package provides **formatted printing** similar to C’s `printf`, but with enhanced features.  
-
-✔ `fmt.Print`, `fmt.Println`, `fmt.Printf` – Basic printing.  
-✔ `fmt.Sprintf`, `fmt.Fprintf` – Return formatted strings.  
-✔ `fmt.Fprint(os.Stdout, …)` – Print to `io.Writer`.  
-
----
-
-#### **1️⃣ Basic Printing**  
 ```go
-fmt.Print("Hello")      // Prints: Hello
-fmt.Println("Hello")    // Prints: Hello\n (adds newline)
-fmt.Printf("Age: %d\n", 25) // Prints: Age: 25
+// Good
+func ProcessUser(u *User) error
+
+// Bad: Copies entire struct
+func ProcessUser(u User) error
 ```
-✔ `Println` adds spaces & newline.  
-✔ `Printf` supports format specifiers (`%d`, `%s`, etc.).  
 
----
+**Preallocate slices when size is known:**
 
-#### **2️⃣ Formatting Values (`Printf`)**  
 ```go
-x := 255
-fmt.Printf("%d %x %b\n", x, x, x) // Decimal, Hex, Binary
-// Output: 255 ff 11111111
+// Good
+items := make([]Item, 0, expectedSize)
 
-t := struct{ Name string; Age int }{"John", 30}
-fmt.Printf("%v\n", t)   // {John 30} (default format)
-fmt.Printf("%+v\n", t)  // {Name:John Age:30} (field names)
-fmt.Printf("%#v\n", t)  // struct { Name string; Age int }{Name:"John", Age:30} (Go syntax)
+// Bad
+var items []Item
 ```
-✔ `%v` → default value representation.  
-✔ `%+v` → shows struct field names.  
-✔ `%#v` → prints Go syntax representation.  
 
----
+**Use sync.Pool for frequently allocated objects:**
 
-#### **3️⃣ Printing Maps & Slices**  
 ```go
-timeZone := map[string]int{"UTC": 0, "PST": -8 * 3600}
-fmt.Printf("%v\n", timeZone)   // map[PST:-28800 UTC:0]
-fmt.Printf("%#v\n", timeZone)  // map[string]int{"PST":-28800, "UTC":0}
-```
-✔ **Maps are sorted lexicographically by key**.  
-
----
-
-#### **4️⃣ Printing Types & Quotes**  
-```go
-str := "Hello"
-fmt.Printf("%T\n", str)   // string (prints type)
-fmt.Printf("%q\n", str)   // "Hello" (quoted string)
-fmt.Printf("%x\n", str)   // 48656c6c6f (hex encoding)
-fmt.Printf("% x\n", str)  // 48 65 6c 6c 6f (spaced hex)
-```
-✔ `%T` → prints type.  
-✔ `%q` → quoted string.  
-✔ `%x` → hexadecimal representation.  
-
----
-
-#### **5️⃣ Custom String Representation (`String()` Method)**  
-```go
-type Person struct {
-    Name string
-    Age  int
+var bufPool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
 }
 
-func (p Person) String() string {
-    return fmt.Sprintf("%s is %d years old", p.Name, p.Age)
-}
-
-p := Person{"Alice", 25}
-fmt.Println(p) // Alice is 25 years old
-```
-✔ Implement `String()` for **custom print formatting**.  
-
----
-
-#### **6️⃣ Variadic Functions (`...interface{}` & `...int`)**  
-```go
-func Min(values ...int) int {
-    min := values[0]
-    for _, v := range values {
-        if v < min {
-            min = v
-        }
-    }
-    return min
-}
-fmt.Println(Min(3, 1, 4, 1, 5)) // 1
-```
-✔ `...int` → allows multiple `int` arguments.  
-
----
-
-</details>
-
-### **Append**
-
-<details>
-<summary>View contents</summary> 
-
-Go’s built-in `append` function dynamically grows slices.  
-
-#### **1️⃣ Syntax**  
-```go
-func append(slice []T, elements ...T) []T
-```
-- `T` is a generic type.  
-- `append` returns a **new slice** because the underlying array **may change**.  
-
----
-
-#### **2️⃣ Appending Elements**  
-```go
-x := []int{1, 2, 3}
-x = append(x, 4, 5, 6)
-fmt.Println(x) // [1 2 3 4 5 6]
-```
-✔ Adds multiple elements at once.  
-
----
-
-#### **3️⃣ Appending a Slice (`...` Operator)**  
-```go
-x := []int{1, 2, 3}
-y := []int{4, 5, 6}
-x = append(x, y...) // Spreads `y` into `x`
-fmt.Println(x) // [1 2 3 4 5 6]
-```
-✔ **`...` is required** to unpack a slice.  
-
----
-
-#### **4️⃣ Capacity Expansion & Performance**  
-```go
-x := make([]int, 3, 5) // len=3, cap=5
-x[0], x[1], x[2] = 1, 2, 3
-x = append(x, 4, 5, 6) // Capacity exceeded → new array allocated
-fmt.Println(x) // [1 2 3 4 5 6]
-```
-✔ If **capacity is exceeded, a new array is created**.  
-
----
-
-#### **5️⃣ Efficient Slice Growth (Doubling Strategy)**  
-```go
-var s []int
-for i := 0; i < 10; i++ {
-    s = append(s, i)
-    fmt.Printf("len=%d cap=%d %v\n", len(s), cap(s), s)
+func process() {
+	buf := bufPool.Get().(*bytes.Buffer)
+	defer bufPool.Put(buf)
+	buf.Reset()
+	
+	// Use buf
 }
 ```
-✔ **Capacity doubles dynamically** when needed.  
 
 ---
 
-</details>
+### Common Pitfalls
 
-</details>
+**1. Loop variable capture:**
 
+```go
+// Wrong
+for _, item := range items {
+	go func() {
+		process(item)  // All goroutines see last value
+	}()
+}
+
+// Correct
+for _, item := range items {
+	go func(it Item) {
+		process(it)
+	}(item)
+}
+```
+
+**2. Nil map/slice:**
+
+```go
+// Wrong
+var m map[string]int
+m["key"] = 1  // Panic!
+
+// Correct
+m := make(map[string]int)
+m["key"] = 1
+```
+
+**3. Slice append:**
+
+```go
+// Wrong
+func addItem(items []Item, item Item) {
+	items = append(items, item)  // Doesn't modify caller's slice
+}
+
+// Correct
+func addItem(items []Item, item Item) []Item {
+	return append(items, item)
+}
+```
+
+---
 
 </details>
 
 ## Learning Resources
 
 <details>
-<summary>View contents</summary>
+<summary><strong>View contents</strong></summary>
 
 - [Build web application with golang](https://github.com/astaxie/build-web-application-with-golang) - `A golang ebook intro how to build a web with golang`
 - [Go Patterns](https://github.com/tmrts/go-patterns) - `Curated list of Go design patterns, recipes and idioms`
