@@ -1867,6 +1867,29 @@ Useful for debugging and learning, not common in production code.
 
 ---
 
+### Type Parameters (Go 1.18+)
+
+Go supports **generic programming** with type parameters.
+
+**Quick Example:**
+
+```go
+// Generic function
+func Max[T comparable](a, b T) T {
+    if a > b {
+        return a
+    }
+    return b
+}
+
+// Works with any comparable type
+fmt.Println(Max(10, 20))           // int: 20
+fmt.Println(Max(3.14, 2.71))       // float64: 3.14
+fmt.Println(Max("hello", "world")) // string: world
+```
+
+---
+
 ### Type Conversion
 
 **Go requires explicit conversion:**
@@ -3773,9 +3796,9 @@ fmt.Println(multi) // [[1 2 3] [5 6 7]]
 - Performance-critical code (avoid heap allocation)
 - **Generally prefer slices** for flexibility
 
----
-
 </details>
+
+---
 
 ### Slices
 
@@ -3808,6 +3831,8 @@ slice := arr[1:4]  // [2 3 4]
 - `make` initializes with `zero-value` and allocates memory.
 - `make([]T, len, cap)`
 
+---
+
 #### Slice Internals
 
 **A slice has three components:**
@@ -3823,6 +3848,8 @@ s := make([]int, 3, 5)
 fmt.Println(len(s))  // 3 (length)
 fmt.Println(cap(s))  // 5 (capacity)
 ```
+
+---
 
 #### Append and Capacity
 
@@ -3844,6 +3871,8 @@ fmt.Printf("len=%d cap=%d %v\n", len(s), cap(s), s)
 - `append` may allocate a **new array** if capacity exceeded
 - Always use result: `s = append(s, value)`
 - Capacity typically doubles when exceeded
+
+---
 
 #### Slice Operations
 
@@ -3904,6 +3933,41 @@ s = append(s[:i], append([]int{value}, s[i:]...)...)
 fmt.Println(s)  // [1 2 3 5]
 ```
 
+---
+
+#### Generic Slice Operations (Go 1.18+)
+
+**Common generic slice functions:**
+
+```go
+// Generic Map
+func Map[T, U any](slice []T, fn func(T) U) []U {
+    result := make([]U, len(slice))
+    for i, v := range slice {
+        result[i] = fn(v)
+    }
+    return result
+}
+
+// Generic Filter
+func Filter[T any](slice []T, fn func(T) bool) []T {
+    result := []T{}
+    for _, v := range slice {
+        if fn(v) {
+            result = append(result, v)
+        }
+    }
+    return result
+}
+
+// Usage
+nums := []int{1, 2, 3, 4, 5}
+doubled := Map(nums, func(n int) int { return n * 2 })
+evens := Filter(nums, func(n int) bool { return n%2 == 0 })
+```
+
+---
+
 #### Slice Gotchas
 
 **Slices share underlying array:**
@@ -3931,13 +3995,13 @@ fmt.Println(s)      // [1 2 3 4 5] (unchanged)
 fmt.Println(slice)  // [2 3 100]
 ```
 
----
-
 </details>
+
+---
 
 ### Maps
 
-In Go, a **map** is a built-in data type that stores **key–value pairs**.
+In Go, a **map** is a built-in data structure that stores **key–value pairs**.
 It is similar to:
 
 * Object (JavaScript)
@@ -3949,116 +4013,46 @@ It is similar to:
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/maps)**
 
-### Map Basics
-
-#### Declaring and creating a map
+**Hash tables mapping keys to values:**
 
 ```go
-var results map[string]float64 = make(map[string]float64) // create empty map
-```
+// Declaration (creates nil map)
+var m map[string]int
 
-Key points:
-
-* `map[string]float64` → key type is `string`, value type is `float64`
-* `make` is required to allocate memory
-* A `nil` map cannot be written to
-
----
-
-#### Reading from a map
-
-```go
-fmt.Println(results["test"]) // 0
-```
-
-Important:
-
-* If a key does **not exist**, Go returns the **zero value** of the value type
-* For `float64`, zero value is `0`
-
----
-
-#### Writing to a map
-
-```go
-results["foyez"] = 3.4
-results["mithu"] = 3.5
-
-fmt.Println(results) // map[foyez:3.4 mithu:3.5]
-```
-
----
-
-### Map literal (initialize with values)
-
-```go
-userEmails := map[int]string{
-	1: "user1@email.com",
-	2: "user2@email.com",
+// Initialization
+m1 := make(map[string]int)
+m2 := map[string]int{
+	"Alice": 25,
+	"Bob":   30,
 }
-```
 
-* Cleaner and more common
-* `make` is implicit
+// Set values
+// If key exists → value updated
+// If key does not exist → key created
+m1["Alice"] = 25
 
----
+// Get values
+age := m1["Alice"]
 
-#### Updating values
+// If a key does not exist, Go returns the zero value of the value type
+age := m1["John] // 0
 
-```go
-userEmails[1] = "user12@email.com"
-```
-
-* If key exists → value updated
-* If key does not exist → key created
-
----
-
-### Checking if a key exists (`comma ok` idiom)
-
-```go
-emailOfSecondUser, ok := userEmails[2]
-emailOfFourthUser, ok2 := userEmails[4]
-
-fmt.Println(emailOfSecondUser, ok)  // user2@email.com true
-fmt.Println(emailOfFourthUser, ok2) // "" false
-```
-
-Key points:
-
-* `ok == true` → key exists
-* `ok == false` → key does not exist
-* Returned value is **zero value** if key is missing
-
----
-
-#### Idiomatic existence check
-
-```go
-if email, ok := userEmails[2]; ok {
-	fmt.Printf("%s exists\n", email)
-} else {
-	fmt.Println("email doesn't exist")
+// Check existence
+age, exists := m1["Alice"]
+if exists {
+	fmt.Println("Found:", age)
 }
+
+// Delete key
+// Safe to delete a non-existing key
+// No error is thrown
+delete(m1, "Alice")
+
+// Length
+fmt.Println(len(m1))
 ```
 
----
-
-### Deleting from a map
-
-```go
-delete(userEmails, 1)
-fmt.Println(userEmails) // map[2:user2@email.com]
-```
-
-Notes:
-
-* Safe to delete a non-existing key
-* No error is thrown
-
----
-
-### Important Map Characteristics
+#### Important Map Characteristics
 
 * Map keys must be **comparable**
 
@@ -4069,45 +4063,141 @@ Notes:
 
   * Assigning a map copies the reference, not the data
 
----
-
-### Iterating Over a Map
+#### Map Iteration
 
 ```go
-users := map[string]interface{}{
-	"name":     "zayan",
-	"age":      5,
-	"religion": "islam",
+scores := map[string]int{
+	"Alice": 90,
+	"Bob":   85,
+	"Carol": 95,
 }
 
-for key, val := range users {
-	fmt.Printf("%s -> %v\n", key, val)
+// Iterate over keys and values
+for name, score := range scores {
+	fmt.Printf("%s: %d\n", name, score)
+}
+
+// Only keys
+for name := range scores {
+	fmt.Println(name)
 }
 ```
 
-#### Notes
+**⚠️ Map iteration order is random!**
 
-* `interface{}` allows **mixed value types**
-* `%v` prints the value in default format
-* Order is **not guaranteed**
+```go
+for i := 0; i < 3; i++ {
+	for name := range scores {
+		fmt.Print(name, " ")
+	}
+	fmt.Println()
+}
 
----
+// Different output each run:
+// Bob Carol Alice
+// Alice Bob Carol
+// Carol Alice Bob
+```
 
-### When to Use `map[string]interface{}`
+**To iterate in order, sort keys:**
+```go
+import "sort"
 
-✅ Useful for:
+names := make([]string, 0, len(scores))
+for name := range scores {
+	names = append(names, name)
+}
+sort.Strings(names)
 
-* JSON-like data
-* Dynamic or unknown schemas
+for _, name := range names {
+	fmt.Printf("%s: %d\n", name, scores[name])
+}
+```
 
-⚠️ Avoid in:
+#### Generic Map Operations (Go 1.18+)
 
-* Strongly typed business logic
-* Performance-critical code
+**Type-safe map operations:**
 
----
+```go
+// Generic Keys function
+func Keys[K comparable, V any](m map[K]V) []K {
+    keys := make([]K, 0, len(m))
+    for k := range m {
+        keys = append(keys, k)
+    }
+    return keys
+}
+
+// Generic Values function
+func Values[K comparable, V any](m map[K]V) []V {
+    values := make([]V, 0, len(m))
+    for _, v := range m {
+        values = append(values, v)
+    }
+    return values
+}
+
+// Usage
+m := map[string]int{"a": 1, "b": 2, "c": 3}
+keys := Keys(m)     // []string
+values := Values(m) // []int
+```
+
+#### Map Characteristics
+
+**Zero value is nil:**
+```go
+var m map[string]int
+// m["key"] = 1  // Panic! Cannot write to nil map
+
+m = make(map[string]int)  // Must initialize
+m["key"] = 1  // OK
+```
+
+**Maps are reference types:**
+```go
+func modify(m map[string]int) {
+	m["key"] = 100  // Modifies original map
+}
+
+scores := map[string]int{"key": 1}
+modify(scores)
+fmt.Println(scores)  // map[key:100]
+```
+
+**Checking for missing keys:**
+```go
+value := m["missing"]  // Returns zero value (0 for int)
+
+// Distinguish between "key exists with value 0" and "key missing"
+value, exists := m["missing"]
+if !exists {
+	fmt.Println("Key not found")
+}
+```
+
+**Using maps as sets:**
+```go
+visited := make(map[string]bool)
+visited["page1"] = true
+visited["page2"] = true
+
+if visited["page1"] {
+	fmt.Println("Already visited")
+}
+
+// More memory-efficient: use struct{} (zero bytes)
+visited2 := make(map[string]struct{})
+visited2["page1"] = struct{}{}
+
+if _, exists := visited2["page1"]; exists {
+	fmt.Println("Already visited")
+}
+```
 
 </details>
+
+---
 
 ### Structs
 
@@ -4118,92 +4208,160 @@ A **struct** is a composite data type that groups together variables (fields) un
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/structs)**
 
-### Why use structs?
+**Custom composite types:**
 
-* To represent **real-world entities**
-* To organize related data
-* To define **custom types**
+```go
+type Person struct {
+	Name string // Exported field (accessible outside the package)
+	Age  int
+}
 
----
+// Create struct
+p1 := Person{Name: "Alice", Age: 30} // named-field initialization (recommended)
+p2 := Person{"Bob", 25}  // Positional (avoid in production)
 
-### Basic Struct Definition
+// Zero value
+var p3 Person  // Name: "", Age: 0
+
+// Access fields
+fmt.Println(p1.Name)
+p1.Age = 31
+```
+
+#### Anonymous Structs
+
+```go
+// One-off use (e.g., JSON marshaling)
+person := struct {
+	Name string
+	Age  int
+}{
+	Name: "Alice",
+	Age:  30,
+}
+```
+
+#### Struct Embedding (Composition)
+
+**Go doesn't have inheritance; use composition:**
+
+```go
+type Address struct {
+	City    string
+	Country string
+}
+
+type Person struct {
+	Name    string
+	Age     int
+	Address Address  // Nested struct
+}
+
+// Usage
+p := Person{
+	Name: "Alice",
+	Age:  30,
+	Address: Address{
+		City:    "New York",
+		Country: "USA",
+	},
+}
+
+fmt.Println(p.Address.City)  // New York
+```
+
+**Embedded fields (promoted):**
+
+```go
+type Person struct {
+	Name string
+	Age  int
+	Address  // Embedded (no field name)
+}
+
+p := Person{
+	Name: "Alice",
+	Age:  30,
+	Address: Address{
+		City:    "New York",
+		Country: "USA",
+	},
+}
+
+// Promoted fields accessible directly
+fmt.Println(p.City)  // New York (promoted from Address)
+fmt.Println(p.Address.City)  // Also valid
+```
+
+#### Struct Tags
+
+**Metadata for reflection (used by JSON, XML, etc.):**
 
 ```go
 type User struct {
-	ID        int
-	FirstName string
-	LastName  string
-	Email     string
-}
-```
-
-* `type User struct {}` defines a **new type**
-* Field names starting with **capital letters are exported** (accessible outside the package)
-* Field names starting with **lowercase letters are unexported**
-
----
-
-### Creating a Struct Value
-
-```go
-user := User{
-	ID:        1,
-	FirstName: "Foyez",
-	LastName:  "Ahmed",
-	Email:     "foyez@email.com",
+	Name     string `json:"name"`
+	Email    string `json:"email,omitempty"`
+	Password string `json:"-"`  // Never serialize
+	Age      int    `json:"age,string"`
 }
 
-fmt.Println(user.FirstName) // Foyez
+u := User{Name: "Alice", Email: "alice@example.com", Age: 30}
+data, _ := json.Marshal(u)
+fmt.Println(string(data))
+// {"name":"Alice","email":"alice@example.com","age":"30"}
 ```
 
-#### Important Notes
+**Common tags:**
+- `json:"fieldName,omitempty"`: Omit if zero value
+- `json:"-"`: Ignore field
+- `xml:"fieldName"`
+- `yaml:"fieldName"`
+- `db:"column_name"`
 
-* This is called **named-field initialization** (recommended)
-* It prevents bugs when fields are reordered
-* Unspecified fields get **zero values**
+#### Generic Structs (Go 1.18+)
 
----
-
-### Zero Values of Struct Fields
-
-```go
-var user User
-fmt.Println(user)
-```
-
-Output:
+**Structs can be generic:**
 
 ```go
-{0 "" "" ""}
-```
-
-* `int` → `0`
-* `string` → `""`
-* `bool` → `false`
-* slices/maps → `nil`
-
----
-
-### Struct Pointers
-
-You can create a pointer to a struct:
-
-```go
-user := &User{
-	ID:        1,
-	FirstName: "Foyez",
+// Generic Pair
+type Pair[T, U any] struct {
+    First  T
+    Second U
 }
+
+// Usage
+p1 := Pair[string, int]{First: "age", Second: 30}
+p2 := Pair[int, string]{First: 1, Second: "one"}
+
+// Generic Stack
+type Stack[T any] struct {
+    items []T
+}
+
+func (s *Stack[T]) Push(item T) {
+    s.items = append(s.items, item)
+}
+
+func (s *Stack[T]) Pop() (T, bool) {
+    if len(s.items) == 0 {
+        var zero T
+        return zero, false
+    }
+    item := s.items[len(s.items)-1]
+    s.items = s.items[:len(s.items)-1]
+    return item, true
+}
+
+// Usage
+stack := Stack[int]{}
+stack.Push(1)
+stack.Push(2)
+val, ok := stack.Pop() // 2, true
 ```
-
-Access fields using **dot notation** (Go automatically dereferences):
-
-```go
-fmt.Println(user.FirstName)
-```
-
----
 
 </details>
+
+---
 
 ### Pointers
 
@@ -4214,7 +4372,7 @@ A **pointer** stores the **memory address** of a variable instead of a copy of i
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/pointers)**
 
-### Pointer Syntax
+**Pointer Syntax:**
 
 ```go
 // Declare a pointer variable
@@ -4227,217 +4385,99 @@ var variableName *type
 *variableName
 ```
 
----
-
-### Example: Pointer with Struct
+**Variables that store memory addresses:**
 
 ```go
-type person struct {
-	firstName      string
-	lastName       string
-	favoriteSports []string
+x := 10
+p := &x  // p holds the address of x
+
+fmt.Println(p)   // 0xc000014078 (memory address)
+fmt.Println(*p)  // 10 (dereference to get value)
+
+*p = 20  // Modify value through pointer
+fmt.Println(x)  // 20
+```
+
+#### Why Use Pointers?
+
+**1. Modify function parameters:**
+```go
+func increment(x *int) {
+	*x++
+}
+
+count := 0
+increment(&count)
+fmt.Println(count)  // 1
+```
+
+**2. Avoid copying large structs:**
+```go
+type LargeStruct struct {
+	Data [1000]int
+}
+
+// Bad: Copies entire struct
+func process(s LargeStruct) {
+	// ...
+}
+
+// Good: Passes pointer (8 bytes)
+func process(s *LargeStruct) {
+	// ...
 }
 ```
 
----
-
-#### Main Function
-
+**3. Nullable values:**
 ```go
-func main() {
-	person := person{
-		firstName: "Foyez",
-		lastName:  "Ahmed",
-		favoriteSports: []string{"Cricket"},
-	}
+type User struct {
+	Name  string
+	Email *string  // Optional field
+}
 
-	updateFirstName(&person, "Rumon")
-	fmt.Println(person) // {Rumon Ahmed [Cricket]}
-
-	updateFavoriteSports(person, "Football")
-	fmt.Println(person) // {Rumon Ahmed [Football]}
+u := User{Name: "Alice"}
+if u.Email != nil {
+	fmt.Println(*u.Email)
 }
 ```
 
----
-
-### Updating Struct Fields Using Pointer
+#### Pointers vs Values
 
 ```go
-func updateFirstName(p *person, newFirstName string) {
-	fmt.Println(p)  // &{Foyez Ahmed [Cricket]}
-	fmt.Println(&p) // address of pointer variable itself
-	fmt.Println(*p) // {Foyez Ahmed [Cricket]}
-
-	// (*p).firstName = newFirstName
-	p.firstName = newFirstName
+type Counter struct {
+	Value int
 }
-```
 
-#### Key Concepts
-
-* `p` is a pointer to `person`
-* `*p` gives the actual struct value
-* `p.firstName` works because **Go automatically dereferences pointers**
-
----
-
-### Why This Works Without Pointer?
-
-```go
-func updateFavoriteSports(p person, sportName string) {
-	p.favoriteSports[0] = sportName
+// Value receiver (doesn't modify original)
+func (c Counter) Get() int {
+	return c.Value
 }
-```
 
-#### Explanation
-
-* `person` is passed **by value**
-* BUT `slice` is a **reference type**
-* Both `p.favoriteSports` and `person.favoriteSports` point to the **same underlying array**
-
----
-
-### Value Types vs Reference Types (Very Important)
-
-#### Value Types
-
-```
-int, float, string, bool, struct, array
-```
-
-* Passed **by value**
-* A **copy** is created
-* Changes inside a function **do NOT affect original data**
-* Use **pointer** to modify original value
-
----
-
-#### Reference Types
-
-```
-slice, map, channel, pointer, function
-```
-
-* Internally contain a **pointer**
-* Passed **by value**, but reference same data
-* Changes inside a function **DO affect original data**
-* Pointer usually **not required**
-
----
-
-### Call by Value (Default Behavior)
-
-```go
-type Person struct {
-	name string
-	age  int
+// Pointer receiver (modifies original)
+func (c *Counter) Increment() {
+	c.Value++
 }
+
+c := Counter{Value: 0}
+c.Increment()  // Go auto-converts to (&c).Increment()
+fmt.Println(c.Get())  // 1
 ```
 
-#### Function Example
-
-```go
-func updateAge(p Person) {
-	p.age = 20
-	fmt.Println(p) // {Mithu 20}
-}
-```
-
-#### Method Example
-
-```go
-func (p Person) updateAge() {
-	p.age = 30
-	fmt.Println(p) // {Mithu 30}
-}
-```
-
-#### Main
-
-```go
-func main() {
-	mithu := Person{name: "Mithu", age: 10}
-
-	updateAge(mithu)
-	fmt.Println(mithu) // {Mithu 10}
-
-	mithu.updateAge()
-	fmt.Println(mithu) // {Mithu 10}
-}
-```
-
-#### Explanation
-
-* `p` receives a **copy**
-* Changes affect only the copy
-* Original value remains unchanged
-
----
-
-### Call by Reference (Using Pointers)
-
-#### Function Example
-
-```go
-func updateAge(p *Person) {
-	p.age = 20
-	fmt.Println(*p) // {Mithu 20}
-}
-```
-
-#### Method Example
-
-```go
-func (p *Person) updateAge() {
-	p.age = 30
-	fmt.Println(*p) // {Mithu 30}
-}
-```
-
-#### Main
-
-```go
-func main() {
-	mithu := Person{name: "Mithu", age: 10}
-
-	updateAge(&mithu)
-	fmt.Println(mithu) // {Mithu 20}
-
-	mithu.updateAge()
-	fmt.Println(mithu) // {Mithu 30}
-}
-```
-
----
-
-### Important Go Feature: Automatic Addressing
-
-```go
-mithu.updateAge()
-```
-
-Even though `updateAge` expects `*Person`, Go automatically does:
-
-```go
-(&mithu).updateAge()
-```
-
-This makes pointer receivers **clean and safe to use**
-
----
-
-### When to Use Pointer Receivers in Methods
+**Google Style: Pointer vs Value Receivers**
 
 Use pointer receivers when:
+- Method modifies the receiver
+- Receiver is large struct (avoid copying)
+- Consistency (if any method uses pointer, use it everywhere)
 
-1. You want to **modify the receiver**
-2. The struct is **large** (performance)
-3. Consistency (recommended if any method uses pointer)
+Use value receivers when:
+- Receiver is small (basic types, small structs)
+- Receiver is immutable
+- Receiver is a map, function, or channel (already reference types)
 
 ---
 
-### Summary Cheat Sheet
+**Behavior of data types:**
 
 | Concept                   | Behavior                |
 | ------------------------- | ----------------------- |
@@ -4450,7 +4490,638 @@ Use pointer receivers when:
 | Slices                    | Reference type          |
 | Maps                      | Reference type          |
 
+</details>
+
 ---
+
+### Practice Questions
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+**Fill in the Blanks:**
+
+1. The built-in function `__________` is used to add elements to a slice.
+2. Maps in Go are __________ types, meaning modifications affect the original.
+3. A struct can be embedded in another struct to achieve __________.
+4. The `&` operator gets the __________ of a variable.
+
+**True/False:**
+
+1. ⬜ Arrays in Go can change size after declaration
+2. ⬜ Map iteration order is guaranteed to be consistent
+3. ⬜ Writing to a nil map causes a runtime panic
+4. ⬜ Struct fields can be accessed through pointers using the dot notation
+
+**Multiple Choice:**
+
+1. What happens when you append to a slice beyond its capacity?
+   - A) Runtime error
+   - B) Original array is resized
+   - C) New underlying array is allocated
+   - D) Append fails silently
+
+2. What is the zero value of a map?
+   - A) Empty map `{}`
+   - B) `nil`
+   - C) Panic
+   - D) `0`
+
+**Code Output:**
+
+```go
+m := map[string]int{"a": 1, "b": 2}
+m2 := m
+m2["c"] = 3
+fmt.Println(len(m))
+```
+
+What is printed?
+
+---
+
+### Answers
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Fill in the Blanks:**
+1. append
+2. reference
+3. composition
+4. address
+
+**True/False:**
+1. ❌ False (arrays are fixed size)
+2. ❌ False (iteration order is random)
+3. ✅ True
+4. ✅ True (Go auto-dereferences)
+
+**Multiple Choice:**
+1. **C** - New underlying array is allocated
+2. **B** - `nil`
+
+**Code Output:**
+```
+3
+```
+(Maps are reference types; `m` and `m2` point to same underlying data)
+
+</details>
+
+</details>
+
+---
+
+## Object-Oriented Programming
+
+### Interfaces
+
+**Interfaces** allow you to define **behavior** without specifying how that behavior is implemented.
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/interfaces)**
+
+**Interfaces define behavior (method sets):**
+
+```go
+type Shape interface {
+	Area() float64
+	Perimeter() float64
+}
+```
+
+**Any type that implements all methods satisfies the interface:**
+
+```go
+type Rectangle struct {
+	Width, Height float64
+}
+
+func (r Rectangle) Area() float64 {
+	return r.Width * r.Height
+}
+
+func (r Rectangle) Perimeter() float64 {
+	return 2 * (r.Width + r.Height)
+}
+
+// Rectangle implements Shape (implicitly)
+```
+
+#### Interface Satisfaction
+
+**No explicit declaration needed:**
+
+```go
+type Circle struct {
+	Radius float64
+}
+
+func (c Circle) Area() float64 {
+	return math.Pi * c.Radius * c.Radius
+}
+
+func (c Circle) Perimeter() float64 {
+	return 2 * math.Pi * c.Radius
+}
+
+// Both Circle and Rectangle implement Shape
+func printInfo(s Shape) {
+	fmt.Printf("Area: %.2f, Perimeter: %.2f\n", s.Area(), s.Perimeter())
+}
+
+func main() {
+	rect := Rectangle{Width: 10, Height: 5}
+	circ := Circle{Radius: 7}
+	
+	printInfo(rect)  // Works
+	printInfo(circ)  // Works
+}
+```
+
+#### Empty Interface
+
+**`interface{}` or `any` (Go 1.18+) accepts any type:**
+
+```go
+func printAnything(v interface{}) {
+	fmt.Println(v)
+}
+
+printAnything(42)
+printAnything("hello")
+printAnything([]int{1, 2, 3})
+```
+
+**Use cases:**
+- Generic containers before Go 1.18
+- JSON unmarshaling
+- Reflection
+
+**⚠️ Avoid overuse:** Prefer specific interfaces or generics
+
+---
+
+### Type Constraints (Go 1.18+)
+
+**Interfaces can now define type constraints for generics:**
+
+```go
+// Traditional interface (methods)
+type Stringer interface {
+    String() string
+}
+
+// Type constraint (union of types)
+type Number interface {
+    int | int64 | float64
+}
+
+// Constraint with underlying types
+type Integer interface {
+    ~int | ~int64
+}
+
+// Usage in generic function
+func Sum[T Number](nums []T) T {
+    var total T
+    for _, n := range nums {
+        total += n
+    }
+    return total
+}
+
+Sum([]int{1, 2, 3})        // ✅ Works
+Sum([]float64{1.5, 2.5})   // ✅ Works
+// Sum([]string{"a", "b"})  // ❌ Compile error
+```
+
+**Key Difference:**
+- **Method-based interfaces** → Describe behavior (runtime polymorphism)
+- **Type constraint interfaces** → Limit generic types (compile-time)
+
+---
+
+### Type Assertions
+
+**Extract concrete type from interface:**
+
+```go
+var i any = "hello"
+
+// Type assertion
+s := i.(string)
+fmt.Println(s)  // "hello"
+
+// Safe assertion (comma-ok idiom)
+s, ok := i.(string)
+if ok {
+	fmt.Println(s)
+} else {
+	fmt.Println("Not a string")
+}
+
+// Unsafe assertion (panics if wrong type)
+n := i.(int)  // Panic!
+```
+
+```go
+func printShapeProps(s Shape) {
+	if rect, ok := s.(Rectangle); ok {
+		fmt.Printf("Height: %.2f, Width: %.2f\n", rect.Height, rect.Width)
+	}
+	if circle, ok := s.(Circle); ok {
+		fmt.Printf("Radius: %.2f\n", circle.Radius)
+	}
+}
+
+circle := Circle{10}
+rectangle := Rectangle{10, 20}
+
+printShapeProps(rectangle) // Height: 20.00, Width: 10.00
+printShapeProps(circle)    // Radius: 10.00
+```
+
+#### Type Switch
+
+**Check multiple types:**
+
+```go
+func describe(i interface{}) {
+	switch v := i.(type) {
+	case int:
+		fmt.Println("Integer:", v)
+	case string:
+		fmt.Println("String:", v)
+	case bool:
+		fmt.Println("Boolean:", v)
+	case nil:
+		fmt.Println("Nil")
+	default:
+		fmt.Printf("Unknown type: %T\n", v)
+	}
+}
+
+describe(42)       // Integer: 42
+describe("hello")  // String: hello
+describe(true)     // Boolean: true
+```
+
+---
+
+### Generic Interfaces (Go 1.18+)
+
+**Interfaces themselves can be generic:**
+
+```go
+type Container[T any] interface {
+    Add(item T)
+    Get(index int) (T, bool)
+    Size() int
+}
+
+// Implementation
+type List[T any] struct {
+    items []T
+}
+
+func (l *List[T]) Add(item T) {
+    l.items = append(l.items, item)
+}
+
+func (l *List[T]) Get(index int) (T, bool) {
+    if index < 0 || index >= len(l.items) {
+        var zero T
+        return zero, false
+    }
+    return l.items[index], true
+}
+
+func (l *List[T]) Size() int {
+    return len(l.items)
+}
+
+// Usage
+var container Container[string] = &List[string]{}
+container.Add("hello")
+container.Add("world")
+```
+
+---
+
+### Common Interfaces
+
+#### Stringer (custom string representation)
+
+```go
+type Stringer interface {
+	String() string
+}
+
+type Person struct {
+	Name string
+	Age  int
+}
+
+func (p Person) String() string {
+	return fmt.Sprintf("%s (%d years old)", p.Name, p.Age)
+}
+
+p := Person{Name: "Alice", Age: 30}
+fmt.Println(p)  // Alice (30 years old)
+```
+
+#### Reader and Writer
+
+**IO operations:**
+
+```go
+type Reader interface {
+	Read(p []byte) (n int, err error)
+}
+
+type Writer interface {
+	Write(p []byte) (n int, err error)
+}
+
+// Many types implement these:
+// - os.File
+// - bytes.Buffer
+// - strings.Reader
+// - net.Conn
+```
+
+**Example:**
+```go
+import (
+	"io"
+	"os"
+	"strings"
+)
+
+func readAll(r io.Reader) (string, error) {
+	data, err := io.ReadAll(r)
+	return string(data), err
+}
+
+// Works with any Reader
+file, _ := os.Open("file.txt")
+content, _ := readAll(file)
+
+reader := strings.NewReader("Hello, World!")
+content, _ = readAll(reader)
+```
+
+#### Error Interface
+
+```go
+type error interface {
+	Error() string
+}
+
+// Custom error
+type ValidationError struct {
+	Field   string
+	Message string
+}
+
+func (e ValidationError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Field, e.Message)
+}
+
+func validate(email string) error {
+	if !strings.Contains(email, "@") {
+		return ValidationError{
+			Field:   "email",
+			Message: "must contain @",
+		}
+	}
+	return nil
+}
+```
+
+---
+
+### Interface Best Practices
+
+**1. Small interfaces (Google Style)**
+
+```go
+// Good: Single method
+type Reader interface {
+	Read(p []byte) (n int, err error)
+}
+
+// Bad: Too many methods
+type FileManager interface {
+	Open() error
+	Close() error
+	Read() ([]byte, error)
+	Write([]byte) error
+	Delete() error
+	Rename(string) error
+}
+```
+
+**2. Accept interfaces, return structs**
+
+```go
+// Good
+func ProcessData(r io.Reader) (*Result, error) {
+	// ...
+}
+
+// Avoid
+func ProcessData(f *os.File) (*Result, error) {
+	// ...
+}
+```
+
+**3. Define interfaces where used**
+
+```go
+// consumer.go
+type DataStore interface {
+	Get(key string) (string, error)
+}
+
+func ProcessUser(store DataStore, userID string) {
+	// ...
+}
+
+// implementation.go
+type RedisStore struct {
+	// ...
+}
+
+func (r *RedisStore) Get(key string) (string, error) {
+	// ...
+}
+```
+
+---
+
+### Polymorphism Example
+
+**Real-world payment processing:**
+
+```go
+type PaymentProcessor interface {
+	ProcessPayment(amount float64) error
+	RefundPayment(transactionID string) error
+}
+
+type CreditCard struct {
+	Number string
+	CVV    string
+}
+
+func (c CreditCard) ProcessPayment(amount float64) error {
+	fmt.Printf("Processing $%.2f via credit card\n", amount)
+	return nil
+}
+
+func (c CreditCard) RefundPayment(transactionID string) error {
+	fmt.Println("Refunding credit card payment")
+	return nil
+}
+
+type PayPal struct {
+	Email string
+}
+
+func (p PayPal) ProcessPayment(amount float64) error {
+	fmt.Printf("Processing $%.2f via PayPal\n", amount)
+	return nil
+}
+
+func (p PayPal) RefundPayment(transactionID string) error {
+	fmt.Println("Refunding PayPal payment")
+	return nil
+}
+
+// Single function works with any payment method
+func checkout(processor PaymentProcessor, amount float64) error {
+	return processor.ProcessPayment(amount)
+}
+
+func main() {
+	card := CreditCard{Number: "1234-5678", CVV: "123"}
+	paypal := PayPal{Email: "user@example.com"}
+	
+	checkout(card, 100.50)    // Works
+	checkout(paypal, 200.75)  // Works
+}
+```
+
+---
+
+</details>
+
+### Practice Questions (Interfaces)
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+**Fill in the Blanks:**
+
+1. An interface in Go is satisfied __________ when a type implements all its methods.
+2. The empty interface `interface{}` can hold values of __________ type.
+3. A type assertion extracts the __________ type from an interface value.
+4. The `__________` interface allows custom string representation via the String() method.
+
+**True/False:**
+
+1. ⬜ Go requires explicit declaration to implement an interface
+2. ⬜ Type assertions can cause a panic if the type is incorrect
+3. ⬜ A single type can implement multiple interfaces
+4. ⬜ Interfaces should typically have many methods for flexibility
+
+**Multiple Choice:**
+
+1. What is the safest way to perform a type assertion?
+   - A) `x := i.(string)`
+   - B) `x, ok := i.(string)`
+   - C) `x := string(i)`
+   - D) `x := i.toString()`
+
+2. Which pattern is recommended by Google Style Guide?
+   - A) Large interfaces with many methods
+   - B) Accept interfaces, return structs
+   - C) Return interfaces from functions
+   - D) Define interfaces in implementation packages
+
+**Code Challenge:**
+
+Create a `Logger` interface with methods `Info(msg string)` and `Error(msg string)`. Implement it for both `ConsoleLogger` and `FileLogger`.
+
+---
+
+### Answers
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Fill in the Blanks:**
+1. implicitly
+2. any
+3. concrete
+4. Stringer
+
+**True/False:**
+1. ❌ False (implicit satisfaction)
+2. ✅ True (use comma-ok idiom for safety)
+3. ✅ True
+4. ❌ False (prefer small, focused interfaces)
+
+**Multiple Choice:**
+1. **B** - `x, ok := i.(string)` (comma-ok idiom)
+2. **B** - Accept interfaces, return structs
+
+**Code Challenge:**
+```go
+type Logger interface {
+	Info(msg string)
+	Error(msg string)
+}
+
+type ConsoleLogger struct{}
+
+func (c ConsoleLogger) Info(msg string) {
+	fmt.Println("[INFO]", msg)
+}
+
+func (c ConsoleLogger) Error(msg string) {
+	fmt.Println("[ERROR]", msg)
+}
+
+type FileLogger struct {
+	file *os.File
+}
+
+func (f FileLogger) Info(msg string) {
+	f.file.WriteString("[INFO] " + msg + "\n")
+}
+
+func (f FileLogger) Error(msg string) {
+	f.file.WriteString("[ERROR] " + msg + "\n")
+}
+
+// Usage
+func logMessage(logger Logger, msg string) {
+	logger.Info(msg)
+}
+
+consoleLog := ConsoleLogger{}
+logMessage(consoleLog, "Application started")
+```
+
+---
+
+</details>
 
 </details>
 
@@ -4460,7 +5131,7 @@ Go treats errors as **values**, not exceptions.
 This design forces developers to **handle errors explicitly**, making programs more predictable and easier to reason about.
 
 <details>
-<summary>View contents</summary>
+<summary><strong>View contents</strong></summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/errors)**
 
@@ -4681,219 +5352,6 @@ defer func() {
   * Gracefully shutting down a service
 
 * Don’t use `recover` to **silently ignore bugs**, otherwise you’re hiding problems.
-
----
-
-</details>
-
-## Interfaces
-
-**Interfaces** are one of the most powerful features in Go.
-They allow you to define **behavior** without specifying how that behavior is implemented.
-
-<details>
-<summary>View contents</summary>
-
-**[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/interfaces)**
-
-### Structs vs Interfaces
-
-| Concept  | Struct                    | Interface                             |
-| -------- | ------------------------- | ------------------------------------- |
-| Purpose  | Holds **data/attributes** | Defines **behavior/methods**          |
-| Contains | Fields                    | Method signatures (no implementation) |
-| Usage    | Create instances          | Implemented by types implicitly       |
-| Analogy  | “What an object **has**”  | “What an object **can do**”           |
-
----
-
-### Defining an Interface
-
-```go
-type Shape2D interface {
-	Area() float64
-	Perimeter() float64
-}
-```
-
-* `Shape2D` is an **interface type**
-* Any type that has **both `Area()` and `Perimeter()` methods** automatically implements `Shape2D`
-* **No explicit declaration needed** (unlike Java/C#)
-
----
-
-### Implementing Interfaces with Structs
-
-```go
-type Rectangle struct {
-	Width  float64
-	Height float64
-}
-
-func (r Rectangle) Area() float64 {
-	return r.Width * r.Height
-}
-
-func (r Rectangle) Perimeter() float64 {
-	return 2 * (r.Width + r.Height)
-}
-
-type Circle struct {
-	Radius float64
-}
-
-func (c Circle) Area() float64 {
-	return math.Pi * c.Radius * c.Radius
-}
-
-func (c Circle) Perimeter() float64 {
-	return 2 * math.Pi * c.Radius
-}
-```
-
-✅ **Key Points**
-
-* Both `Rectangle` and `Circle` implement `Shape2D`
-* Go checks **struct methods** at compile time
-* No need to explicitly declare `implements Shape2D`
-
----
-
-### Using Interfaces as Function Parameters
-
-```go
-func fitInYard(s Shape2D) bool {
-	return s.Area() > 200 && s.Perimeter() > 200
-}
-```
-
-* `fitInYard` works with **any type** that implements `Shape2D`
-* This is **polymorphism** in Go
-* Allows **generic-like behavior** without generics
-
----
-
-### Type Assertions
-
-Sometimes you want to **access the concrete type** from an interface:
-
-```go
-func printShapeProps(s Shape2D) {
-	if rect, ok := s.(Rectangle); ok {
-		fmt.Printf("Height: %.2f, Width: %.2f\n", rect.Height, rect.Width)
-	}
-	if circle, ok := s.(Circle); ok {
-		fmt.Printf("Radius: %.2f\n", circle.Radius)
-	}
-}
-```
-
-* `s.(Rectangle)` tries to assert that `s` is of type `Rectangle`
-* `ok` is `true` if the assertion succeeds, `false` otherwise
-* Safe: avoids panic
-
----
-
-#### Example Usage
-
-```go
-func main() {
-	circle := Circle{10}
-	rectangle := Rectangle{10, 20}
-
-	fmt.Println(fitInYard(circle))
-	fmt.Println(fitInYard(rectangle))
-
-	printShapeProps(rectangle) // Height: 20.00, Width: 10.00
-	printShapeProps(circle)    // Radius: 10.00
-}
-```
-
----
-
-### Empty Interface (`interface{}`)
-
-* Defines **zero methods**
-* Can hold **values of any type**
-* Equivalent to `any` in TypeScript
-
-```go
-var people map[string]interface{} = make(map[string]interface{})
-
-people["name"] = "Foyez"
-people["age"] = 28
-
-fmt.Printf("%#v %T\n", people["name"], people["name"]) // "Foyez" string
-fmt.Printf("%#v %T", people["age"], people["age"])     // 28 int
-```
-
-**Use Cases**
-
-* Storing **heterogeneous data**
-* Functions like `fmt.Println` and JSON marshaling
-* Type-agnostic containers
-
----
-
-### Interfaces vs Structs Summary
-
-| Feature      | Struct                            | Interface                      |
-| ------------ | --------------------------------- | ------------------------------ |
-| Stores       | Fields/data                       | Methods/behavior               |
-| Implements   | N/A                               | Any type with matching methods |
-| Inheritance  | No                                | Can embed interfaces           |
-| Polymorphism | No                                | Yes                            |
-| Example      | `Rectangle{Width: 10, Height: 5}` | `Shape2D`                      |
-
----
-
-### Important Notes / Best Practices
-
-1. **Implicit implementation**
-
-   * A struct implements an interface **automatically** if it has required methods
-   * No need to declare `implements`
-
-2. **Pointers vs Values**
-
-   * If a method has a **pointer receiver**, only a **pointer to struct** implements the interface
-
-   ```go
-   type MyInterface interface {
-       Foo()
-   }
-   func (m *MyStruct) Foo() {}
-   ```
-
-   * `var x MyInterface = &MyStruct{}` ✅
-   * `var x MyInterface = MyStruct{}` ❌
-
-3. **Use interfaces for abstraction**
-
-   * Don’t overuse empty interfaces; prefer **specific interfaces**
-
-4. **Type switches** (advanced)
-
-   * Safer than multiple type assertions
-
-   ```go
-   switch v := s.(type) {
-   case Rectangle:
-       fmt.Println("Rectangle", v.Width, v.Height)
-   case Circle:
-       fmt.Println("Circle", v.Radius)
-   default:
-       fmt.Println("Unknown shape")
-   }
-   ```
-
----
-
-### Why Interfaces Matter
-
-* Enable **polymorphism** without inheritance
-* Decouple code: functions don’t need to know concrete types
-* Allow **mocking/testing** by passing fake implementations
 
 ---
 
