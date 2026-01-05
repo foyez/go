@@ -1636,8 +1636,6 @@ mathutils.a // ❌ compile error
 **Struct field visibility (very common pitfall):**
 
 ```go
-package user
-
 // Exported (public) - accessible from other packages
 type User struct {
 	Name  string // Exported field
@@ -3788,106 +3786,90 @@ Slices are **more flexible than arrays** and are used almost everywhere in Go.
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/slices)**
 
-### Declaring a slice
+**Dynamic, flexible view into arrays:**
 
 ```go
-// SLICE
-// []T
-// A slice type has no specific length
+// Declaration (creates nil slice)
+var s []int
 
-var mySlice []int
-fmt.Println(mySlice) // []
+// mySlice[0] = 1 // ❌ compile-error
+// Because the slice has no allocated memory yet
+
+// Initialization
+s1 := []int{1, 2, 3}
+s2 := make([]int, 5)      // Length 5, capacity 5
+s3 := make([]int, 5, 10)  // Length 5, capacity 10
+
+// Slicing an array
+arr := [5]int{1, 2, 3, 4, 5}
+slice := arr[1:4]  // [2 3 4]
 ```
 
-❌ This will panic:
+- `make` initializes with `zero-value` and allocates memory.
+- `make([]T, len, cap)`
 
-```go
-// mySlice[0] = 1
-```
+#### Slice Internals
 
-Because the slice has **no allocated memory yet**.
-
----
-
-## Slice internals
-
-A slice has **three properties**:
-
-* `ptr` – pointer to the underlying array
-* `len` – number of elements
-* `cap` – capacity of the underlying array
+**A slice has three components:**
+- **Pointer** to underlying array
+- **Length** (number of elements)
+- **Capacity** (max elements before reallocation)
 
 ![image](https://user-images.githubusercontent.com/11992095/202870508-0739d792-8747-4e20-8cd2-0ffa888d5c08.png)
 
----
-
-### Slice assignment copies metadata, not data
-
-```go
-var s = []int{1, 2, 3}
-var s2 = s
-
-s2[0] = 5
-
-fmt.Println(s, s2) // [5 2 3] [5 2 3]
-```
-
-* Both slices point to the **same underlying array**
-* Modifying one affects the other
-
----
-
-## make() with slices
-
-`make` initializes and allocates memory.
-
 ```go
 // make([]T, len, cap)
-s := make([]int, 0, 3)
+s := make([]int, 3, 5)
+fmt.Println(len(s))  // 3 (length)
+fmt.Println(cap(s))  // 5 (capacity)
 ```
 
-⚠️ Important correction
-This line is invalid:
+#### Append and Capacity
 
 ```go
-sliceWithMake[0] = 1
+s := []int{1, 2, 3}
+fmt.Printf("len=%d cap=%d %v\n", len(s), cap(s), s)
+// len=3 cap=3 [1 2 3]
+
+s = append(s, 4)
+fmt.Printf("len=%d cap=%d %v\n", len(s), cap(s), s)
+// len=4 cap=6 [1 2 3 4] (capacity doubled)
+
+s = append(s, 5, 6, 7)
+fmt.Printf("len=%d cap=%d %v\n", len(s), cap(s), s)
+// len=7 cap=12 [1 2 3 4 5 6 7]
 ```
 
-Because `len == 0`
+**Key Points:**
+- `append` may allocate a **new array** if capacity exceeded
+- Always use result: `s = append(s, value)`
+- Capacity typically doubles when exceeded
 
-Correct usage:
+#### Slice Operations
 
+**Slicing:**
 ```go
-s = append(s, 1)
+s := []int{1, 2, 3, 4, 5}
+
+s[1:4]    // [2 3 4] (index 1 to 3)
+s[:3]     // [1 2 3] (start to index 2)
+s[2:]     // [3 4 5] (index 2 to end)
+s[:]      // [1 2 3 4 5] (full slice)
 ```
 
----
-
-### Capacity growth example
-
+**Copying:**
 ```go
-for i := 0; i < 5; i++ {
-	s = append(s, i)
-	fmt.Printf("cap %v, len %v, %p\n", cap(s), len(s), s)
-}
+src := []int{1, 2, 3}
+dst := make([]int, len(src))
+copy(dst, src)
+fmt.Println(dst)  // [1 2 3]
+
+// Copy returns number of elements copied
+n := copy(dst, src)
+fmt.Println(n)  // 3
 ```
 
-Output:
-
-```sh
-cap 3, len 1, 0xc0000b2000
-cap 3, len 2, 0xc0000b2000
-cap 3, len 3, 0xc0000b2000
-cap 6, len 4, 0xc0000b8000
-cap 6, len 5, 0xc0000b8000
-```
-
-* Capacity grows
-* Underlying array changes when capacity exceeded
-
----
-
-### Unpack / spread slice
+**Unpack / spread slice:**
 
 ```go
 var fruits = []string{"apple", "mango"}
@@ -3900,6 +3882,53 @@ func addFruits(fruitsToAdd ...string) []string {
 }
 
 addFruits("banana", "pineapple")
+```
+
+**Deleting elements (no built-in delete):**
+```go
+s := []int{1, 2, 3, 4, 5}
+
+// Remove element at index 2
+i := 2
+s = append(s[:i], s[i+1:]...)
+fmt.Println(s)  // [1 2 4 5]
+```
+
+**Inserting elements:**
+```go
+s := []int{1, 2, 5}
+i := 2
+value := 3
+
+s = append(s[:i], append([]int{value}, s[i:]...)...)
+fmt.Println(s)  // [1 2 3 5]
+```
+
+#### Slice Gotchas
+
+**Slices share underlying array:**
+```go
+original := []int{1, 2, 3, 4, 5}
+slice1 := original[1:3]  // [2 3]
+slice2 := original[2:4]  // [3 4]
+
+slice1[1] = 100
+fmt.Println(original)  // [1 2 100 4 5]
+fmt.Println(slice2)    // [100 4]
+```
+
+**Full slice expression (limit capacity):**
+```go
+s := []int{1, 2, 3, 4, 5}
+slice := s[1:3:3]  // [low:high:max] limits capacity
+
+fmt.Println(len(slice))  // 2
+fmt.Println(cap(slice))  // 2 (not 4)
+
+// Now append creates new array (doesn't affect s)
+slice = append(slice, 100)
+fmt.Println(s)      // [1 2 3 4 5] (unchanged)
+fmt.Println(slice)  // [2 3 100]
 ```
 
 ---
