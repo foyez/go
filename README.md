@@ -4967,424 +4967,1599 @@ Generics (introduced in **Go 1.18**) allow you to write **type-safe, reusable co
 <details>
 <summary>View contents</summary>
 
-### Problem: Using `interface{}` (Empty Interface)
+**Before Generics (Go < 1.18):**
 
 ```go
-func isEqual(a, b interface{}) bool {
-	return a == b
+// Separate functions for each type
+func MaxInt(a, b int) int {
+    if a > b {
+        return a
+    }
+    return b
 }
 
-func main() {
-	fmt.Println(isEqual(1, 1))   // true
-	fmt.Println(isEqual(1, "1")) // ❌ NOT type-safe
+func MaxFloat(a, b float64) float64 {
+    if a > b {
+        return a
+    }
+    return b
 }
-```
 
-#### Important Clarification
+func MaxString(a, b string) string {
+    if a > b {
+        return a
+    }
+    return b
+}
 
-* This function **compiles**, but:
-
-  * `interface{}` removes **type safety**
-  * The compiler **cannot help you**
-* You are allowing **any two values** to be compared, even if it makes no logical sense
-
-💡 In reality:
-
-```go
-isEqual(1, "1") // returns false, but comparison itself is meaningless
-```
-
-The **real problem** is not panic here — it’s that:
-
-* The compiler **should have rejected this code**
-* Bugs move from **compile time → runtime**
-
----
-
-### Why `interface{}` Is Dangerous Here
-
-* You lose:
-
-  * Compile-time guarantees
-  * Meaningful comparisons
-* You rely on **runtime behavior**
-* Bugs become harder to detect
-
-👉 This is exactly what generics were designed to fix.
-
----
-
-### Solution: Generics (Type Parameters)
-
-```go
-func isEqual[T comparable](a, b T) bool {
-	return a == b
+// Or use interface{} (type erasure)
+func Max(a, b interface{}) interface{} {
+    // Type assertions needed
+    // Runtime type checking
+    // Not type-safe!
 }
 ```
 
-#### What This Means
-
-* `T` is a **type parameter**
-* `comparable` is a **constraint**
-* Only types that support `==` and `!=` are allowed
-
----
-
-#### Usage
-
-```go
-func main() {
-	fmt.Println(isEqual(1, 1))   // true
-	fmt.Println(isEqual(1, "1")) // ❌ compile-time error
-}
-```
-
-**Compiler error (GOOD thing):**
-
-```
-default type string of "1" does not match inferred type int for T
-```
-
-- This is **type safety**
-- Bug caught **before the program runs**
-
----
-
-### What Is `comparable`?
-
-```go
-func isEqual[T comparable](a, b T) bool
-```
-
-#### `comparable` (built-in constraint)
-
-* Introduced in Go 1.18
-* Allows types that can be compared using `==` and `!=`
-
-Includes:
-
-* `int`, `float`, `string`, `bool`
-* pointers
-* structs (if all fields are comparable)
-
-Excludes:
-
-* slices
-* maps
-* functions
-
----
-
-### Constraints and Ordering
-
-```go
-import (
-	"fmt"
-	"golang.org/x/exp/constraints"
-)
-
-// Max returns the maximum of two values that implement the Ordered constraint.
-func Max[T constraints.Ordered](a, b T) T {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-type Ordered interface {
-	~int | ~int64 | ~float64 | ~string
-}
-
-func Min[T Ordered](a, b T) T {
-	if a < b {
-		return a
-	}
-	return b
-}
-```
-
-#### `constraints.Ordered`
-
-* Allows:
-
-  * `<`, `<=`, `>`, `>=`
-* Works for:
-
-  * integers
-  * floats
-  * strings
-
-⚠️ Note:
-
-* This package existed **before** Go finalized generics
-* Today, many people define their **own constraints** instead
-
----
-
-### Custom Constraints
-
-```go
-type Number interface {
-	~int | ~int64 | ~float64
-}
-
-func Add[T Number](a, b T) T {
-	return a + b
-}
-```
-
-#### Why `~` (tilde)?
-
-* Allows **underlying types**
-* Makes generics work with custom type aliases
-
----
-
-### Higher-Order Generic Functions
-
-#### `Reduce`
-
-```go
-func Reduce[A, B any](collection []A, accumulator func(B, A) B, initialValue B) B {
-	var result = initialValue
-	for _, x := range collection {
-		result = accumulator(result, x)
-	}
-	return result
-}
-```
-
-* `A` → element type
-* `B` → accumulator/result type
-* Extremely flexible
-* Used for:
-
-  * sums
-  * concatenation
-  * aggregation
-
----
-
-#### `Find`
-
-```go
-func Find[A any](items []A, predict func(A) bool) (value A, found bool) {
-	for _, v := range items {
-		if predict(v) {
-			return v, true
-		}
-	}
-	return
-}
-```
-
-* Returns:
-
-  * value
-  * boolean indicating presence
-* Avoids sentinel values (`nil`, `-1`, etc.)
-
----
-
-#### `Filter`
-
-```go
-func Filter[A any](items []A, predict func(A) bool) []A {
-	var founds []A
-
-	for _, v := range items {
-		if predict(v) {
-			founds = append(founds, v)
-		}
-	}
-
-	return founds
-}
-```
-
-* Keeps type information
-* No casting
-* Fully compile-time safe
-
----
-
-#### `Map`
-
-```go
-func Map[A, B any](items []A, modify func(A) B) []B {
-	var modifiedItems []B
-	for _, v := range items {
-		modifiedItems = append(modifiedItems, modify(v))
-	}
-	return modifiedItems
-}
-```
-
-* Transforms `[]A → []B`
-* Classic functional pattern
-* Impossible to do safely with `interface{}`
-
----
-
-### Generics vs Interfaces
-
-| Feature             | Interfaces                | Generics                |
-| ------------------- | ------------------------- | ----------------------- |
-| Purpose             | Abstraction over behavior | Abstraction over types  |
-| Uses methods        | ✅                         | ❌                       |
-| Compile-time safety | ✅                         | ✅                       |
-| Polymorphism        | Dynamic                   | Static                  |
-| Best for            | APIs, behavior            | Algorithms, collections |
-
----
-
-#### Rule of Thumb
-
-* Use **interfaces** when:
-
-  * You care about *what something does*
-* Use **generics** when:
-
-  * You care about *what type something is*
-
----
-
-### Generics vs `interface{}`
-
-| Feature             | interface{} | Generics |
-| ------------------- | ----------- | -------- |
-| Type safety         | ❌           | ✅        |
-| Compile-time checks | ❌           | ✅        |
-| Casting required    | ✅           | ❌        |
-| Performance         | Worse       | Better   |
-| Readability         | Worse       | Better   |
-
----
-
-### When NOT to Use Generics
-
-❌ Don’t use generics when:
-
-* You only have **one concrete type**
-* Interfaces already solve the problem
-* The generic version is harder to read
-
-✅ Generics are powerful — but **not free**
-
----
-
-### Mental Model
-
-```
-interface{}  → maximum flexibility, zero safety
-interfaces   → behavior abstraction
-generics     → type abstraction + safety
-```
-
----
-
-### How Go Generics Compile Internally
-
-#### Important Truth (Core Idea)
-
-👉 **Go generics are NOT implemented like C++ templates or TypeScript generics.**
-
-Go uses a strategy called:
-
-> **Monomorphization with sharing (a.k.a. dictionary passing)**
-
----
-
-#### What That Means (Simplified)
-
-When you write:
+**With Generics (Go 1.18+):**
 
 ```go
 func Max[T comparable](a, b T) T {
-	if a > b {
-		return a
-	}
-	return b
+    if a > b {
+        return a
+    }
+    return b
 }
+
+// Type-safe usage
+fmt.Println(Max(10, 20))        // int: 20
+fmt.Println(Max(3.14, 2.71))    // float64: 3.14
+fmt.Println(Max("hello", "world")) // string: world
 ```
-
-And call it like:
-
-```go
-Max(10, 20)
-Max(3.5, 2.1)
-```
-
-The compiler does **NOT** blindly generate infinite versions.
-
-Instead, it does roughly this:
-
-* Generates **specialized code per constraint group**
-* Shares implementations when possible
-* Passes **type-specific operations** (like `>`, `==`) via hidden dictionaries
 
 ---
 
-#### Mental Model of Compilation
+### Why Generics?
 
-Conceptually, the compiler turns this:
+**Problems Generics Solve:**
 
-```go
-Max[int](10, 20)
-```
+1. **Code Duplication**
+   ```go
+   // Before: Multiple implementations
+   func ReverseIntSlice(s []int) []int { /* ... */ }
+   func ReverseStringSlice(s []string) []string { /* ... */ }
+   
+   // After: Single generic implementation
+   func Reverse[T any](s []T) []T { /* ... */ }
+   ```
 
-Into something *like*:
+2. **Type Safety**
+   ```go
+   // Before: interface{} loses type information
+   func First(slice []interface{}) interface{} {
+       return slice[0] // Caller must type assert
+   }
+   
+   // After: Type-safe
+   func First[T any](slice []T) T {
+       return slice[0] // Type preserved
+   }
+   ```
 
-```go
-func Max_int(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-```
-
-And:
-
-```go
-func Max_float64(a, b float64) float64 {
-	if a > b {
-		return a
-	}
-	return b
-}
-```
-
-⚠️ **But**:
-
-* Go does **not** literally generate one function per call
-* It generates **shared instantiations** per type set
+3. **Performance**
+   ```go
+   // interface{} has allocation overhead
+   // Generics compile to efficient code
+   ```
 
 ---
 
-#### Why Go Did This
+### Real-World Analogy
 
-| Language | Strategy              | Result                          |
-| -------- | --------------------- | ------------------------------- |
-| C++      | Full monomorphization | Very fast, very large binaries  |
-| Java     | Type erasure          | Smaller binaries, runtime casts |
-| Go       | Hybrid                | Fast + controlled binary size   |
+```
+Think of generics like a universal remote control:
+
+Without Generics:
+- TV Remote (only controls TVs)
+- DVD Remote (only controls DVDs)
+- Stereo Remote (only controls stereos)
+→ Need separate remote for each device
+
+With Generics:
+- Universal Remote [Device] (controls any device)
+→ One remote, many devices
+```
 
 ---
 
-### Final Takeaway
+## Type Parameters
 
-* Generics solve problems that `interface{}` **never should**
-* They move bugs from **runtime → compile time**
-* They shine in:
+### Syntax
 
-  * collections
-  * algorithms
-  * utility libraries
+```go
+func FunctionName[T TypeConstraint](param T) T {
+    // Use T as a type
+}
+```
+
+**Components:**
+- `[T TypeConstraint]` - Type parameter declaration
+- `T` - Type parameter (placeholder for actual type)
+- `TypeConstraint` - What types T can be
+
+---
+
+### Single Type Parameter
+
+```go
+func Print[T any](value T) {
+    fmt.Println(value)
+}
+
+// Usage
+Print[int](42)
+Print[string]("hello")
+Print(42)        // Type inference
+Print("hello")   // Type inference
+```
+
+---
+
+### Multiple Type Parameters
+
+```go
+func Pair[K comparable, V any](key K, value V) map[K]V {
+    return map[K]V{key: value}
+}
+
+// Usage
+m1 := Pair[string, int]("age", 30)
+m2 := Pair("name", "Alice")  // Type inference
+```
+
+---
+
+### Type Inference
+
+**Go can often infer type parameters:**
+
+```go
+func Identity[T any](val T) T {
+    return val
+}
+
+// Explicit
+x := Identity[int](42)
+
+// Inferred (preferred)
+x := Identity(42)
+```
+
+**When type inference works:**
+```go
+func Add[T int | float64](a, b T) T {
+    return a + b
+}
+
+Add(1, 2)        // ✅ Infers T=int
+Add(1.5, 2.5)    // ✅ Infers T=float64
+// Add(1, 2.5)   // ❌ Compile error (mixed types)
+```
+
+**When explicit types needed:**
+```go
+func Make[T any]() T {
+    var zero T
+    return zero
+}
+
+// Must be explicit (no parameters to infer from)
+x := Make[int]()
+s := Make[string]()
+```
+
+---
+
+## Type Constraints
+
+### Built-in Constraints
+
+**1. `any` (alias for `interface{}`)**
+
+```go
+// Accepts any type
+func Print[T any](v T) {
+    fmt.Println(v)
+}
+```
+
+**2. `comparable`**
+
+```go
+// Types that support == and !=
+func Contains[T comparable](slice []T, item T) bool {
+    for _, v := range slice {
+        if v == item {  // Requires comparable
+            return true
+        }
+    }
+    return false
+}
+
+// Works with:
+Contains([]int{1, 2, 3}, 2)           // ✅
+Contains([]string{"a", "b"}, "a")     // ✅
+
+// Doesn't work with:
+// Contains([][]int{{1}}, []int{1})   // ❌ Slices not comparable
+```
+
+---
+
+### Custom Constraints (Interface-based)
+
+**Type Union Constraints:**
+
+```go
+type Number interface {
+    int | int64 | float64
+}
+
+func Sum[T Number](numbers []T) T {
+    var total T
+    for _, n := range numbers {
+        total += n
+    }
+    return total
+}
+
+// Usage
+Sum([]int{1, 2, 3})           // 6
+Sum([]float64{1.5, 2.5})      // 4.0
+// Sum([]string{"a", "b"})    // ❌ Compile error
+```
+
+**With Approximation (`~`)**
+
+```go
+// Without ~: Only exact types
+type Integer interface {
+    int | int64
+}
+
+// With ~: Underlying types too
+type Integer interface {
+    ~int | ~int64
+}
+
+type MyInt int
+
+func Double[T Integer](n T) T {
+    return n * 2
+}
+
+var x MyInt = 5
+fmt.Println(Double(x))  // ✅ Works with ~ in constraint
+```
+
+**Why `~` Matters:**
+
+```go
+type Celsius float64
+type Fahrenheit float64
+
+type Temperature interface {
+    ~float64  // Includes Celsius, Fahrenheit
+}
+
+func Average[T Temperature](temps []T) T {
+    var sum T
+    for _, t := range temps {
+        sum += t
+    }
+    return sum / T(len(temps))
+}
+
+// Works with custom types
+temps := []Celsius{0, 10, 20}
+avg := Average(temps)  // ✅
+```
+
+---
+
+### Method Constraints
+
+```go
+// Types must implement String() method
+type Stringer interface {
+    String() string
+}
+
+func PrintAll[T Stringer](items []T) {
+    for _, item := range items {
+        fmt.Println(item.String())  // Guaranteed to exist
+    }
+}
+
+// Example type
+type Person struct {
+    Name string
+}
+
+func (p Person) String() string {
+    return p.Name
+}
+
+// Usage
+people := []Person{{"Alice"}, {"Bob"}}
+PrintAll(people)  // ✅ Person implements Stringer
+```
+
+---
+
+### Combined Constraints
+
+```go
+// Multiple constraints
+type Ordered interface {
+    ~int | ~int64 | ~float64 | ~string
+}
+
+type Printable interface {
+    String() string
+}
+
+// Type must satisfy both
+type OrderedPrintable interface {
+    Ordered
+    Printable
+}
+```
+
+---
+
+## Generic Functions
+
+### Simple Generic Functions
+
+**1. Identity Function**
+
+```go
+func Identity[T any](val T) T {
+    return val
+}
+
+x := Identity(42)      // int
+s := Identity("hello") // string
+```
+
+**2. Swap Function**
+
+```go
+func Swap[T any](a, b T) (T, T) {
+    return b, a
+}
+
+x, y := Swap(1, 2)
+fmt.Println(x, y)  // 2 1
+```
+
+**3. First Element**
+
+```go
+func First[T any](slice []T) (T, bool) {
+    if len(slice) == 0 {
+        var zero T
+        return zero, false
+    }
+    return slice[0], true
+}
+
+// Usage
+val, ok := First([]int{1, 2, 3})
+fmt.Println(val, ok)  // 1 true
+
+val2, ok2 := First([]string{})
+fmt.Println(val2, ok2)  // "" false
+```
+
+---
+
+### Generic Algorithms
+
+**1. Map (Transform Slice)**
+
+```go
+func Map[T, U any](slice []T, fn func(T) U) []U {
+    result := make([]U, len(slice))
+    for i, v := range slice {
+        result[i] = fn(v)
+    }
+    return result
+}
+
+// Usage
+nums := []int{1, 2, 3, 4, 5}
+
+// Square numbers
+squares := Map(nums, func(n int) int {
+    return n * n
+})
+// [1, 4, 9, 16, 25]
+
+// Convert to strings
+strs := Map(nums, func(n int) string {
+    return fmt.Sprintf("num-%d", n)
+})
+// ["num-1", "num-2", "num-3", "num-4", "num-5"]
+```
+
+**2. Filter**
+
+```go
+func Filter[T any](slice []T, fn func(T) bool) []T {
+    result := []T{}
+    for _, v := range slice {
+        if fn(v) {
+            result = append(result, v)
+        }
+    }
+    return result
+}
+
+// Usage
+nums := []int{1, 2, 3, 4, 5, 6}
+
+// Get even numbers
+evens := Filter(nums, func(n int) bool {
+    return n%2 == 0
+})
+// [2, 4, 6]
+
+// Get numbers > 3
+large := Filter(nums, func(n int) bool {
+    return n > 3
+})
+// [4, 5, 6]
+```
+
+**3. Reduce**
+
+```go
+func Reduce[T, U any](slice []T, initial U, fn func(U, T) U) U {
+    result := initial
+    for _, v := range slice {
+        result = fn(result, v)
+    }
+    return result
+}
+
+// Usage
+nums := []int{1, 2, 3, 4, 5}
+
+// Sum
+sum := Reduce(nums, 0, func(acc, n int) int {
+    return acc + n
+})
+// 15
+
+// Product
+product := Reduce(nums, 1, func(acc, n int) int {
+    return acc * n
+})
+// 120
+
+// Concatenate strings
+words := []string{"Hello", " ", "World"}
+sentence := Reduce(words, "", func(acc, word string) string {
+    return acc + word
+})
+// "Hello World"
+```
+
+**4. Find**
+
+```go
+func Find[T any](slice []T, fn func(T) bool) (T, bool) {
+    for _, v := range slice {
+        if fn(v) {
+            return v, true
+        }
+    }
+    var zero T
+    return zero, false
+}
+
+// Usage
+nums := []int{1, 2, 3, 4, 5}
+
+// Find first even number
+even, found := Find(nums, func(n int) bool {
+    return n%2 == 0
+})
+fmt.Println(even, found)  // 2 true
+
+// Find number > 10
+large, found := Find(nums, func(n int) bool {
+    return n > 10
+})
+fmt.Println(large, found)  // 0 false
+```
+
+---
+
+### Variadic Generic Functions
+
+```go
+func Min[T Ordered](values ...T) T {
+    if len(values) == 0 {
+        panic("Min requires at least one value")
+    }
+    
+    min := values[0]
+    for _, v := range values[1:] {
+        if v < min {
+            min = v
+        }
+    }
+    return min
+}
+
+// Usage
+fmt.Println(Min(5, 2, 8, 1, 9))      // 1
+fmt.Println(Min(3.14, 2.71, 1.41))   // 1.41
+fmt.Println(Min("zebra", "apple"))   // "apple"
+```
+
+---
+
+## Generic Types
+
+### Generic Structs
+
+**1. Generic Stack**
+
+```go
+type Stack[T any] struct {
+    items []T
+}
+
+func (s *Stack[T]) Push(item T) {
+    s.items = append(s.items, item)
+}
+
+func (s *Stack[T]) Pop() (T, bool) {
+    if len(s.items) == 0 {
+        var zero T
+        return zero, false
+    }
+    
+    item := s.items[len(s.items)-1]
+    s.items = s.items[:len(s.items)-1]
+    return item, true
+}
+
+func (s *Stack[T]) Peek() (T, bool) {
+    if len(s.items) == 0 {
+        var zero T
+        return zero, false
+    }
+    return s.items[len(s.items)-1], true
+}
+
+func (s *Stack[T]) IsEmpty() bool {
+    return len(s.items) == 0
+}
+
+// Usage
+stack := Stack[int]{}
+stack.Push(1)
+stack.Push(2)
+stack.Push(3)
+
+val, ok := stack.Pop()
+fmt.Println(val, ok)  // 3 true
+```
+
+**2. Generic Queue**
+
+```go
+type Queue[T any] struct {
+    items []T
+}
+
+func (q *Queue[T]) Enqueue(item T) {
+    q.items = append(q.items, item)
+}
+
+func (q *Queue[T]) Dequeue() (T, bool) {
+    if len(q.items) == 0 {
+        var zero T
+        return zero, false
+    }
+    
+    item := q.items[0]
+    q.items = q.items[1:]
+    return item, true
+}
+
+// Usage
+queue := Queue[string]{}
+queue.Enqueue("first")
+queue.Enqueue("second")
+
+val, ok := queue.Dequeue()
+fmt.Println(val, ok)  // "first" true
+```
+
+**3. Generic Pair**
+
+```go
+type Pair[T, U any] struct {
+    First  T
+    Second U
+}
+
+func NewPair[T, U any](first T, second U) Pair[T, U] {
+    return Pair[T, U]{First: first, Second: second}
+}
+
+// Usage
+p1 := Pair[string, int]{"age", 30}
+p2 := NewPair("name", "Alice")
+p3 := NewPair(1, "one")
+```
+
+**4. Generic Optional (Like Option in Rust)**
+
+```go
+type Optional[T any] struct {
+    value   T
+    present bool
+}
+
+func Some[T any](value T) Optional[T] {
+    return Optional[T]{value: value, present: true}
+}
+
+func None[T any]() Optional[T] {
+    return Optional[T]{present: false}
+}
+
+func (o Optional[T]) IsPresent() bool {
+    return o.present
+}
+
+func (o Optional[T]) Get() (T, bool) {
+    return o.value, o.present
+}
+
+func (o Optional[T]) OrElse(defaultValue T) T {
+    if o.present {
+        return o.value
+    }
+    return defaultValue
+}
+
+// Usage
+opt1 := Some(42)
+val, ok := opt1.Get()
+fmt.Println(val, ok)  // 42 true
+
+opt2 := None[int]()
+val2 := opt2.OrElse(0)
+fmt.Println(val2)  // 0
+```
+
+**5. Generic Result (Error Handling)**
+
+```go
+type Result[T any] struct {
+    value T
+    err   error
+}
+
+func Ok[T any](value T) Result[T] {
+    return Result[T]{value: value}
+}
+
+func Err[T any](err error) Result[T] {
+    return Result[T]{err: err}
+}
+
+func (r Result[T]) IsOk() bool {
+    return r.err == nil
+}
+
+func (r Result[T]) Unwrap() (T, error) {
+    return r.value, r.err
+}
+
+// Usage
+func Divide(a, b float64) Result[float64] {
+    if b == 0 {
+        return Err[float64](errors.New("division by zero"))
+    }
+    return Ok(a / b)
+}
+
+result := Divide(10, 2)
+if result.IsOk() {
+    val, _ := result.Unwrap()
+    fmt.Println(val)  // 5
+}
+```
+
+---
+
+### Generic Slices (Type Aliases)
+
+```go
+type Numbers[T int | float64] []T
+
+func (n Numbers[T]) Sum() T {
+    var total T
+    for _, v := range n {
+        total += v
+    }
+    return total
+}
+
+// Usage
+nums := Numbers[int]{1, 2, 3, 4, 5}
+fmt.Println(nums.Sum())  // 15
+
+prices := Numbers[float64]{9.99, 19.99, 29.99}
+fmt.Println(prices.Sum())  // 59.97
+```
+
+---
+
+### Generic Maps
+
+```go
+type Cache[K comparable, V any] struct {
+    data map[K]V
+    mu   sync.RWMutex
+}
+
+func NewCache[K comparable, V any]() *Cache[K, V] {
+    return &Cache[K, V]{
+        data: make(map[K]V),
+    }
+}
+
+func (c *Cache[K, V]) Set(key K, value V) {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    c.data[key] = value
+}
+
+func (c *Cache[K, V]) Get(key K) (V, bool) {
+    c.mu.RLock()
+    defer c.mu.RUnlock()
+    val, ok := c.data[key]
+    return val, ok
+}
+
+// Usage
+cache := NewCache[string, int]()
+cache.Set("age", 30)
+val, ok := cache.Get("age")
+fmt.Println(val, ok)  // 30 true
+```
+
+---
+
+## Generic Interfaces
+
+### Simple Generic Interface
+
+```go
+type Container[T any] interface {
+    Add(item T)
+    Get(index int) (T, bool)
+    Size() int
+}
+
+// Implementation
+type List[T any] struct {
+    items []T
+}
+
+func (l *List[T]) Add(item T) {
+    l.items = append(l.items, item)
+}
+
+func (l *List[T]) Get(index int) (T, bool) {
+    if index < 0 || index >= len(l.items) {
+        var zero T
+        return zero, false
+    }
+    return l.items[index], true
+}
+
+func (l *List[T]) Size() int {
+    return len(l.items)
+}
+
+// Usage
+var c Container[string] = &List[string]{}
+c.Add("hello")
+c.Add("world")
+```
+
+---
+
+### Constraint Interface with Methods
+
+```go
+type Numeric interface {
+    ~int | ~int64 | ~float64
+}
+
+type Addable[T Numeric] interface {
+    Add(other T) T
+}
+
+type Counter[T Numeric] struct {
+    value T
+}
+
+func (c Counter[T]) Add(other T) T {
+    return c.value + other
+}
+
+func Sum[T Numeric, A Addable[T]](items []A) T {
+    var total T
+    for _, item := range items {
+        total = item.Add(0)  // Access Add method
+    }
+    return total
+}
+```
+
+---
+
+## Advanced Constraints
+
+### constraints Package
+
+**Official constraints package:**
+
+```go
+import "golang.org/x/exp/constraints"
+
+// Signed integers
+type Signed interface {
+    ~int | ~int8 | ~int16 | ~int32 | ~int64
+}
+
+// Unsigned integers
+type Unsigned interface {
+    ~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
+}
+
+// All integers
+type Integer interface {
+    Signed | Unsigned
+}
+
+// Floating point
+type Float interface {
+    ~float32 | ~float64
+}
+
+// All numbers
+type Ordered interface {
+    Integer | Float | ~string
+}
+```
+
+**Usage:**
+
+```go
+import "golang.org/x/exp/constraints"
+
+func Max[T constraints.Ordered](a, b T) T {
+    if a > b {
+        return a
+    }
+    return b
+}
+
+func Sum[T constraints.Integer | constraints.Float](nums []T) T {
+    var total T
+    for _, n := range nums {
+        total += n
+    }
+    return total
+}
+```
+
+---
+
+### Type Sets
+
+```go
+// Empty type set (no types satisfy this)
+type Impossible interface {
+    int
+    string  // Can't be both int AND string
+}
+
+// Union type set
+type IntOrString interface {
+    int | string  // Can be int OR string
+}
+
+// Method + type constraint
+type StringerInt interface {
+    ~int
+    String() string
+}
+```
+
+---
+
+## Real-World Examples
+
+### 1. Generic Linked List
+
+```go
+type Node[T any] struct {
+    Value T
+    Next  *Node[T]
+}
+
+type LinkedList[T any] struct {
+    head *Node[T]
+    size int
+}
+
+func (l *LinkedList[T]) Add(value T) {
+    newNode := &Node[T]{Value: value}
+    
+    if l.head == nil {
+        l.head = newNode
+    } else {
+        current := l.head
+        for current.Next != nil {
+            current = current.Next
+        }
+        current.Next = newNode
+    }
+    l.size++
+}
+
+func (l *LinkedList[T]) ToSlice() []T {
+    result := make([]T, 0, l.size)
+    current := l.head
+    for current != nil {
+        result = append(result, current.Value)
+        current = current.Next
+    }
+    return result
+}
+
+// Usage
+list := &LinkedList[int]{}
+list.Add(1)
+list.Add(2)
+list.Add(3)
+fmt.Println(list.ToSlice())  // [1 2 3]
+```
+
+---
+
+### 2. Generic Binary Tree
+
+```go
+type TreeNode[T constraints.Ordered] struct {
+    Value T
+    Left  *TreeNode[T]
+    Right *TreeNode[T]
+}
+
+type BinaryTree[T constraints.Ordered] struct {
+    root *TreeNode[T]
+}
+
+func (t *BinaryTree[T]) Insert(value T) {
+    t.root = t.insertNode(t.root, value)
+}
+
+func (t *BinaryTree[T]) insertNode(node *TreeNode[T], value T) *TreeNode[T] {
+    if node == nil {
+        return &TreeNode[T]{Value: value}
+    }
+    
+    if value < node.Value {
+        node.Left = t.insertNode(node.Left, value)
+    } else if value > node.Value {
+        node.Right = t.insertNode(node.Right, value)
+    }
+    
+    return node
+}
+
+func (t *BinaryTree[T]) InOrder() []T {
+    result := []T{}
+    t.inOrder(t.root, &result)
+    return result
+}
+
+func (t *BinaryTree[T]) inOrder(node *TreeNode[T], result *[]T) {
+    if node == nil {
+        return
+    }
+    t.inOrder(node.Left, result)
+    *result = append(*result, node.Value)
+    t.inOrder(node.Right, result)
+}
+
+// Usage
+tree := &BinaryTree[int]{}
+tree.Insert(5)
+tree.Insert(3)
+tree.Insert(7)
+tree.Insert(1)
+fmt.Println(tree.InOrder())  // [1 3 5 7]
+```
+
+---
+
+### 3. Generic Set
+
+```go
+type Set[T comparable] struct {
+    data map[T]struct{}
+}
+
+func NewSet[T comparable]() *Set[T] {
+    return &Set[T]{
+        data: make(map[T]struct{}),
+    }
+}
+
+func (s *Set[T]) Add(item T) {
+    s.data[item] = struct{}{}
+}
+
+func (s *Set[T]) Remove(item T) {
+    delete(s.data, item)
+}
+
+func (s *Set[T]) Contains(item T) bool {
+    _, exists := s.data[item]
+    return exists
+}
+
+func (s *Set[T]) Size() int {
+    return len(s.data)
+}
+
+func (s *Set[T]) ToSlice() []T {
+    result := make([]T, 0, len(s.data))
+    for k := range s.data {
+        result = append(result, k)
+    }
+    return result
+}
+
+func (s *Set[T]) Union(other *Set[T]) *Set[T] {
+    result := NewSet[T]()
+    for k := range s.data {
+        result.Add(k)
+    }
+    for k := range other.data {
+        result.Add(k)
+    }
+    return result
+}
+
+func (s *Set[T]) Intersection(other *Set[T]) *Set[T] {
+    result := NewSet[T]()
+    for k := range s.data {
+        if other.Contains(k) {
+            result.Add(k)
+        }
+    }
+    return result
+}
+
+// Usage
+set1 := NewSet[int]()
+set1.Add(1)
+set1.Add(2)
+set1.Add(3)
+
+set2 := NewSet[int]()
+set2.Add(2)
+set2.Add(3)
+set2.Add(4)
+
+union := set1.Union(set2)
+fmt.Println(union.ToSlice())  // [1 2 3 4] (order may vary)
+
+intersection := set1.Intersection(set2)
+fmt.Println(intersection.ToSlice())  // [2 3] (order may vary)
+```
+
+---
+
+### 4. Generic HTTP Response Wrapper
+
+```go
+type Response[T any] struct {
+    Data    T      `json:"data,omitempty"`
+    Error   string `json:"error,omitempty"`
+    Success bool   `json:"success"`
+}
+
+func SuccessResponse[T any](data T) Response[T] {
+    return Response[T]{
+        Data:    data,
+        Success: true,
+    }
+}
+
+func ErrorResponse[T any](err string) Response[T] {
+    return Response[T]{
+        Error:   err,
+        Success: false,
+    }
+}
+
+// Usage in HTTP handlers
+func getUserHandler(w http.ResponseWriter, r *http.Request) {
+    type User struct {
+        ID   int    `json:"id"`
+        Name string `json:"name"`
+    }
+    
+    user := User{ID: 1, Name: "Alice"}
+    response := SuccessResponse(user)
+    
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(response)
+}
+
+func listUsersHandler(w http.ResponseWriter, r *http.Request) {
+    type User struct {
+        ID   int    `json:"id"`
+        Name string `json:"name"`
+    }
+    
+    users := []User{
+        {ID: 1, Name: "Alice"},
+        {ID: 2, Name: "Bob"},
+    }
+    
+    response := SuccessResponse(users)
+    json.NewEncoder(w).Encode(response)
+}
+```
+
+---
+
+## Best Practices
+
+### 1. When to Use Generics
+
+**✅ Good Use Cases:**
+
+```go
+// Data structures
+type Stack[T any] struct { /* ... */ }
+
+// Algorithms
+func Sort[T constraints.Ordered](slice []T) { /* ... */ }
+
+// Utility functions
+func Map[T, U any](slice []T, fn func(T) U) []U { /* ... */ }
+
+// API wrappers
+type Response[T any] struct { /* ... */ }
+```
+
+**❌ Avoid Generics When:**
+
+```go
+// When interface{} is simpler and performance doesn't matter
+func Print(v interface{}) { fmt.Println(v) }
+
+// When only used with one type
+func ProcessInts(nums []int) { /* ... */ }  // Just use int
+
+// When logic differs significantly per type
+// Better to write separate functions
+```
+
+---
+
+### 2. Naming Conventions
+
+```go
+// Single letter for simple cases
+func Identity[T any](v T) T { return v }
+
+// Descriptive for complex cases
+func Transform[Input, Output any](in Input, fn func(Input) Output) Output
+
+// Common conventions:
+// T - Type
+// K - Key
+// V - Value
+// E - Element
+// R - Result
+```
+
+---
+
+### 3. Keep Constraints Minimal
+
+```go
+// ❌ Too restrictive
+func Process[T int](value T) { /* ... */ }
+
+// ✅ More flexible
+func Process[T constraints.Integer](value T) { /* ... */ }
+
+// ✅ Even better if you only need addition
+func Process[T interface{ ~int | ~int64 }](value T) { /* ... */ }
+```
+
+---
+
+### 4. Don't Overuse Type Parameters
+
+```go
+// ❌ Unnecessary
+func Add[T int](a, b T) T {
+    return a + b
+}
+
+// ✅ Just use int
+func Add(a, b int) int {
+    return a + b
+}
+
+// ✅ Generic only when supporting multiple types
+func Add[T constraints.Integer | constraints.Float](a, b T) T {
+    return a + b
+}
+```
+
+---
+
+### 5. Prefer Interfaces for Behavior
+
+```go
+// ✅ Good: Use interface for behavior
+type Sorter interface {
+    Len() int
+    Less(i, j int) bool
+    Swap(i, j int)
+}
+
+func Sort(data Sorter) { /* ... */ }
+
+// Instead of overly generic
+func Sort[T any](data []T, less func(T, T) bool) { /* ... */ }
+```
+
+</details>
+
+---
+
+### Practice Questions (Generics)
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+**Fill in the Blanks:**
+
+1. The `any` constraint is an alias for __________.
+2. Types that support `==` and `!=` must use the __________ constraint.
+3. The `~` symbol in constraints matches the __________ type.
+4. Type parameters are declared in __________ brackets.
+
+**True/False:**
+
+1. ⬜ Generics were introduced in Go 1.18
+2. ⬜ Type parameters can always be inferred
+3. ⬜ Slices are comparable and can use the `comparable` constraint
+4. ⬜ Generic types can have methods
+
+**Multiple Choice:**
+
+1. Which constraint allows comparison with `>` and `<`?
+   - A) `any`
+   - B) `comparable`
+   - C) `constraints.Ordered`
+   - D) `interface{}`
+
+2. What does `~int` mean in a constraint?
+   - A) Not int
+   - B) int only
+   - C) int and types with int as underlying type
+   - D) Approximately int
+
+**Code Challenge:**
+
+Write a generic function `Chunk` that splits a slice into chunks of specified size.
+
+```go
+func Chunk[T any](slice []T, size int) [][]T {
+    // Your implementation
+}
+
+// Example usage:
+nums := []int{1, 2, 3, 4, 5, 6, 7}
+chunks := Chunk(nums, 3)
+// Result: [[1, 2, 3], [4, 5, 6], [7]]
+```
+
+---
+
+## Answers
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Fill in the Blanks:**
+1. interface{}
+2. comparable
+3. underlying
+4. square
+
+**True/False:**
+1. ✅ True
+2. ❌ False (sometimes explicit types needed)
+3. ❌ False (slices are not comparable)
+4. ✅ True
+
+**Multiple Choice:**
+1. **C** - `constraints.Ordered`
+2. **C** - int and types with int as underlying type
+
+**Code Challenge:**
+
+```go
+func Chunk[T any](slice []T, size int) [][]T {
+    if size <= 0 {
+        return nil
+    }
+    
+    result := [][]T{}
+    for i := 0; i < len(slice); i += size {
+        end := i + size
+        if end > len(slice) {
+            end = len(slice)
+        }
+        result = append(result, slice[i:end])
+    }
+    return result
+}
+
+// Usage
+nums := []int{1, 2, 3, 4, 5, 6, 7}
+chunks := Chunk(nums, 3)
+fmt.Println(chunks)  // [[1 2 3] [4 5 6] [7]]
+
+words := []string{"a", "b", "c", "d", "e"}
+wordChunks := Chunk(words, 2)
+fmt.Println(wordChunks)  // [[a b] [c d] [e]]
+```
+
+</details>
+
+</details>
+
+---
+
+### Interview Questions (Generics)
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+### Q1: What problem do generics solve in Go?
+
+**Answer:**
+
+Generics solve three main problems:
+
+1. **Code Duplication**
+   ```go
+   // Before: Separate functions for each type
+   func MaxInt(a, b int) int
+   func MaxFloat(a, b float64) float64
+   
+   // After: One generic function
+   func Max[T constraints.Ordered](a, b T) T
+   ```
+
+2. **Type Safety**
+   ```go
+   // Before: interface{} loses type info
+   func First(slice []interface{}) interface{}
+   
+   // After: Type-safe
+   func First[T any](slice []T) T
+   ```
+
+3. **Performance**
+   ```go
+   // interface{} has allocation overhead
+   // Generics compile to specialized code (monomorphization)
+   ```
+
+---
+
+### Q2: What's the difference between `any` and `comparable` constraints?
+
+**Answer:**
+
+```go
+// any: Accepts ANY type
+func Print[T any](v T) {
+    fmt.Println(v)  // Only fmt.Println works
+}
+
+// comparable: Only types that support == and !=
+func Contains[T comparable](slice []T, item T) bool {
+    for _, v := range slice {
+        if v == item {  // Requires comparable
+            return true
+        }
+    }
+    return false
+}
+
+// Works:
+Contains([]int{1, 2, 3}, 2)        // ✅ int is comparable
+Contains([]string{"a"}, "a")       // ✅ string is comparable
+
+// Doesn't work:
+Contains([][]int{{1}}, []int{1})   // ❌ Slices not comparable
+```
+
+---
+
+### Q3: What does the `~` (tilde) mean in type constraints?
+
+**Answer:**
+
+**`~` includes the underlying type:**
+
+```go
+// Without ~
+type Integer interface {
+    int | int64
+}
+
+// With ~
+type Integer interface {
+    ~int | ~int64
+}
+
+type MyInt int
+
+func Double[T Integer](n T) T {
+    return n * 2
+}
+
+var x MyInt = 5
+
+// Without ~: Compile error (MyInt not in constraint)
+// With ~: Works! (MyInt's underlying type is int)
+fmt.Println(Double(x))
+```
+
+**Use cases:**
+- Supporting custom types (like `type UserID int`)
+- Making constraints more flexible
+- Working with type aliases
+
+---
+
+### Q4: Can generic types have methods?
+
+**Answer:**
+
+**Yes! Generic types can have methods:**
+
+```go
+type Stack[T any] struct {
+    items []T
+}
+
+// Method on generic type
+func (s *Stack[T]) Push(item T) {
+    s.items = append(s.items, item)
+}
+
+func (s *Stack[T]) Pop() (T, bool) {
+    if len(s.items) == 0 {
+        var zero T
+        return zero, false
+    }
+    item := s.items[len(s.items)-1]
+    s.items = s.items[:len(s.items)-1]
+    return item, true
+}
+
+// Usage
+stack := Stack[int]{}
+stack.Push(1)
+stack.Push(2)
+val, ok := stack.Pop()  // 2 true
+```
+
+**Important:** Methods themselves cannot have additional type parameters:
+
+```go
+// ❌ Not allowed
+func (s *Stack[T]) Transform[U any](fn func(T) U) Stack[U]
+
+// ✅ Type parameters must be on the type itself
+type Stack[T any] struct { /* ... */ }
+```
+
+---
+
+### Q5: When should you NOT use generics?
+
+**Answer:**
+
+**Avoid generics when:**
+
+1. **Single concrete type**
+   ```go
+   // ❌ Unnecessary
+   func ProcessInts[T int](nums []T) { /* ... */ }
+   
+   // ✅ Just use int
+   func ProcessInts(nums []int) { /* ... */ }
+   ```
+
+2. **Interface is sufficient**
+   ```go
+   // ✅ Better with interface
+   func Print(v interface{ String() string }) {
+       fmt.Println(v.String())
+   }
+   
+   // Not: func Print[T Stringer](v T)
+   ```
+
+3. **Performance doesn't matter**
+   ```go
+   // ✅ Simpler
+   func Log(v interface{}) {
+       fmt.Println(v)
+   }
+   ```
+
+4. **Logic differs per type**
+   ```go
+   // ❌ Don't force generics
+   func Process[T any](v T) {
+       switch any(v).(type) {
+       case int: /* ... */
+       case string: /* ... */
+       }
+   }
+   
+   // ✅ Separate functions
+   func ProcessInt(v int) { /* ... */ }
+   func ProcessString(v string) { /* ... */ }
+   ```
 
 ---
 
 </details>
+
 
 ## Concurrency
 
@@ -8355,7 +9530,4039 @@ func addItem(items []Item, item Item) []Item {
 
 </details>
 
-## Learning Resources
+## Interview Questions
+
+<details>
+<summary><strong>View contents</strong></summary>
+
+## Basics & Fundamentals
+
+### Q1: What is Go and why was it created?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+Go (Golang) is a statically typed, compiled programming language designed at Google in 2007 by Robert Griesemer, Rob Pike, and Ken Thompson, and open-sourced in 2009.
+
+**Design Goals:**
+- **Simplicity**: Easy to learn and read (25 keywords)
+- **Performance**: Fast compilation and execution
+- **Concurrency**: Built-in support via goroutines
+- **Productivity**: Strong tooling and fast development
+
+**Why it was created:**
+- Address shortcomings of C++ (complexity, slow compilation)
+- Provide better concurrency than Java
+- Maintain performance while improving developer experience
+- Handle large-scale distributed systems at Google
+
+**Real-world impact:**
+- Docker, Kubernetes (container orchestration)
+- Terraform (infrastructure as code)
+- Prometheus (monitoring)
+- etcd (distributed key-value store)
+
+</details>
+
+---
+
+### Q2: Explain the difference between `var`, `:=`, and `const`.
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+```go
+// var - Explicit declaration
+var name string = "Alice"
+var age = 30              // Type inference
+var count int             // Zero value (0)
+
+// := - Short variable declaration (function scope only)
+city := "New York"        // Type inferred
+
+// const - Immutable value (compile-time constant)
+const MaxRetries = 3
+const Pi = 3.14159
+```
+
+**Key Differences:**
+
+| Feature | var | := | const |
+|---------|-----|-------|-------|
+| **Scope** | Package or function | Function only | Package or function |
+| **Type inference** | Yes | Yes | Yes |
+| **Zero value** | Yes | No | N/A |
+| **Reassignable** | Yes | Yes | No |
+| **Compile-time** | No | No | Yes |
+
+**Common Pitfall:**
+```go
+// Wrong: := cannot be used at package level
+package main
+name := "Alice"  // Compile error!
+
+// Correct
+var name = "Alice"
+```
+
+</details>
+
+---
+
+### Q3: What are the basic data types in Go?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Numeric Types:**
+```go
+// Integers
+int, int8, int16, int32, int64       // Signed
+uint, uint8, uint16, uint32, uint64  // Unsigned
+
+// Floating-point
+float32, float64
+
+// Complex numbers
+complex64, complex128
+
+// Aliases
+byte  // alias for uint8
+rune  // alias for int32 (Unicode code point)
+```
+
+**Other Types:**
+```go
+string  // Immutable sequence of bytes
+bool    // true or false
+```
+
+**Important Notes:**
+- `int` size is **platform-dependent** (32-bit on 32-bit systems, 64-bit on 64-bit)
+- **No implicit type conversion** - must be explicit
+- **Zero values**: 0 for numbers, "" for strings, false for bool
+
+**Example:**
+```go
+var i int = 42
+var f float64 = float64(i)  // Must convert explicitly
+// var f float64 = i         // Compile error!
+```
+
+</details>
+
+---
+
+### Q4: Explain how strings work in Go. Are they mutable?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Key Characteristics:**
+- **Immutable**: Cannot be changed after creation
+- **UTF-8 encoded** byte sequences
+- **len()** returns **byte count**, not character count
+
+```go
+s := "Hello, 世界"
+
+// Length in BYTES, not characters
+fmt.Println(len(s))  // 13 (not 9!)
+
+// Indexing returns bytes
+fmt.Println(s[0])    // 72 (byte value of 'H')
+
+// Immutable
+s[0] = 'h'  // Compile error!
+
+// Concatenation creates new string
+s2 := s + " Go"  // New string allocated
+```
+
+**Iterating over strings:**
+
+```go
+// Wrong: Iterates over bytes
+for i := 0; i < len(s); i++ {
+    fmt.Printf("%c ", s[i])  // Breaks on Unicode
+}
+
+// Correct: Iterates over runes (Unicode code points)
+for _, r := range s {
+    fmt.Printf("%c ", r)  // Works with Unicode
+}
+```
+
+**Why immutable?**
+- **Thread safety**: Can be shared across goroutines
+- **Performance**: String literals can be reused
+- **Simplicity**: No unexpected modifications
+
+</details>
+
+---
+
+### Q5: What is the difference between `nil` slice and empty slice?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+```go
+// Nil slice
+var s1 []int
+fmt.Println(s1 == nil)     // true
+fmt.Println(len(s1))       // 0
+fmt.Println(cap(s1))       // 0
+
+// Empty slice
+s2 := []int{}
+fmt.Println(s2 == nil)     // false
+fmt.Println(len(s2))       // 0
+fmt.Println(cap(s2))       // 0
+
+s3 := make([]int, 0)
+fmt.Println(s3 == nil)     // false
+```
+
+**Visual Representation:**
+
+```
+Nil slice:
+┌──────┬─────┬─────┐
+│ ptr  │ len │ cap │
+│ nil  │  0  │  0  │
+└──────┴─────┴─────┘
+
+Empty slice:
+┌──────┬─────┬─────┐
+│ ptr  │ len │ cap │
+│ 0x.. │  0  │  0  │ (points to empty array)
+└──────┴─────┴─────┘
+```
+
+**When to use which?**
+
+```go
+// Nil slice - Default zero value
+var users []User  // Represents "no data"
+
+// Empty slice - Explicitly empty collection
+users := []User{}  // Represents "initialized but empty"
+
+// JSON marshaling difference
+json.Marshal(nil)     // null
+json.Marshal([]int{}) // []
+```
+
+**Best Practice:**
+- Use **nil slice** as zero value (simpler, same behavior)
+- Check `len(s) == 0` instead of `s == nil` (works for both)
+
+</details>
+
+---
+
+### Q6: Explain the difference between arrays and slices.
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Arrays - Fixed Size:**
+
+```go
+// Size is part of the type
+var a1 [3]int       // Different type from [5]int
+a2 := [3]int{1, 2, 3}
+a3 := [...]int{1, 2, 3}  // Compiler counts
+
+// Arrays are VALUES (copied on assignment)
+b := a2
+b[0] = 100
+fmt.Println(a2)  // [1 2 3] (unchanged)
+fmt.Println(b)   // [100 2 3]
+```
+
+**Slices - Dynamic Size:**
+
+```go
+// Reference to underlying array
+s1 := []int{1, 2, 3}
+s2 := make([]int, 3, 5)  // len=3, cap=5
+
+// Slices are REFERENCES
+s3 := s1
+s3[0] = 100
+fmt.Println(s1)  // [100 2 3] (modified!)
+fmt.Println(s3)  // [100 2 3]
+```
+
+**Comparison Table:**
+
+| Feature | Array | Slice |
+|---------|-------|-------|
+| **Size** | Fixed | Dynamic |
+| **Type** | [N]T | []T |
+| **Passed to function** | Copied | Reference |
+| **Resizable** | No | Yes (via append) |
+| **Common use** | Rare | Very common |
+
+**When to use arrays:**
+- Fixed-size data (SHA256 hash: `[32]byte`)
+- Performance-critical code (avoid allocations)
+- **Generally, prefer slices**
+
+</details>
+
+---
+
+### Q7: What is the zero value in Go? Give examples.
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Zero values are automatically assigned to variables without initialization.**
+
+```go
+var i int           // 0
+var f float64       // 0.0
+var s string        // ""
+var b bool          // false
+var p *int          // nil
+var slice []int     // nil
+var m map[string]int // nil
+var ch chan int     // nil
+var fn func()       // nil
+var iface interface{} // nil
+
+type Person struct {
+    Name string  // ""
+    Age  int     // 0
+}
+var person Person  // {Name: "", Age: 0}
+```
+
+**Why zero values matter:**
+
+```go
+// Safe defaults
+type Counter struct {
+    count int  // Starts at 0 (useful!)
+}
+
+c := Counter{}
+fmt.Println(c.count)  // 0 (no initialization needed)
+
+// Nil checks
+var m map[string]int
+if m == nil {
+    m = make(map[string]int)
+}
+```
+
+**Common Pitfall:**
+
+```go
+var m map[string]int
+m["key"] = 1  // PANIC! Cannot write to nil map
+
+// Must initialize
+m = make(map[string]int)
+m["key"] = 1  // OK
+```
+
+</details>
+
+---
+
+### Q8: Explain `defer`. What happens with multiple defer statements?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**defer delays function execution until surrounding function returns.**
+
+```go
+func readFile(path string) error {
+    file, err := os.Open(path)
+    if err != nil {
+        return err
+    }
+    defer file.Close()  // Executes when readFile returns
+    
+    // Work with file
+    // Even if error occurs, file.Close() is called
+    return nil
+}
+```
+
+**Multiple defers execute in LIFO (Last In, First Out):**
+
+```go
+func example() {
+    defer fmt.Println("First")
+    defer fmt.Println("Second")
+    defer fmt.Println("Third")
+    fmt.Println("Main")
+}
+
+// Output:
+// Main
+// Third
+// Second
+// First
+```
+
+**Arguments are evaluated immediately:**
+
+```go
+func example() {
+    x := 10
+    defer fmt.Println(x)  // x evaluated NOW (10)
+    x = 20
+    fmt.Println(x)
+}
+
+// Output:
+// 20
+// 10
+```
+
+**Common Use Cases:**
+
+```go
+// 1. Resource cleanup
+defer file.Close()
+defer db.Close()
+
+// 2. Unlock mutex
+mu.Lock()
+defer mu.Unlock()
+
+// 3. Recover from panic
+defer func() {
+    if r := recover(); r != nil {
+        log.Println("Recovered:", r)
+    }
+}()
+
+// 4. Timing function execution
+start := time.Now()
+defer func() {
+    fmt.Println("Duration:", time.Since(start))
+}()
+```
+
+**Real-world Example:**
+
+```go
+func processTransaction(db *sql.DB) error {
+    tx, err := db.Begin()
+    if err != nil {
+        return err
+    }
+    defer tx.Rollback()  // Rollback if not committed
+    
+    // Perform operations
+    if err := operation1(tx); err != nil {
+        return err  // Auto-rollback
+    }
+    
+    if err := operation2(tx); err != nil {
+        return err  // Auto-rollback
+    }
+    
+    return tx.Commit()  // Commit overrides rollback
+}
+```
+
+</details>
+
+---
+
+### Q9: What are init functions and when are they called?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**`init()` functions run automatically before `main()`.**
+
+```go
+package main
+
+import "fmt"
+
+func init() {
+    fmt.Println("Init 1")
+}
+
+func init() {
+    fmt.Println("Init 2")
+}
+
+func main() {
+    fmt.Println("Main")
+}
+
+// Output:
+// Init 1
+// Init 2
+// Main
+```
+
+**Execution Order:**
+
+1. **Package-level variables** initialized
+2. **All `init()` functions** in the order they appear
+3. **Dependencies first** (imported packages before current)
+4. **`main()` function** (if it exists)
+
+**Multi-package example:**
+
+```go
+// package config
+var DBConnection string
+
+func init() {
+    DBConnection = "postgres://..."
+    fmt.Println("Config initialized")
+}
+
+// package main
+import (
+    "config"
+)
+
+func init() {
+    fmt.Println("Main package initialized")
+}
+
+func main() {
+    fmt.Println("Main function")
+    fmt.Println(config.DBConnection)
+}
+
+// Output:
+// Config initialized
+// Main package initialized
+// Main function
+// postgres://...
+```
+
+**Common Use Cases:**
+
+```go
+// 1. Package initialization
+func init() {
+    rand.Seed(time.Now().UnixNano())
+}
+
+// 2. Register drivers (database, image formats)
+import _ "github.com/lib/pq"  // Runs init() only
+
+func init() {
+    sql.Register("postgres", &Driver{})
+}
+
+// 3. Validation
+var config Config
+
+func init() {
+    if err := loadConfig(&config); err != nil {
+        panic("Failed to load config: " + err.Error())
+    }
+}
+```
+
+**Best Practices:**
+- ✅ Keep `init()` simple and deterministic
+- ✅ Avoid side effects if possible
+- ❌ Avoid complex logic (hard to test)
+- ❌ Don't use `init()` for dependency injection
+
+</details>
+
+---
+
+### Q10: What is the difference between `new()` and `make()`?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Both allocate memory, but serve different purposes.**
+
+**`new(T)` - Returns `*T` (pointer to zeroed memory):**
+
+```go
+// new allocates zeroed storage
+p := new(int)
+fmt.Println(*p)  // 0
+
+type Person struct {
+    Name string
+    Age  int
+}
+
+p2 := new(Person)
+fmt.Printf("%+v\n", p2)  // &{Name: Age:0}
+```
+
+**`make(T)` - Returns initialized `T` (slices, maps, channels only):**
+
+```go
+// make creates and initializes
+s := make([]int, 5, 10)    // len=5, cap=10
+m := make(map[string]int)  // Empty map
+ch := make(chan int, 5)    // Buffered channel
+```
+
+**Comparison:**
+
+| Feature | new(T) | make(T) |
+|---------|--------|---------|
+| **Returns** | `*T` (pointer) | `T` (value) |
+| **Works with** | Any type | Slice, map, channel only |
+| **Initialization** | Zero value | Ready to use |
+| **Use case** | Rare | Common |
+
+**Examples:**
+
+```go
+// Slice
+var s1 *[]int = new([]int)  // *s1 == nil (useless!)
+var s2 []int = make([]int, 0) // Ready to use
+
+// Map
+var m1 *map[string]int = new(map[string]int)  // *m1 == nil
+var m2 map[string]int = make(map[string]int)  // Ready to use
+
+// Struct
+type Counter struct {
+    count int
+}
+
+c1 := new(Counter)    // Returns *Counter
+c2 := &Counter{}      // Equivalent (preferred)
+```
+
+**Best Practice:**
+
+```go
+// Prefer composite literals over new()
+// new(T)
+p := new(Person)
+p.Name = "Alice"
+
+// Composite literal (better)
+p := &Person{
+    Name: "Alice",
+}
+```
+
+</details>
+
+---
+
+## Data Structures
+
+### Q11: How do maps work internally in Go?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Maps are hash tables implemented using buckets.**
+
+**Internal Structure:**
+
+```
+Hash Table
+┌─────────────┐
+│   Buckets   │
+├─────────────┤
+│ [0] → [k,v] │
+│ [1] → [k,v] │
+│ [2] → [k,v] │
+│     ...     │
+│ [7] → [k,v] │
+└─────────────┘
+     ↓
+Overflow buckets (if needed)
+```
+
+**Key Characteristics:**
+
+1. **Hash Function**: Converts key to bucket index
+2. **Buckets**: Each bucket holds ~8 key-value pairs
+3. **Load Factor**: When ~6.5 entries per bucket, map grows (2x)
+4. **Collision Handling**: Chaining via overflow buckets
+
+**Example:**
+
+```go
+m := make(map[string]int)
+m["Alice"] = 25
+
+// Internally:
+// 1. hash("Alice") → bucket index
+// 2. Store in bucket[index]
+// 3. If bucket full, create overflow bucket
+```
+
+**Performance:**
+
+| Operation | Average | Worst Case |
+|-----------|---------|------------|
+| **Get** | O(1) | O(n) |
+| **Set** | O(1) | O(n) |
+| **Delete** | O(1) | O(n) |
+
+**Important Notes:**
+
+```go
+// Maps are NOT thread-safe
+var m = make(map[string]int)
+
+// Race condition!
+go func() { m["key"] = 1 }()
+go func() { m["key"] = 2 }()
+
+// Use sync.Map or mutex
+var mu sync.Mutex
+mu.Lock()
+m["key"] = 1
+mu.Unlock()
+
+// Map iteration order is RANDOM
+for k, v := range m {
+    fmt.Println(k, v)  // Order not guaranteed!
+}
+
+// Maps cannot be compared
+m1 := map[string]int{"a": 1}
+m2 := map[string]int{"a": 1}
+// m1 == m2  // Compile error!
+```
+
+</details>
+
+---
+
+### Q12: Explain slice capacity and how `append` works.
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Slice Structure:**
+
+```go
+type slice struct {
+    ptr *array  // Pointer to underlying array
+    len int     // Number of elements
+    cap int     // Capacity of underlying array
+}
+```
+
+**Example:**
+
+```go
+s := make([]int, 3, 5)
+// ptr → [0, 0, 0, _, _]
+// len = 3
+// cap = 5
+
+fmt.Println(len(s))  // 3
+fmt.Println(cap(s))  // 5
+```
+
+**How `append` Works:**
+
+```go
+s := []int{1, 2, 3}
+fmt.Printf("len=%d cap=%d\n", len(s), cap(s))  // len=3 cap=3
+
+s = append(s, 4)
+fmt.Printf("len=%d cap=%d\n", len(s), cap(s))  // len=4 cap=6
+
+// What happened?
+// 1. Old capacity (3) exceeded
+// 2. New array allocated (capacity doubled to 6)
+// 3. Old elements copied to new array
+// 4. New element added
+```
+
+**Capacity Growth Strategy:**
+
+```go
+// Capacity doubles when small (<1024), then grows by 25%
+s := []int{}
+for i := 0; i < 10; i++ {
+    s = append(s, i)
+    fmt.Printf("len=%d cap=%d\n", len(s), cap(s))
+}
+
+// Output:
+// len=1 cap=1
+// len=2 cap=2
+// len=3 cap=4
+// len=4 cap=4
+// len=5 cap=8
+// len=6 cap=8
+// len=7 cap=8
+// len=8 cap=8
+// len=9 cap=16
+// len=10 cap=16
+```
+
+**Appending Multiple Values:**
+
+```go
+s1 := []int{1, 2, 3}
+s2 := []int{4, 5, 6}
+
+// Append single values
+s1 = append(s1, 4, 5, 6)
+
+// Append slice (must unpack)
+s1 = append(s1, s2...)  // ... unpacks slice
+```
+
+**Common Pitfall (Shared Underlying Array):**
+
+```go
+original := []int{1, 2, 3, 4, 5}
+slice1 := original[0:3]  // [1, 2, 3]
+slice2 := original[2:5]  // [3, 4, 5]
+
+slice1[2] = 100
+
+fmt.Println(original)  // [1 2 100 4 5]
+fmt.Println(slice1)    // [1 2 100]
+fmt.Println(slice2)    // [100 4 5] - Affected!
+```
+
+**Solution - Limit Capacity:**
+
+```go
+original := []int{1, 2, 3, 4, 5}
+slice1 := original[0:3:3]  // len=3, cap=3 (limits capacity)
+
+slice1 = append(slice1, 100)  // New array allocated
+fmt.Println(original)  // [1 2 3 4 5] - Unchanged!
+```
+
+</details>
+
+---
+
+### Q13: What is the difference between passing by value and by reference in Go?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Go always passes by VALUE, but some types contain references.**
+
+**Value Types (Copied):**
+
+```go
+// Basic types, arrays, structs
+func modifyInt(x int) {
+    x = 100  // Modifies copy
+}
+
+func modifyArray(arr [3]int) {
+    arr[0] = 100  // Modifies copy
+}
+
+func modifyStruct(p Person) {
+    p.Name = "Bob"  // Modifies copy
+}
+
+x := 10
+modifyInt(x)
+fmt.Println(x)  // 10 (unchanged)
+```
+
+**Reference Types (Contain Pointers):**
+
+```go
+// Slices, maps, channels
+func modifySlice(s []int) {
+    s[0] = 100  // Modifies original (via pointer)
+}
+
+func modifyMap(m map[string]int) {
+    m["key"] = 100  // Modifies original
+}
+
+s := []int{1, 2, 3}
+modifySlice(s)
+fmt.Println(s)  // [100 2 3] (modified!)
+```
+
+**Using Pointers for True Reference Passing:**
+
+```go
+func modifyPerson(p *Person) {
+    p.Name = "Bob"  // Modifies original
+}
+
+person := Person{Name: "Alice"}
+modifyPerson(&person)
+fmt.Println(person.Name)  // Bob
+```
+
+**Visual Representation:**
+
+```
+Value Types:
+┌─────────┐        ┌─────────┐
+│ Caller  │ Copy   │Function │
+│  x=10   │───────>│  x=100  │
+└─────────┘        └─────────┘
+   (unchanged)
+
+Slice (Reference Type):
+┌─────────┐        ┌─────────┐
+│ Caller  │ Copy   │Function │
+│ slice ──┼───────>│ slice ──┼─> Same array
+└─────────┘        └─────────┘
+   (modified!)
+
+Pointer:
+┌─────────┐        ┌─────────┐
+│ Caller  │ Copy   │Function │
+│  p ─────┼───────>│  p ─────┼─> Same struct
+└─────────┘        └─────────┘
+   (modified!)
+```
+
+**Summary Table:**
+
+| Type | Passed As | Modifications Visible? |
+|------|-----------|------------------------|
+| int, float, bool | Value | No |
+| string | Value | No (immutable anyway) |
+| array | Value | No |
+| struct | Value | No |
+| slice | Value (but contains pointer) | Yes (elements) |
+| map | Value (but contains pointer) | Yes |
+| channel | Value (but contains pointer) | Yes |
+| pointer | Value (of address) | Yes |
+
+</details>
+
+---
+
+### Q14: How would you implement a set in Go?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Go doesn't have a built-in set, but maps work perfectly.**
+
+**Method 1: `map[T]bool`**
+
+```go
+type StringSet map[string]bool
+
+func NewStringSet() StringSet {
+    return make(StringSet)
+}
+
+func (s StringSet) Add(item string) {
+    s[item] = true
+}
+
+func (s StringSet) Remove(item string) {
+    delete(s, item)
+}
+
+func (s StringSet) Contains(item string) bool {
+    return s[item]
+}
+
+func (s StringSet) Size() int {
+    return len(s)
+}
+
+// Usage
+set := NewStringSet()
+set.Add("apple")
+set.Add("banana")
+set.Add("apple")  // Duplicate ignored
+
+fmt.Println(set.Size())           // 2
+fmt.Println(set.Contains("apple")) // true
+```
+
+**Method 2: `map[T]struct{}` (More Memory Efficient)**
+
+```go
+type StringSet map[string]struct{}
+
+func (s StringSet) Add(item string) {
+    s[item] = struct{}{}  // struct{} uses 0 bytes
+}
+
+func (s StringSet) Contains(item string) bool {
+    _, exists := s[item]
+    return exists
+}
+```
+
+**Set Operations:**
+
+```go
+type StringSet map[string]struct{}
+
+// Union
+func (s StringSet) Union(other StringSet) StringSet {
+    result := make(StringSet)
+    for k := range s {
+        result[k] = struct{}{}
+    }
+    for k := range other {
+        result[k] = struct{}{}
+    }
+    return result
+}
+
+// Intersection
+func (s StringSet) Intersection(other StringSet) StringSet {
+    result := make(StringSet)
+    for k := range s {
+        if _, exists := other[k]; exists {
+            result[k] = struct{}{}
+        }
+    }
+    return result
+}
+
+// Difference
+func (s StringSet) Difference(other StringSet) StringSet {
+    result := make(StringSet)
+    for k := range s {
+        if _, exists := other[k]; !exists {
+            result[k] = struct{}{}
+        }
+    }
+    return result
+}
+
+// Usage
+s1 := StringSet{"a": {}, "b": {}, "c": {}}
+s2 := StringSet{"b": {}, "c": {}, "d": {}}
+
+union := s1.Union(s2)           // {a, b, c, d}
+intersection := s1.Intersection(s2)  // {b, c}
+diff := s1.Difference(s2)       // {a}
+```
+
+**Generic Set (Go 1.18+):**
+
+```go
+type Set[T comparable] map[T]struct{}
+
+func NewSet[T comparable]() Set[T] {
+    return make(Set[T])
+}
+
+func (s Set[T]) Add(item T) {
+    s[item] = struct{}{}
+}
+
+func (s Set[T]) Contains(item T) bool {
+    _, exists := s[item]
+    return exists
+}
+
+// Usage
+intSet := NewSet[int]()
+intSet.Add(1)
+intSet.Add(2)
+
+stringSet := NewSet[string]()
+stringSet.Add("hello")
+```
+
+</details>
+
+---
+
+### Q15: Explain struct embedding and composition in Go.
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Go doesn't have inheritance; it uses composition.**
+
+**Basic Embedding:**
+
+```go
+type Address struct {
+    City    string
+    Country string
+}
+
+type Person struct {
+    Name    string
+    Age     int
+    Address  // Embedded field (anonymous)
+}
+
+// Usage
+p := Person{
+    Name: "Alice",
+    Age:  30,
+    Address: Address{
+        City:    "New York",
+        Country: "USA",
+    },
+}
+
+// Promoted fields
+fmt.Println(p.City)  // New York (promoted from Address)
+fmt.Println(p.Address.City)  // Also valid
+```
+
+**Method Promotion:**
+
+```go
+type Engine struct {
+    Power int
+}
+
+func (e Engine) Start() {
+    fmt.Println("Engine started")
+}
+
+type Car struct {
+    Model string
+    Engine  // Embedded
+}
+
+// Engine methods promoted to Car
+car := Car{Model: "Tesla", Engine: Engine{Power: 500}}
+car.Start()  // Engine started (promoted method)
+```
+
+**Multiple Embedding:**
+
+```go
+type Logger struct{}
+
+func (l Logger) Log(msg string) {
+    fmt.Println("[LOG]", msg)
+}
+
+type Database struct{}
+
+func (d Database) Query(sql string) {
+    fmt.Println("Executing:", sql)
+}
+
+type Service struct {
+    Logger
+    Database
+}
+
+// Service has both Log and Query methods
+service := Service{}
+service.Log("Starting service")
+service.Query("SELECT * FROM users")
+```
+
+**Name Conflicts:**
+
+```go
+type A struct {
+    Name string
+}
+
+func (a A) Print() {
+    fmt.Println("A:", a.Name)
+}
+
+type B struct {
+    Name string
+}
+
+func (b B) Print() {
+    fmt.Println("B:", b.Name)
+}
+
+type C struct {
+    A
+    B
+}
+
+c := C{
+    A: A{Name: "Alice"},
+    B: B{Name: "Bob"},
+}
+
+// c.Print()  // Ambiguous! Compile error
+c.A.Print()   // OK: A: Alice
+c.B.Print()   // OK: B: Bob
+
+// c.Name  // Ambiguous! Compile error
+fmt.Println(c.A.Name)  // OK: Alice
+fmt.Println(c.B.Name)  // OK: Bob
+```
+
+**Interface Implementation via Embedding:**
+
+```go
+type Reader interface {
+    Read() string
+}
+
+type Writer interface {
+    Write(s string)
+}
+
+type FileReader struct{}
+
+func (f FileReader) Read() string {
+    return "file content"
+}
+
+type FileWriter struct{}
+
+func (f FileWriter) Write(s string) {
+    fmt.Println("Writing:", s)
+}
+
+// ReadWriter via embedding
+type ReadWriter struct {
+    FileReader
+    FileWriter
+}
+
+// ReadWriter automatically implements both interfaces!
+func process(rw ReadWriter) {
+    content := rw.Read()
+    rw.Write(content)
+}
+```
+
+**Comparison with Inheritance:**
+
+```
+Inheritance (Java/C++):
+- "is-a" relationship
+- Tight coupling
+- Polymorphism via inheritance
+
+Composition (Go):
+- "has-a" relationship
+- Loose coupling
+- Polymorphism via interfaces
+```
+
+</details>
+
+---
+
+## Concurrency
+
+### Q16: What are goroutines and how do they differ from threads?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Goroutines are lightweight threads managed by Go runtime.**
+
+**Key Differences:**
+
+| Feature | Goroutine | OS Thread |
+|---------|-----------|-----------|
+| **Stack Size** | ~2KB (grows dynamically) | ~2MB (fixed) |
+| **Creation Cost** | Microseconds | Milliseconds |
+| **Switching Cost** | Nanoseconds | Microseconds |
+| **Managed By** | Go runtime | Operating system |
+| **Scalability** | Millions possible | Thousands practical |
+
+**Example:**
+
+```go
+// Creating a goroutine (cheap!)
+go func() {
+    fmt.Println("Hello from goroutine")
+}()
+
+// Creating OS thread (expensive)
+thread := Thread.new { puts "Hello from thread" }
+```
+
+**How Goroutines Work:**
+
+```
+Go Runtime (M:N Scheduler)
+┌────────────────────────────┐
+│    Goroutines (G)          │
+│    G1 G2 G3 G4 G5 ...      │
+└────────────────────────────┘
+         ↓
+┌────────────────────────────┐
+│    Logical Processors (P)  │
+│    P1  P2  P3              │
+└────────────────────────────┘
+         ↓
+┌────────────────────────────┐
+│    OS Threads (M)          │
+│    M1  M2  M3              │
+└────────────────────────────┘
+```
+
+**Scheduling:**
+
+```go
+// GOMAXPROCS controls logical processors
+runtime.GOMAXPROCS(4)  // Use 4 cores
+
+// Goroutines are multiplexed onto OS threads
+for i := 0; i < 1000000; i++ {
+    go func(n int) {
+        // Work
+    }(i)
+}
+// Only a few OS threads needed!
+```
+
+**Synchronization:**
+
+```go
+func main() {
+    var wg sync.WaitGroup
+    
+    for i := 0; i < 5; i++ {
+        wg.Add(1)
+        go func(id int) {
+            defer wg.Done()
+            fmt.Println("Worker", id)
+        }(i)
+    }
+    
+    wg.Wait()  // Wait for all goroutines
+}
+```
+
+**Why Goroutines are Better:**
+
+1. **Resource Efficient**: Can run millions concurrently
+2. **Fast Context Switching**: Managed in user space
+3. **Dynamic Stack**: Grows and shrinks as needed
+4. **Integrated with Language**: Channels, select, etc.
+
+</details>
+
+---
+
+### Q17: Explain channels and how they work. What's the difference between buffered and unbuffered channels?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Channels enable communication between goroutines.**
+
+**Unbuffered Channels (Synchronous):**
+
+```go
+ch := make(chan int)  // Unbuffered
+
+// Sender blocks until receiver ready
+go func() {
+    ch <- 42  // Blocks until received
+}()
+
+value := <-ch  // Blocks until sent
+fmt.Println(value)  // 42
+```
+
+**Buffered Channels (Asynchronous):**
+
+```go
+ch := make(chan int, 3)  // Buffer size 3
+
+// Can send without receiver (until buffer full)
+ch <- 1  // Doesn't block
+ch <- 2  // Doesn't block
+ch <- 3  // Doesn't block
+// ch <- 4  // Blocks (buffer full)
+
+fmt.Println(<-ch)  // 1
+fmt.Println(<-ch)  // 2
+```
+
+**Visual Representation:**
+
+```
+Unbuffered Channel:
+Sender → │ │ → Receiver
+         (no buffer)
+         ↓
+    Synchronous handoff
+
+Buffered Channel (size 3):
+Sender → │1│2│3│ → Receiver
+         └─┴─┴─┘
+         (buffer)
+         ↓
+    Asynchronous up to capacity
+```
+
+**Comparison Table:**
+
+| Feature | Unbuffered | Buffered |
+|---------|-----------|----------|
+| **Synchronization** | Yes | Until buffer full |
+| **Blocking send** | Always | Only when full |
+| **Blocking receive** | Always | Only when empty |
+| **Use case** | Synchronization | Decoupling, smoothing |
+
+**Closing Channels:**
+
+```go
+ch := make(chan int, 3)
+
+// Send values
+ch <- 1
+ch <- 2
+ch <- 3
+close(ch)  // Close when done
+
+// Receive until closed
+for val := range ch {
+    fmt.Println(val)
+}
+
+// Check if closed
+val, ok := <-ch
+if !ok {
+    fmt.Println("Channel closed")
+}
+```
+
+**Important Rules:**
+
+```go
+// ✅ Only sender closes
+close(ch)
+
+// ❌ Don't close twice
+close(ch)
+close(ch)  // PANIC!
+
+// ❌ Don't send on closed channel
+ch <- 1  // PANIC!
+
+// ✅ Receive from closed channel returns zero value
+val := <-ch  // 0 (if int channel)
+```
+
+**Directional Channels:**
+
+```go
+// Send-only channel
+func producer(ch chan<- int) {
+    ch <- 42
+    // val := <-ch  // Compile error!
+}
+
+// Receive-only channel
+func consumer(ch <-chan int) {
+    val := <-ch
+    // ch <- 42  // Compile error!
+}
+
+func main() {
+    ch := make(chan int)
+    go producer(ch)
+    go consumer(ch)
+}
+```
+
+**Real-World Example:**
+
+```go
+// Worker pool with buffered channel
+func workerPool(jobs <-chan int, results chan<- int) {
+    for job := range jobs {
+        // Process job
+        time.Sleep(time.Second)
+        results <- job * 2
+    }
+}
+
+func main() {
+    jobs := make(chan int, 100)
+    results := make(chan int, 100)
+    
+    // Start workers
+    for i := 0; i < 3; i++ {
+        go workerPool(jobs, results)
+    }
+    
+    // Send jobs
+    for i := 1; i <= 10; i++ {
+        jobs <- i
+    }
+    close(jobs)
+    
+    // Collect results
+    for i := 1; i <= 10; i++ {
+        fmt.Println(<-results)
+    }
+}
+```
+
+</details>
+
+---
+
+### Q18: What is the `select` statement and when do you use it?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**`select` multiplexes multiple channel operations.**
+
+**Basic Syntax:**
+
+```go
+select {
+case msg := <-ch1:
+    fmt.Println("Received from ch1:", msg)
+case msg := <-ch2:
+    fmt.Println("Received from ch2:", msg)
+case ch3 <- value:
+    fmt.Println("Sent to ch3")
+default:
+    fmt.Println("No channel ready")
+}
+```
+
+**Use Case 1: Timeout Pattern**
+
+```go
+select {
+case result := <-ch:
+    fmt.Println("Received:", result)
+case <-time.After(2 * time.Second):
+    fmt.Println("Timeout!")
+}
+```
+
+**Use Case 2: Non-blocking Channel Operations**
+
+```go
+// Non-blocking send
+select {
+case ch <- value:
+    fmt.Println("Sent")
+default:
+    fmt.Println("Channel full, skipping")
+}
+
+// Non-blocking receive
+select {
+case msg := <-ch:
+    fmt.Println("Received:", msg)
+default:
+    fmt.Println("No message available")
+}
+```
+
+**Use Case 3: Context Cancellation**
+
+```go
+func worker(ctx context.Context, ch <-chan int) {
+    for {
+        select {
+        case <-ctx.Done():
+            fmt.Println("Worker cancelled")
+            return
+        case job := <-ch:
+            fmt.Println("Processing", job)
+        }
+    }
+}
+
+func main() {
+    ctx, cancel := context.WithCancel(context.Background())
+    ch := make(chan int)
+    
+    go worker(ctx, ch)
+    
+    ch <- 1
+    ch <- 2
+    
+    cancel()  // Cancel worker
+    time.Sleep(time.Second)
+}
+```
+
+**Use Case 4: Fan-In (Merge Channels)**
+
+```go
+func fanIn(ch1, ch2 <-chan int) <-chan int {
+    out := make(chan int)
+    
+    go func() {
+        defer close(out)
+        for {
+            select {
+            case val, ok := <-ch1:
+                if !ok {
+                    ch1 = nil  // Disable this case
+                    continue
+                }
+                out <- val
+            case val, ok := <-ch2:
+                if !ok {
+                    ch2 = nil
+                    continue
+                }
+                out <- val
+            }
+            
+            // Both channels closed
+            if ch1 == nil && ch2 == nil {
+                return
+            }
+        }
+    }()
+    
+    return out
+}
+```
+
+**Random Selection:**
+
+```go
+// If multiple cases ready, select chooses randomly
+ch1 := make(chan int, 1)
+ch2 := make(chan int, 1)
+
+ch1 <- 1
+ch2 <- 2
+
+select {
+case v := <-ch1:
+    fmt.Println("ch1:", v)
+case v := <-ch2:
+    fmt.Println("ch2:", v)
+}
+// Output: ch1: 1 OR ch2: 2 (random!)
+```
+
+**Complete Example (Web Scraper with Timeout):**
+
+```go
+func fetchURL(url string, ch chan<- string) {
+    resp, err := http.Get(url)
+    if err != nil {
+        ch <- fmt.Sprintf("Error: %v", err)
+        return
+    }
+    defer resp.Body.Close()
+    
+    ch <- fmt.Sprintf("Status: %s", resp.Status)
+}
+
+func main() {
+    urls := []string{
+        "https://google.com",
+        "https://github.com",
+        "https://stackoverflow.com",
+    }
+    
+    ch := make(chan string)
+    
+    for _, url := range urls {
+        go fetchURL(url, ch)
+    }
+    
+    for range urls {
+        select {
+        case result := <-ch:
+            fmt.Println(result)
+        case <-time.After(5 * time.Second):
+            fmt.Println("Timeout!")
+            return
+        }
+    }
+}
+```
+
+</details>
+
+---
+
+### Q19: What is a race condition and how do you prevent it?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**A race condition occurs when multiple goroutines access shared data concurrently, and at least one modifies it.**
+
+**Example Race Condition:**
+
+```go
+var counter int
+
+func increment() {
+    counter++  // Read-Modify-Write (not atomic!)
+}
+
+func main() {
+    for i := 0; i < 1000; i++ {
+        go increment()
+    }
+    
+    time.Sleep(time.Second)
+    fmt.Println(counter)  // Unpredictable! (not 1000)
+}
+```
+
+**Why This Happens:**
+
+```
+counter++ is actually three operations:
+1. Read counter (e.g., 5)
+2. Add 1 (5 + 1 = 6)
+3. Write back (counter = 6)
+
+Goroutine A: Read(5) → Add(6) → Write(6)
+Goroutine B:     Read(5) → Add(6) → Write(6)
+                      ↑
+               Both read 5, both write 6
+               Lost one increment!
+```
+
+**Detection:**
+
+```bash
+# Race detector (runtime tool)
+go run -race main.go
+go test -race ./...
+go build -race
+```
+
+**Solution 1: Mutex**
+
+```go
+var (
+    counter int
+    mu      sync.Mutex
+)
+
+func increment() {
+    mu.Lock()
+    counter++
+    mu.Unlock()
+}
+
+// Or use defer
+func increment() {
+    mu.Lock()
+    defer mu.Unlock()
+    counter++
+}
+```
+
+**Solution 2: Atomic Operations**
+
+```go
+import "sync/atomic"
+
+var counter int64
+
+func increment() {
+    atomic.AddInt64(&counter, 1)
+}
+```
+
+**Solution 3: Channels (Share Memory by Communicating)**
+
+```go
+func counterServer(ch chan int) {
+    counter := 0
+    for range ch {
+        counter++
+    }
+    fmt.Println("Final count:", counter)
+}
+
+func main() {
+    ch := make(chan int)
+    go counterServer(ch)
+    
+    for i := 0; i < 1000; i++ {
+        ch <- 1
+    }
+    
+    close(ch)
+    time.Sleep(time.Second)
+}
+```
+
+**Solution 4: sync.Map (Concurrent Map)**
+
+```go
+var m sync.Map
+
+// Set
+m.Store("key", "value")
+
+// Get
+value, ok := m.Load("key")
+
+// Delete
+m.Delete("key")
+
+// No race conditions!
+```
+
+**Comparison:**
+
+| Method | Use When | Performance |
+|--------|----------|-------------|
+| **Mutex** | Protecting any shared state | Good |
+| **Atomic** | Simple counters, flags | Excellent |
+| **Channels** | Communication patterns | Good |
+| **sync.Map** | Concurrent map access | Good |
+
+**Real-World Example (Safe Counter):**
+
+```go
+type SafeCounter struct {
+    mu    sync.Mutex
+    count int
+}
+
+func (c *SafeCounter) Increment() {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    c.count++
+}
+
+func (c *SafeCounter) Value() int {
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    return c.count
+}
+
+func main() {
+    counter := &SafeCounter{}
+    
+    var wg sync.WaitGroup
+    for i := 0; i < 1000; i++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            counter.Increment()
+        }()
+    }
+    
+    wg.Wait()
+    fmt.Println(counter.Value())  // Always 1000!
+}
+```
+
+</details>
+
+---
+
+### Q20: Explain context in Go. When and why would you use it?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Context carries deadlines, cancellation signals, and request-scoped values across API boundaries.**
+
+**Creating Contexts:**
+
+```go
+// Root context (never cancelled)
+ctx := context.Background()
+
+// Cancellable context
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+// Timeout context
+ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+defer cancel()
+
+// Deadline context
+deadline := time.Now().Add(10 * time.Second)
+ctx, cancel := context.WithDeadline(context.Background(), deadline)
+defer cancel()
+
+// Value context (request-scoped data)
+ctx = context.WithValue(ctx, "userID", 123)
+```
+
+**Use Case 1: HTTP Request Cancellation**
+
+```go
+func handler(w http.ResponseWriter, r *http.Request) {
+    ctx := r.Context()  // Request context
+    
+    // Do work that respects cancellation
+    result, err := processRequest(ctx)
+    if err != nil {
+        if ctx.Err() == context.Canceled {
+            http.Error(w, "Request cancelled", 499)
+            return
+        }
+        http.Error(w, err.Error(), 500)
+        return
+    }
+    
+    w.Write([]byte(result))
+}
+
+func processRequest(ctx context.Context) (string, error) {
+    // Check cancellation periodically
+    select {
+    case <-ctx.Done():
+        return "", ctx.Err()
+    default:
+        // Continue processing
+    }
+    
+    // Perform work
+    return "result", nil
+}
+```
+
+**Use Case 2: Database Query with Timeout**
+
+```go
+func getUser(ctx context.Context, id int) (*User, error) {
+    // Context passed to DB query
+    row := db.QueryRowContext(ctx, "SELECT * FROM users WHERE id = ?", id)
+    
+    var user User
+    err := row.Scan(&user.ID, &user.Name)
+    if err != nil {
+        return nil, err
+    }
+    
+    return &user, nil
+}
+
+func main() {
+    ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+    defer cancel()
+    
+    user, err := getUser(ctx, 123)
+    if err != nil {
+        if err == context.DeadlineExceeded {
+            fmt.Println("Query timeout!")
+        }
+        return
+    }
+    
+    fmt.Println(user)
+}
+```
+
+**Use Case 3: Goroutine Cancellation**
+
+```go
+func worker(ctx context.Context, id int) {
+    for {
+        select {
+        case <-ctx.Done():
+            fmt.Printf("Worker %d cancelled: %v\n", id, ctx.Err())
+            return
+        default:
+            // Do work
+            fmt.Printf("Worker %d working...\n", id)
+            time.Sleep(500 * time.Millisecond)
+        }
+    }
+}
+
+func main() {
+    ctx, cancel := context.WithCancel(context.Background())
+    
+    // Start workers
+    for i := 0; i < 3; i++ {
+        go worker(ctx, i)
+    }
+    
+    // Let them work
+    time.Sleep(2 * time.Second)
+    
+    // Cancel all workers
+    cancel()
+    
+    time.Sleep(time.Second)
+}
+```
+
+**Use Case 4: Request-Scoped Values**
+
+```go
+type key string
+
+const userIDKey key = "userID"
+
+func withUserID(ctx context.Context, id int) context.Context {
+    return context.WithValue(ctx, userIDKey, id)
+}
+
+func getUserID(ctx context.Context) (int, bool) {
+    id, ok := ctx.Value(userIDKey).(int)
+    return id, ok
+}
+
+func handler(w http.ResponseWriter, r *http.Request) {
+    userID := 123  // From auth middleware
+    
+    ctx := withUserID(r.Context(), userID)
+    
+    processRequest(ctx)
+}
+
+func processRequest(ctx context.Context) {
+    if userID, ok := getUserID(ctx); ok {
+        fmt.Println("Processing request for user:", userID)
+    }
+}
+```
+
+**Best Practices:**
+
+```go
+// ✅ Pass context as first parameter
+func DoSomething(ctx context.Context, arg string) error
+
+// ❌ Don't store context in structs
+type Server struct {
+    ctx context.Context  // Bad!
+}
+
+// ✅ Use context.TODO() if unsure
+ctx := context.TODO()
+
+// ✅ Always call cancel (even if not needed)
+ctx, cancel := context.WithTimeout(ctx, time.Second)
+defer cancel()
+
+// ❌ Don't pass nil context
+DoSomething(nil, "arg")  // Bad!
+
+// ✅ Pass context.Background() instead
+DoSomething(context.Background(), "arg")
+```
+
+**Context Errors:**
+
+```go
+switch ctx.Err() {
+case context.Canceled:
+    // Context was cancelled
+case context.DeadlineExceeded:
+    // Timeout occurred
+case nil:
+    // No error
+}
+```
+
+</details>
+
+## Error Handling
+
+### Q21: How does Go handle errors? Why doesn't it have exceptions?
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Go treats errors as values, not exceptions.**
+
+**Error Handling Pattern:**
+
+```go
+func divide(a, b float64) (float64, error) {
+    if b == 0 {
+        return 0, errors.New("division by zero")
+    }
+    return a / b, nil
+}
+
+result, err := divide(10, 0)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(result)
+```
+
+**Why No Exceptions?**
+
+1. **Explicit error handling** - Forces developers to handle errors
+2. **No hidden control flow** - Code is easier to follow
+3. **No performance overhead** - No stack unwinding
+4. **Simpler code** - No try/catch/finally blocks
+
+**Comparison:**
+
+```java
+// Java (Exception-based)
+try {
+    result = divide(10, 0);
+    System.out.println(result);
+} catch (DivisionByZeroException e) {
+    System.err.println(e);
+}
+
+// Go (Error-based)
+result, err := divide(10, 0)
+if err != nil {
+    log.Println(err)
+    return
+}
+fmt.Println(result)
+```
+
+**Error Wrapping (Go 1.13+):**
+
+```go
+func readConfig() error {
+    _, err := os.ReadFile("config.json")
+    if err != nil {
+        return fmt.Errorf("reading config: %w", err)
+    }
+    return nil
+}
+
+func main() {
+    err := readConfig()
+    if err != nil {
+        // Unwrap to check original error
+        if errors.Is(err, os.ErrNotExist) {
+            fmt.Println("Config file doesn't exist")
+        }
+    }
+}
+```
+
+**Custom Errors:**
+
+```go
+type ValidationError struct {
+    Field   string
+    Message string
+}
+
+func (e ValidationError) Error() string {
+    return fmt.Sprintf("%s: %s", e.Field, e.Message)
+}
+
+func validateEmail(email string) error {
+    if !strings.Contains(email, "@") {
+        return ValidationError{
+            Field:   "email",
+            Message: "must contain @ symbol",
+        }
+    }
+    return nil
+}
+
+// Check error type
+err := validateEmail("invalid")
+var valErr ValidationError
+if errors.As(err, &valErr) {
+    fmt.Printf("Field: %s, Message: %s\n", valErr.Field, valErr.Message)
+}
+```
+
+</details>
+
+---
+
+### Q22: Explain `panic` and `recover`. When should you use them?
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**`panic` stops normal execution; `recover` catches panics.**
+
+**Basic Usage:**
+
+```go
+func main() {
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println("Recovered from panic:", r)
+        }
+    }()
+    
+    panic("something went wrong")
+    fmt.Println("This won't execute")
+}
+
+// Output:
+// Recovered from panic: something went wrong
+```
+
+**When to Use Panic:**
+
+```go
+// ✅ Programmer errors (can't continue)
+func mustConnect(url string) *Connection {
+    conn, err := connect(url)
+    if err != nil {
+        panic("failed to connect: " + err.Error())
+    }
+    return conn
+}
+
+// ✅ Initialization failures
+func init() {
+    if err := loadConfig(); err != nil {
+        panic("config required: " + err.Error())
+    }
+}
+
+// ❌ Don't panic for normal errors
+func getUser(id int) (*User, error) {
+    if id < 0 {
+        panic("invalid user ID")  // Bad! Return error instead
+    }
+    return nil, errors.New("user not found")  // Good
+}
+```
+
+**When to Use Recover:**
+
+```go
+// ✅ HTTP server (prevent one request from crashing server)
+func handler(w http.ResponseWriter, r *http.Request) {
+    defer func() {
+        if r := recover(); r != nil {
+            log.Printf("Panic in handler: %v", r)
+            http.Error(w, "Internal Server Error", 500)
+        }
+    }()
+    
+    // Handler logic that might panic
+}
+
+// ✅ Goroutine safety
+func safeGoroutine(fn func()) {
+    go func() {
+        defer func() {
+            if r := recover(); r != nil {
+                log.Printf("Goroutine panic: %v", r)
+            }
+        }()
+        fn()
+    }()
+}
+```
+
+**Complete Example:**
+
+```go
+func riskyOperation() {
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println("Recovered:", r)
+            debug.PrintStack()
+        }
+    }()
+    
+    // Simulating panic
+    arr := []int{1, 2, 3}
+    fmt.Println(arr[10])  // Panic: index out of range
+}
+
+func main() {
+    riskyOperation()
+    fmt.Println("Program continues")
+}
+
+// Output:
+// Recovered: runtime error: index out of range [10] with length 3
+// [stack trace]
+// Program continues
+```
+
+**Best Practices:**
+
+```go
+// ✅ Return errors, don't panic
+func divide(a, b float64) (float64, error) {
+    if b == 0 {
+        return 0, errors.New("division by zero")
+    }
+    return a / b, nil
+}
+
+// ❌ Don't panic in library code
+func divide(a, b float64) float64 {
+    if b == 0 {
+        panic("division by zero")  // Bad for library
+    }
+    return a / b
+}
+
+// ✅ Recover only in known safe spots
+func processRequest() {
+    defer func() {
+        recover()  // Recover and log
+    }()
+    // Process
+}
+
+// ❌ Don't silently recover
+func processRequest() {
+    defer func() {
+        recover()  // Swallows all errors!
+    }()
+}
+```
+
+</details>
+
+---
+
+## Interfaces & Polymorphism
+
+### Q23: How do interfaces work in Go? What is implicit interface satisfaction?
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Interfaces define behavior (method sets); types satisfy them implicitly.**
+
+**Interface Definition:**
+
+```go
+type Shape interface {
+    Area() float64
+    Perimeter() float64
+}
+```
+
+**Implicit Satisfaction:**
+
+```go
+type Rectangle struct {
+    Width, Height float64
+}
+
+// No explicit "implements Shape" needed!
+func (r Rectangle) Area() float64 {
+    return r.Width * r.Height
+}
+
+func (r Rectangle) Perimeter() float64 {
+    return 2 * (r.Width + r.Height)
+}
+
+// Rectangle automatically satisfies Shape interface
+func printInfo(s Shape) {
+    fmt.Printf("Area: %.2f, Perimeter: %.2f\n", s.Area(), s.Perimeter())
+}
+
+func main() {
+    rect := Rectangle{Width: 10, Height: 5}
+    printInfo(rect)  // Works!
+}
+```
+
+**Why Implicit is Better:**
+
+```
+Java/C# (Explicit):
+class Rectangle implements Shape { ... }
+- Tight coupling
+- Must know interface at type definition
+- Hard to retrofit existing types
+
+Go (Implicit):
+type Rectangle struct { ... }
+func (r Rectangle) Area() float64 { ... }
+- Loose coupling
+- Can satisfy interfaces defined later
+- Easy to adapt existing types
+```
+
+**Interface Composition:**
+
+```go
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}
+
+// Composed interface
+type ReadWriter interface {
+    Reader
+    Writer
+}
+
+// Any type with Read() and Write() satisfies ReadWriter
+type File struct{}
+
+func (f File) Read(p []byte) (int, error) {
+    return 0, nil
+}
+
+func (f File) Write(p []byte) (int, error) {
+    return 0, nil
+}
+
+var rw ReadWriter = File{}  // Works!
+```
+
+**Empty Interface:**
+
+```go
+// interface{} accepts ANY type
+func PrintAnything(v interface{}) {
+    fmt.Println(v)
+}
+
+PrintAnything(42)
+PrintAnything("hello")
+PrintAnything([]int{1, 2, 3})
+
+// Go 1.18+: "any" is alias for interface{}
+func PrintAnything(v any) {
+    fmt.Println(v)
+}
+```
+
+**Interface Values:**
+
+```go
+var s Shape = Rectangle{Width: 10, Height: 5}
+
+// Interface value holds (type, value) pair
+// Type: Rectangle
+// Value: {Width: 10, Height: 5}
+
+fmt.Printf("%T\n", s)  // main.Rectangle
+fmt.Printf("%v\n", s)  // {10 5}
+```
+
+</details>
+
+---
+
+### Q24: What is the difference between a value receiver and a pointer receiver?
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Value receivers operate on copies; pointer receivers modify originals.**
+
+**Value Receiver:**
+
+```go
+type Counter struct {
+    Count int
+}
+
+func (c Counter) Increment() {
+    c.Count++  // Modifies copy, not original
+}
+
+func main() {
+    counter := Counter{Count: 0}
+    counter.Increment()
+    fmt.Println(counter.Count)  // 0 (unchanged!)
+}
+```
+
+**Pointer Receiver:**
+
+```go
+func (c *Counter) Increment() {
+    c.Count++  // Modifies original
+}
+
+func main() {
+    counter := Counter{Count: 0}
+    counter.Increment()  // Go auto-converts to (&counter).Increment()
+    fmt.Println(counter.Count)  // 1 (modified!)
+}
+```
+
+**Decision Matrix:**
+
+| Use Pointer Receiver When | Use Value Receiver When |
+|---------------------------|-------------------------|
+| Method modifies receiver | Receiver is small (≤ few ints) |
+| Receiver is large struct | Receiver is immutable |
+| Want consistency (if any method uses pointer) | Receiver is value type |
+| Method called on nil receiver is valid | Don't need to modify |
+
+**Interface Satisfaction:**
+
+```go
+type Incrementer interface {
+    Increment()
+}
+
+type Counter struct {
+    Count int
+}
+
+func (c *Counter) Increment() {
+    c.Count++
+}
+
+// Pointer receiver method
+var i Incrementer = &Counter{}  // ✅ Works
+// var i Incrementer = Counter{}  // ❌ Doesn't work!
+
+// Why? Counter doesn't have Increment(), only *Counter does
+```
+
+**Best Practice (Google Style):**
+
+```go
+// ✅ Consistent - all methods use pointer receivers
+type User struct {
+    Name  string
+    Email string
+}
+
+func (u *User) SetName(name string) {
+    u.Name = name
+}
+
+func (u *User) SetEmail(email string) {
+    u.Email = email
+}
+
+func (u *User) GetName() string {
+    return u.Name  // Still use pointer for consistency
+}
+
+// ❌ Mixed - confusing
+func (u User) GetName() string {
+    return u.Name
+}
+
+func (u *User) SetName(name string) {
+    u.Name = name
+}
+```
+
+**Large Struct Example:**
+
+```go
+type LargeStruct struct {
+    Data [1000]int
+}
+
+// ❌ Bad: Copies 8KB on every call
+func (l LargeStruct) Process() {
+    // ...
+}
+
+// ✅ Good: Passes 8-byte pointer
+func (l *LargeStruct) Process() {
+    // ...
+}
+```
+
+</details>
+
+---
+
+### Q25: Explain type assertion and type switch.
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Type assertion extracts concrete type from interface; type switch checks multiple types.**
+
+**Type Assertion:**
+
+```go
+var i interface{} = "hello"
+
+// Unsafe assertion (panics if wrong type)
+s := i.(string)
+fmt.Println(s)  // hello
+
+n := i.(int)  // PANIC!
+
+// Safe assertion (comma-ok idiom)
+s, ok := i.(string)
+if ok {
+    fmt.Println("String:", s)
+} else {
+    fmt.Println("Not a string")
+}
+
+n, ok := i.(int)
+fmt.Println(n, ok)  // 0 false
+```
+
+**Type Switch:**
+
+```go
+func describe(i interface{}) {
+    switch v := i.(type) {
+    case int:
+        fmt.Println("Integer:", v)
+    case string:
+        fmt.Println("String:", v)
+    case bool:
+        fmt.Println("Boolean:", v)
+    case nil:
+        fmt.Println("Nil")
+    default:
+        fmt.Printf("Unknown type: %T\n", v)
+    }
+}
+
+describe(42)       // Integer: 42
+describe("hello")  // String: hello
+describe(true)     // Boolean: true
+describe(nil)      // Nil
+describe(3.14)     // Unknown type: float64
+```
+
+**Real-World Example (JSON Unmarshaling):**
+
+```go
+func processValue(data interface{}) {
+    switch v := data.(type) {
+    case map[string]interface{}:
+        fmt.Println("Object with keys:", len(v))
+        for key, val := range v {
+            fmt.Printf("  %s: %v\n", key, val)
+        }
+    case []interface{}:
+        fmt.Println("Array with", len(v), "elements")
+    case string:
+        fmt.Println("String:", v)
+    case float64:
+        fmt.Println("Number:", v)
+    case bool:
+        fmt.Println("Boolean:", v)
+    case nil:
+        fmt.Println("Null")
+    }
+}
+
+var data interface{}
+json.Unmarshal([]byte(`{"name": "Alice", "age": 30}`), &data)
+processValue(data)
+```
+
+**Error Type Checking:**
+
+```go
+_, err := os.Open("file.txt")
+
+// Check for specific error type
+var pathErr *os.PathError
+if errors.As(err, &pathErr) {
+    fmt.Println("Path error:", pathErr.Path)
+}
+
+// Check for specific error value
+if errors.Is(err, os.ErrNotExist) {
+    fmt.Println("File doesn't exist")
+}
+```
+
+</details>
+
+---
+
+## Performance & Optimization
+
+### Q26: How do you optimize Go code for performance?
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Key optimization strategies:**
+
+**1. Use Profiling (Don't Guess!):**
+
+```bash
+# CPU profiling
+go test -cpuprofile=cpu.prof -bench .
+go tool pprof cpu.prof
+
+# Memory profiling
+go test -memprofile=mem.prof -bench .
+go tool pprof mem.prof
+
+# Benchmark code
+go test -bench . -benchmem
+```
+
+**2. Preallocate Slices:**
+
+```go
+// ❌ Bad: Multiple allocations
+func bad(n int) []int {
+    var result []int
+    for i := 0; i < n; i++ {
+        result = append(result, i)
+    }
+    return result
+}
+
+// ✅ Good: Single allocation
+func good(n int) []int {
+    result := make([]int, 0, n)
+    for i := 0; i < n; i++ {
+        result = append(result, i)
+    }
+    return result
+}
+
+// Benchmark results:
+// bad:  15000 ns/op  57344 B/op  10 allocs/op
+// good:  3000 ns/op   8192 B/op   1 allocs/op
+```
+
+**3. Use sync.Pool for Reusable Objects:**
+
+```go
+var bufPool = sync.Pool{
+    New: func() interface{} {
+        return new(bytes.Buffer)
+    },
+}
+
+func process() {
+    buf := bufPool.Get().(*bytes.Buffer)
+    defer bufPool.Put(buf)
+    buf.Reset()
+    
+    // Use buf
+}
+```
+
+**4. Avoid Unnecessary Allocations:**
+
+```go
+// ❌ Bad: Creates new strings
+func bad(strs []string) string {
+    result := ""
+    for _, s := range strs {
+        result += s  // Allocates new string each time
+    }
+    return result
+}
+
+// ✅ Good: Single allocation
+func good(strs []string) string {
+    var builder strings.Builder
+    for _, s := range strs {
+        builder.WriteString(s)
+    }
+    return builder.String()
+}
+```
+
+**5. Use Pointer Receivers for Large Structs:**
+
+```go
+type LargeStruct struct {
+    Data [1000]int
+}
+
+// ❌ Bad: Copies 8KB
+func (l LargeStruct) Process() {}
+
+// ✅ Good: 8-byte pointer
+func (l *LargeStruct) Process() {}
+```
+
+**6. Batch Channel Operations:**
+
+```go
+// ❌ Bad: Send one at a time
+for i := 0; i < 1000; i++ {
+    ch <- i
+}
+
+// ✅ Good: Batch sends
+batch := make([]int, 0, 100)
+for i := 0; i < 1000; i++ {
+    batch = append(batch, i)
+    if len(batch) == 100 {
+        ch <- batch
+        batch = batch[:0]
+    }
+}
+```
+
+**7. Use strconv for Conversions:**
+
+```go
+// ❌ Bad: Slower
+s := fmt.Sprintf("%d", num)
+
+// ✅ Good: Faster
+s := strconv.Itoa(num)
+
+// Benchmark:
+// Sprintf: 150 ns/op  16 B/op  2 allocs/op
+// Itoa:     50 ns/op   8 B/op  1 allocs/op
+```
+
+**8. Avoid Defer in Hot Paths:**
+
+```go
+// ❌ Bad: defer has overhead
+func hotPath() {
+    mu.Lock()
+    defer mu.Unlock()
+    
+    // Simple operation
+}
+
+// ✅ Good: Manual unlock
+func hotPath() {
+    mu.Lock()
+    // Simple operation
+    mu.Unlock()
+}
+
+// Use defer for complex functions with multiple returns
+```
+
+</details>
+
+---
+
+### Q27: What is escape analysis in Go?
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Escape analysis determines whether a variable goes on stack or heap.**
+
+**Stack vs Heap:**
+
+```
+Stack:
+- Fast allocation/deallocation
+- Automatic cleanup
+- Limited size
+- Function-local
+
+Heap:
+- Slower allocation
+- Garbage collected
+- Large size
+- Survives function return
+```
+
+**Example 1: Stack Allocation**
+
+```go
+func stackAlloc() {
+    x := 42  // Allocated on stack
+    fmt.Println(x)
+}  // x destroyed when function returns
+```
+
+**Example 2: Heap Allocation (Escapes)**
+
+```go
+func heapAlloc() *int {
+    x := 42
+    return &x  // x escapes to heap (survives return)
+}
+```
+
+**Check Escape Analysis:**
+
+```bash
+go build -gcflags="-m" main.go
+
+# Output:
+# ./main.go:5: moved to heap: x
+# ./main.go:6: &x escapes to heap
+```
+
+**Common Escape Scenarios:**
+
+```go
+// 1. Return pointer
+func escape1() *int {
+    x := 42
+    return &x  // Escapes
+}
+
+// 2. Store in global
+var global *int
+
+func escape2() {
+    x := 42
+    global = &x  // Escapes
+}
+
+// 3. Send to channel
+func escape3() {
+    x := 42
+    ch <- &x  // Escapes
+}
+
+// 4. Assign to interface
+func escape4() {
+    x := 42
+    var i interface{} = x  // May escape
+}
+
+// 5. Large structs
+type Large struct {
+    Data [10000]int
+}
+
+func escape5() Large {
+    return Large{}  // May escape if too large for stack
+}
+```
+
+**Optimization Tips:**
+
+```go
+// ✅ Keep on stack when possible
+func noEscape() {
+    x := 42
+    process(x)  // Passed by value, no escape
+}
+
+// ❌ Forces heap allocation
+func escapes() {
+    x := 42
+    process(&x)  // Pointer escapes
+}
+
+// ✅ Use value receivers for small types
+type Point struct {
+    X, Y int
+}
+
+func (p Point) Distance() float64 {  // Value receiver
+    return math.Sqrt(float64(p.X*p.X + p.Y*p.Y))
+}
+```
+
+</details>
+
+---
+
+### Q28: How does the Go garbage collector work?
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Go uses a concurrent, tri-color mark-and-sweep GC.**
+
+**GC Algorithm:**
+
+```
+1. Mark Phase (Concurrent):
+   - Roots (globals, stack) marked
+   - Traverse object graph
+   - Mark reachable objects
+
+2. Sweep Phase (Concurrent):
+   - Free unmarked objects
+   - Return memory to allocator
+
+3. Tri-Color Marking:
+   - White: Unreachable (garbage)
+   - Gray: Reachable, not scanned
+   - Black: Reachable, scanned
+```
+
+**GC Tuning:**
+
+```go
+import "runtime/debug"
+
+// Set GC target percentage
+debug.SetGCPercent(100)  // Default
+
+// Force GC
+runtime.GC()
+
+// Get GC stats
+var stats runtime.MemStats
+runtime.ReadMemStats(&stats)
+fmt.Printf("Alloc: %v MB\n", stats.Alloc/1024/1024)
+fmt.Printf("TotalAlloc: %v MB\n", stats.TotalAlloc/1024/1024)
+fmt.Printf("NumGC: %v\n", stats.NumGC)
+```
+
+**Minimize GC Pressure:**
+
+```go
+// ✅ Reuse objects
+var bufferPool = sync.Pool{
+    New: func() interface{} {
+        return new(bytes.Buffer)
+    },
+}
+
+// ✅ Preallocate slices
+data := make([]int, 0, expectedSize)
+
+// ✅ Avoid unnecessary pointers
+type Node struct {
+    Value int
+    // Left  *Node  // Escapes to heap
+    // Right *Node
+}
+
+// ❌ Avoid frequent small allocations
+for i := 0; i < 1000000; i++ {
+    _ = new(int)  // Bad!
+}
+```
+
+**GC Pacing:**
+
+```
+GOGC=100 (default):
+- GC runs when heap doubles
+- Live heap: 10 MB → GC at 20 MB
+
+GOGC=200:
+- GC runs when heap triples
+- Live heap: 10 MB → GC at 30 MB
+- Less frequent GC, more memory
+
+GOGC=50:
+- GC runs at 50% growth
+- Live heap: 10 MB → GC at 15 MB
+- More frequent GC, less memory
+```
+
+</details>
+
+---
+
+## Testing
+
+### Q29: How do you write unit tests in Go?
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Go has built-in testing framework in `testing` package.**
+
+**Basic Test:**
+
+```go
+// math.go
+package math
+
+func Add(a, b int) int {
+    return a + b
+}
+
+// math_test.go
+package math
+
+import "testing"
+
+func TestAdd(t *testing.T) {
+    result := Add(2, 3)
+    expected := 5
+    
+    if result != expected {
+        t.Errorf("Add(2, 3) = %d; want %d", result, expected)
+    }
+}
+```
+
+**Table-Driven Tests (Recommended):**
+
+```go
+func TestAdd(t *testing.T) {
+    tests := []struct {
+        name     string
+        a, b     int
+        expected int
+    }{
+        {"positive", 2, 3, 5},
+        {"negative", -2, -3, -5},
+        {"zero", 0, 5, 5},
+        {"mixed", -2, 3, 1},
+    }
+    
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            result := Add(tt.a, tt.b)
+            if result != tt.expected {
+                t.Errorf("got %d; want %d", result, tt.expected)
+            }
+        })
+    }
+}
+```
+
+**Test Helpers:**
+
+```go
+func assertEqual(t *testing.T, got, want int) {
+    t.Helper()  // Mark as helper
+    
+    if got != want {
+        t.Errorf("got %d; want %d", got, want)
+    }
+}
+
+func TestAdd(t *testing.T) {
+    result := Add(2, 3)
+    assertEqual(t, result, 5)  // Error points to this line
+}
+```
+
+**Setup and Teardown:**
+
+```go
+func TestMain(m *testing.M) {
+    // Setup
+    setup()
+    
+    // Run tests
+    code := m.Run()
+    
+    // Teardown
+    teardown()
+    
+    os.Exit(code)
+}
+
+func setup() {
+    // Database connection, etc.
+}
+
+func teardown() {
+    // Cleanup
+}
+```
+
+**Mocking with Interfaces:**
+
+```go
+// Production code
+type UserStore interface {
+    GetUser(id int) (*User, error)
+}
+
+type UserService struct {
+    store UserStore
+}
+
+func (s *UserService) GetUserName(id int) (string, error) {
+    user, err := s.store.GetUser(id)
+    if err != nil {
+        return "", err
+    }
+    return user.Name, nil
+}
+
+// Test code
+type MockUserStore struct {
+    users map[int]*User
+}
+
+func (m *MockUserStore) GetUser(id int) (*User, error) {
+    user, ok := m.users[id]
+    if !ok {
+        return nil, errors.New("user not found")
+    }
+    return user, nil
+}
+
+func TestGetUserName(t *testing.T) {
+    mock := &MockUserStore{
+        users: map[int]*User{
+            1: {Name: "Alice"},
+        },
+    }
+    
+    service := &UserService{store: mock}
+    
+    name, err := service.GetUserName(1)
+    if err != nil {
+        t.Fatal(err)
+    }
+    
+    if name != "Alice" {
+        t.Errorf("got %q; want %q", name, "Alice")
+    }
+}
+```
+
+**Run Tests:**
+
+```bash
+go test                # Current package
+go test ./...          # All packages
+go test -v             # Verbose
+go test -run TestAdd   # Specific test
+go test -cover         # Coverage
+go test -race          # Race detection
+```
+
+</details>
+
+---
+
+### Q30: What are benchmarks and how do you write them?
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Benchmarks measure performance of code.**
+
+**Basic Benchmark:**
+
+```go
+func BenchmarkAdd(b *testing.B) {
+    for i := 0; i < b.N; i++ {
+        Add(2, 3)
+    }
+}
+```
+
+**Run Benchmark:**
+
+```bash
+go test -bench .
+go test -bench . -benchmem  # Include memory stats
+go test -bench . -benchtime=10s  # Run for 10 seconds
+```
+
+**Output:**
+
+```
+BenchmarkAdd-8    1000000000    0.25 ns/op    0 B/op    0 allocs/op
+                  └─ iterations └─ time/op    └─ bytes └─ allocations
+```
+
+**Table-Driven Benchmarks:**
+
+```go
+func BenchmarkFibonacci(b *testing.B) {
+    tests := []struct {
+        name string
+        n    int
+    }{
+        {"small", 10},
+        {"medium", 20},
+        {"large", 30},
+    }
+    
+    for _, tt := range tests {
+        b.Run(tt.name, func(b *testing.B) {
+            for i := 0; i < b.N; i++ {
+                Fibonacci(tt.n)
+            }
+        })
+    }
+}
+```
+
+**Reset Timer:**
+
+```go
+func BenchmarkWithSetup(b *testing.B) {
+    // Expensive setup
+    data := generateLargeDataset()
+    
+    b.ResetTimer()  // Don't include setup in benchmark
+    
+    for i := 0; i < b.N; i++ {
+        process(data)
+    }
+}
+```
+
+**Parallel Benchmarks:**
+
+```go
+func BenchmarkParallel(b *testing.B) {
+    b.RunParallel(func(pb *testing.PB) {
+        for pb.Next() {
+            // Code to benchmark
+        }
+    })
+}
+```
+
+**Comparing Benchmarks:**
+
+```bash
+# Save baseline
+go test -bench . > old.txt
+
+# Make changes...
+
+# Compare
+go test -bench . > new.txt
+benchcmp old.txt new.txt
+```
+
+</details>
+
+---
+
+## Web Servers
+
+### Q31: How do you build a RESTful API in Go?
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Use `net/http` package (or frameworks like Gin, Echo).**
+
+**Basic REST API:**
+
+```go
+package main
+
+import (
+    "encoding/json"
+    "log"
+    "net/http"
+    "strconv"
+)
+
+type User struct {
+    ID    int    `json:"id"`
+    Name  string `json:"name"`
+    Email string `json:"email"`
+}
+
+var users = []User{
+    {ID: 1, Name: "Alice", Email: "alice@example.com"},
+    {ID: 2, Name: "Bob", Email: "bob@example.com"},
+}
+
+func main() {
+    mux := http.NewServeMux()
+    
+    mux.HandleFunc("GET /api/users", listUsers)
+    mux.HandleFunc("GET /api/users/{id}", getUser)
+    mux.HandleFunc("POST /api/users", createUser)
+    mux.HandleFunc("PUT /api/users/{id}", updateUser)
+    mux.HandleFunc("DELETE /api/users/{id}", deleteUser)
+    
+    log.Fatal(http.ListenAndServe(":8080", mux))
+}
+
+func listUsers(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(users)
+}
+
+func getUser(w http.ResponseWriter, r *http.Request) {
+    id, _ := strconv.Atoi(r.PathValue("id"))  // Go 1.22+
+    
+    for _, user := range users {
+        if user.ID == id {
+            w.Header().Set("Content-Type", "application/json")
+            json.NewEncoder(w).Encode(user)
+            return
+        }
+    }
+    
+    http.Error(w, "User not found", http.StatusNotFound)
+}
+
+func createUser(w http.ResponseWriter, r *http.Request) {
+    var user User
+    if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
+    
+    user.ID = len(users) + 1
+    users = append(users, user)
+    
+    w.WriteHeader(http.StatusCreated)
+    json.NewEncoder(w).Encode(user)
+}
+
+func updateUser(w http.ResponseWriter, r *http.Request) {
+    id, _ := strconv.Atoi(r.PathValue("id"))
+    
+    for i, user := range users {
+        if user.ID == id {
+            var updated User
+            if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
+                http.Error(w, err.Error(), http.StatusBadRequest)
+                return
+            }
+            
+            updated.ID = id
+            users[i] = updated
+            
+            w.Header().Set("Content-Type", "application/json")
+            json.NewEncoder(w).Encode(updated)
+            return
+        }
+    }
+    
+    http.Error(w, "User not found", http.StatusNotFound)
+}
+
+func deleteUser(w http.ResponseWriter, r *http.Request) {
+    id, _ := strconv.Atoi(r.PathValue("id"))
+    
+    for i, user := range users {
+        if user.ID == id {
+            users = append(users[:i], users[i+1:]...)
+            w.WriteHeader(http.StatusNoContent)
+            return
+        }
+    }
+    
+    http.Error(w, "User not found", http.StatusNotFound)
+}
+```
+
+</details>
+
+---
+
+### Q32: Explain middleware in Go HTTP servers.
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Middleware wraps handlers to add cross-cutting concerns.**
+
+**Middleware Pattern:**
+
+```go
+func middleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        // Before request
+        next.ServeHTTP(w, r)
+        // After request
+    })
+}
+```
+
+**Logging Middleware:**
+
+```go
+func loggingMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        start := time.Now()
+        
+        next.ServeHTTP(w, r)
+        
+        log.Printf("%s %s %v", r.Method, r.URL.Path, time.Since(start))
+    })
+}
+```
+
+**Auth Middleware:**
+
+```go
+func authMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        token := r.Header.Get("Authorization")
+        
+        if token != "Bearer valid-token" {
+            http.Error(w, "Unauthorized", http.StatusUnauthorized)
+            return
+        }
+        
+        next.ServeHTTP(w, r)
+    })
+}
+```
+
+**Chaining Middleware:**
+
+```go
+func chain(h http.Handler, middleware ...func(http.Handler) http.Handler) http.Handler {
+    for i := len(middleware) - 1; i >= 0; i-- {
+        h = middleware[i](h)
+    }
+    return h
+}
+
+func main() {
+    mux := http.NewServeMux()
+    mux.HandleFunc("/api/", apiHandler)
+    
+    handler := chain(mux,
+        loggingMiddleware,
+        authMiddleware,
+        corsMiddleware,
+    )
+    
+    http.ListenAndServe(":8080", handler)
+}
+```
+
+</details>
+
+---
+
+## Best Practices
+
+### Q33: What are Go's code organization best practices?
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Follow standard project layout:**
+
+```
+myproject/
+├── cmd/
+│   └── myapp/
+│       └── main.go           # Application entry point
+├── internal/                 # Private application code
+│   ├── config/
+│   ├── database/
+│   └── handlers/
+├── pkg/                      # Public library code
+│   └── api/
+├── test/                     # Additional test files
+├── scripts/                  # Build and deployment scripts
+├── go.mod
+└── go.sum
+```
+
+**Package Naming:**
+
+```go
+// ✅ Good
+package user
+package http
+package json
+
+// ❌ Bad
+package userService
+package http_handler
+package JSON
+```
+
+**Function Naming:**
+
+```go
+// ✅ Good
+func GetUser(id int) (*User, error)
+func NewClient() *Client
+func IsValid() bool
+
+// ❌ Bad
+func get_user(id int) (*User, error)
+func createNewClient() *Client
+```
+
+</details>
+
+---
+
+## Coding Challenges
+
+### Q34: Implement a LRU Cache in Go.
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+```go
+package main
+
+import (
+    "container/list"
+    "fmt"
+)
+
+type LRUCache struct {
+    capacity int
+    cache    map[int]*list.Element
+    list     *list.List
+}
+
+type entry struct {
+    key   int
+    value int
+}
+
+func Constructor(capacity int) LRUCache {
+    return LRUCache{
+        capacity: capacity,
+        cache:    make(map[int]*list.Element),
+        list:     list.New(),
+    }
+}
+
+func (c *LRUCache) Get(key int) int {
+    if elem, ok := c.cache[key]; ok {
+        c.list.MoveToFront(elem)
+        return elem.Value.(*entry).value
+    }
+    return -1
+}
+
+func (c *LRUCache) Put(key, value int) {
+    if elem, ok := c.cache[key]; ok {
+        c.list.MoveToFront(elem)
+        elem.Value.(*entry).value = value
+        return
+    }
+    
+    elem := c.list.PushFront(&entry{key, value})
+    c.cache[key] = elem
+    
+    if c.list.Len() > c.capacity {
+        oldest := c.list.Back()
+        if oldest != nil {
+            c.list.Remove(oldest)
+            delete(c.cache, oldest.Value.(*entry).key)
+        }
+    }
+}
+
+func main() {
+    cache := Constructor(2)
+    
+    cache.Put(1, 1)
+    cache.Put(2, 2)
+    fmt.Println(cache.Get(1))  // 1
+    cache.Put(3, 3)            // Evicts key 2
+    fmt.Println(cache.Get(2))  // -1 (not found)
+    cache.Put(4, 4)            // Evicts key 1
+    fmt.Println(cache.Get(1))  // -1 (not found)
+    fmt.Println(cache.Get(3))  // 3
+    fmt.Println(cache.Get(4))  // 4
+}
+```
+
+</details>
+
+---
+
+### Q35: Implement a rate limiter using Go.
+
+**Answer:**
+
+<details>
+<summary><strong>View answers</strong></summary>
+
+```go
+package main
+
+import (
+    "fmt"
+    "sync"
+    "time"
+)
+
+type RateLimiter struct {
+    tokens   int
+    capacity int
+    mu       sync.Mutex
+    lastTime time.Time
+}
+
+func NewRateLimiter(capacity int) *RateLimiter {
+    return &RateLimiter{
+        tokens:   capacity,
+        capacity: capacity,
+        lastTime: time.Now(),
+    }
+}
+
+func (r *RateLimiter) Allow() bool {
+    r.mu.Lock()
+    defer r.mu.Unlock()
+    
+    now := time.Now()
+    elapsed := now.Sub(r.lastTime)
+    
+    // Refill tokens (1 per second)
+    tokensToAdd := int(elapsed.Seconds())
+    if tokensToAdd > 0 {
+        r.tokens = min(r.capacity, r.tokens+tokensToAdd)
+        r.lastTime = now
+    }
+    
+    if r.tokens > 0 {
+        r.tokens--
+        return true
+    }
+    
+    return false
+}
+
+func min(a, b int) int {
+    if a < b {
+        return a
+    }
+    return b
+}
+
+func main() {
+    limiter := NewRateLimiter(5)  // 5 requests per second
+    
+    for i := 0; i < 10; i++ {
+        if limiter.Allow() {
+            fmt.Println("Request allowed")
+        } else {
+            fmt.Println("Request denied - rate limit exceeded")
+        }
+        time.Sleep(100 * time.Millisecond)
+    }
+}
+```
+
+</details>
+
+---
+
+## Generics (Go 1.18+)
+
+### Q36: What are generics in Go and why were they added?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+Generics allow writing functions and types that work with any type while maintaining type safety.
+
+**Before Generics:**
+```go
+// Code duplication
+func MaxInt(a, b int) int { /* ... */ }
+func MaxFloat(a, b float64) float64 { /* ... */ }
+
+// Or type erasure (not type-safe)
+func Max(a, b interface{}) interface{} { /* ... */ }
+```
+
+**With Generics:**
+```go
+func Max[T constraints.Ordered](a, b T) T {
+    if a > b {
+        return a
+    }
+    return b
+}
+```
+
+**Why added:**
+1. Eliminate code duplication
+2. Maintain type safety (unlike interface{})
+3. Improve performance (no boxing/unboxing)
+4. Enable type-safe data structures
+
+</details>
+
+---
+
+### Q37: Explain the difference between `any` and `comparable` constraints.
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+```go
+// any: Accepts ANY type (alias for interface{})
+func Print[T any](v T) {
+    fmt.Println(v)
+}
+
+// comparable: Only types that support == and !=
+func Contains[T comparable](slice []T, item T) bool {
+    for _, v := range slice {
+        if v == item {  // Requires ==
+            return true
+        }
+    }
+    return false
+}
+
+// Works:
+Contains([]int{1, 2, 3}, 2)         // ✅
+Contains([]string{"a", "b"}, "a")   // ✅
+
+// Doesn't work:
+Contains([][]int{{1}}, []int{1})    // ❌ Slices not comparable
+```
+
+**Comparable types:**
+- Basic types (int, string, bool, etc.)
+- Pointers
+- Structs (if all fields comparable)
+- Arrays (if element type comparable)
+
+**Not comparable:**
+- Slices
+- Maps
+- Functions
+
+</details>
+
+---
+
+### Q38: What does the `~` (tilde) mean in type constraints?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**`~` matches the underlying type:**
+
+```go
+type Integer interface {
+    ~int | ~int64  // Matches int, int64, AND their custom types
+}
+
+type MyInt int
+type UserID int64
+
+func Double[T Integer](n T) T {
+    return n * 2
+}
+
+var x MyInt = 5
+var id UserID = 100
+
+fmt.Println(Double(x))   // ✅ Works (MyInt's underlying type is int)
+fmt.Println(Double(id))  // ✅ Works (UserID's underlying type is int64)
+```
+
+**Without `~`:**
+```go
+type Integer interface {
+    int | int64  // Only exact types
+}
+
+// Double(x)   // ❌ Compile error
+// Double(id)  // ❌ Compile error
+```
+
+**Use case:** Supporting custom types (like type aliases).
+
+</details>
+
+---
+
+### Q39: Can you write a generic Stack in Go?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+```go
+type Stack[T any] struct {
+    items []T
+}
+
+func (s *Stack[T]) Push(item T) {
+    s.items = append(s.items, item)
+}
+
+func (s *Stack[T]) Pop() (T, bool) {
+    if len(s.items) == 0 {
+        var zero T
+        return zero, false
+    }
+    
+    item := s.items[len(s.items)-1]
+    s.items = s.items[:len(s.items)-1]
+    return item, true
+}
+
+func (s *Stack[T]) Peek() (T, bool) {
+    if len(s.items) == 0 {
+        var zero T
+        return zero, false
+    }
+    return s.items[len(s.items)-1], true
+}
+
+func (s *Stack[T]) IsEmpty() bool {
+    return len(s.items) == 0
+}
+
+func (s *Stack[T]) Size() int {
+    return len(s.items)
+}
+
+// Usage
+intStack := Stack[int]{}
+intStack.Push(1)
+intStack.Push(2)
+intStack.Push(3)
+
+val, ok := intStack.Pop()
+fmt.Println(val, ok)  // 3 true
+
+stringStack := Stack[string]{}
+stringStack.Push("hello")
+stringStack.Push("world")
+```
+
+</details>
+
+---
+
+### Q40: When should you NOT use generics?
+
+**Answer:**
+
+<details>
+<summary><strong>View answer</strong></summary>
+
+**Avoid generics when:**
+
+1. **Only one concrete type needed**
+   ```go
+   // ❌ Unnecessary
+   func ProcessInts[T int](nums []T) { /* ... */ }
+   
+   // ✅ Just use int
+   func ProcessInts(nums []int) { /* ... */ }
+   ```
+
+2. **Interface is sufficient**
+   ```go
+   // ✅ Better with interface
+   func Print(v fmt.Stringer) {
+       fmt.Println(v.String())
+   }
+   ```
+
+3. **Logic differs significantly per type**
+   ```go
+   // ❌ Don't force generics
+   func Process[T any](v T) {
+       switch any(v).(type) {
+       case int: /* completely different logic */
+       case string: /* completely different logic */
+       }
+   }
+   
+   // ✅ Separate functions
+   func ProcessInt(v int) { /* ... */ }
+   func ProcessString(v string) { /* ... */ }
+   ```
+
+4. **Performance doesn't matter**
+   ```go
+   // ✅ Simpler with interface{}
+   func Log(v any) {
+       fmt.Println(v)
+   }
+   ```
+
+**When TO use generics:**
+- Data structures (Stack, Queue, Tree)
+- Generic algorithms (Sort, Filter, Map)
+- Type-safe wrappers (Result, Optional)
+- Avoiding code duplication
+
+---
+
+</details>
+
+</details>
+
+## Resources
 
 <details>
 <summary><strong>View contents</strong></summary>
