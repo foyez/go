@@ -5017,9 +5017,9 @@ func main() {
 }
 ```
 
----
-
 </details>
+
+---
 
 #### Practice Questions (Interfaces)
 
@@ -5571,250 +5571,6 @@ if err := user.Validate(); err != nil {
 
 </details>
 
-## Type Assertions
-
-A **type assertion** extracts the **concrete value** from an interface.
-
-<details>
-<summary><strong>View contents</strong></summary>
-
-### Syntax
-
-```go
-value, ok := interfaceValue.(ConcreteType)
-```
-
----
-
-### Example
-
-```go
-var foo interface{} = "Hello"
-
-str := foo.(string)
-fmt.Println(str) // "Hello"
-```
-
----
-
-### Unsafe Assertion (Causes Panic)
-
-```go
-num := foo.(int) // panic
-fmt.Println(num)
-```
-
----
-
-### Safe Assertion (Recommended)
-
-```go
-num2, ok := foo.(int)
-fmt.Println(num2, ok) // 0 false
-```
-
----
-
-### Why Type Assertions Are Needed
-
-* Interfaces hide concrete types
-* To access concrete behavior, you must assert
-* Widely used in:
-
-  * `error` handling
-  * `fmt`
-  * `context`
-  * type switches
-
----
-
-### Type Switch
-
-```go
-switch v := foo.(type) {
-case string:
-	fmt.Println("string:", v)
-case int:
-	fmt.Println("int:", v)
-default:
-	fmt.Println("unknown type")
-}
-```
-
-</details>
-
-
-## Go Type System & Relationships Diagram
-
-<details>
-<summary>View contents</summary>
-
-```
-              ┌────────────┐
-              │  Struct    │
-              │  (Data)    │
-              │ FirstName, │
-              │ LastName   │
-              │ etc.       │
-              └─────┬──────┘
-                    │
-         ┌──────────┴──────────┐
-         │                     │
-   Value Receiver          Pointer Receiver
-  (func (s Struct) M())   (func (s *Struct) M())
-         │                     │
-         │                     │
-         └──────────┬──────────┘
-                    │
-                Methods
-                    │
-         ┌──────────┴──────────┐
-         │                     │
-      Interface             Interface
-  (defines required     (can accept pointer
-     behavior)           receivers if needed)
-         │
-         ▼
-   Any type that implements the
-   interface methods
-         │
-         ▼
-     Interface Value
-     (holds concrete type + value/pointer)
-         │
-   ┌─────┴─────┐
-   │           │
-Type Assertion  Type Switch
-(variable.(T))  switch v := variable.(type) {}
-```
-
----
-
-## Explanation of Each Part
-
-### 1️⃣ Structs
-
-* Hold **fields/data**
-* Can have **methods** (value or pointer receiver)
-* Example:
-
-```go
-type User struct {
-    FirstName string
-    LastName  string
-}
-```
-
----
-
-### 2️⃣ Methods
-
-* Methods are **functions tied to a struct**
-* Can have **value receiver** `(u User)` or **pointer receiver** `(u *User)`
-* Pointer receiver needed if you want to **modify the struct**
-
----
-
-### 3️⃣ Interfaces
-
-* Define **behavior only**
-* Any type that has required methods **automatically implements the interface**
-* Can accept **struct values or pointers**, depending on receiver type
-
-```go
-type Greeter interface {
-    Greet() string
-}
-```
-
----
-
-### 4️⃣ Interface Values
-
-* Store **two things**:
-
-  1. Concrete type (`User` or `*User`)
-  2. Value/pointer to data
-* Can pass **different types** to the same function using an interface
-
-```go
-func SayHello(g Greeter) {
-    fmt.Println(g.Greet())
-}
-```
-
----
-
-### 5️⃣ Type Assertions & Type Switches
-
-* **Type assertion**: get the concrete type back from an interface
-
-```go
-u := g.(User)       // unsafe, panics if wrong
-u, ok := g.(User)   // safe, returns ok=true/false
-```
-
-* **Type switch**: check multiple types safely
-
-```go
-switch v := g.(type) {
-case User:
-    fmt.Println("User", v.FirstName)
-case Admin:
-    fmt.Println("Admin", v.Level)
-}
-```
-
----
-
-### 6️⃣ Pointers
-
-* Important when:
-
-  * You need to **modify a struct** in a method
-  * Interface methods are defined on pointer receivers
-* Go automatically handles:
-
-```go
-u := User{"Foyez", "Ahmed"}
-u.UpdateName("Rumon") // auto-converts to (&u).UpdateName
-```
-
----
-
-## Visual Summary (Flow)
-
-```
-Struct (data)
-    │
-    ▼
-Methods (value / pointer)
-    │
-    ▼
-Interface (behavior)
-    │
-    ▼
-Interface Value (type + pointer/value)
-    │
-    ├──> Type Assertion (recover concrete type)
-    └──> Type Switch (branch on type)
-```
-
----
-
-✅ **Key Takeaways**
-
-1. **Structs** = data
-2. **Methods** = attach behavior to structs
-3. **Interfaces** = abstract behavior (polymorphism)
-4. **Pointer receivers** = modify data / satisfy interfaces
-5. **Interface values** = hold concrete type + value/pointer
-6. **Type assertions/switches** = access concrete type safely
-
----
-
-</details>
- 
 ## Generics
 
 Generics (introduced in **Go 1.18**) allow you to write **type-safe, reusable code** without sacrificing compile-time checks.
@@ -6245,54 +6001,60 @@ func Max_float64(a, b float64) float64 {
 
 **Concurrency** means **dealing with multiple tasks at the same time**.
 
-> Important distinction:
->
-> * **Concurrency**: Structuring a program to handle many things at once
-> * **Parallelism**: Actually running things at the same time on multiple CPU cores
+**Key Distinction:**
+
+```
+Concurrency: Dealing with many things at once (structure). Structuring a program to handle many things at once
+Parallelism: Doing many things at once (execution). Actually running things at the same time on multiple CPU cores
+```
 
 A concurrent program **may or may not** run in parallel.
 
 Go makes concurrency **easy to write and easy to reason about**.
 
 <details>
-<summary>View contents</summary>
+<summary><strong>View contents</strong></summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/concurrency)**
 
-### Why Concurrency Matters
+**Example:**
 
-Most real-world programs are naturally concurrent:
+```
+Concurrency (one chef, multiple dishes):
+- Chef starts soup
+- While soup simmers, chef prepares salad
+- While salad chills, chef checks soup
+- Interleaved execution
 
-* Web servers handling many users
-* APIs calling multiple services
-* Background jobs + user requests
-* Reading files while processing data
-* Waiting on network responses
+Parallelism (multiple chefs):
+- Chef 1 makes soup
+- Chef 2 makes salad
+- Chef 3 makes dessert
+- Simultaneous execution
+```
 
-Without concurrency:
-
-* Programs block unnecessarily
-* CPU time is wasted
-* Code becomes complex and fragile
+**Go enables both:**
+- Goroutines provide **concurrency**
+- Runtime scheduler provides **parallelism** (on multi-core systems)
 
 ---
 
 ### Key Concepts
 
-#### 1 Process
+**1. Process**
 
 * A **process** is an independent program in execution.
 * It has its own memory, variables, and resources.
 * Example: When you open a browser or run `go run main.go`, each runs as a separate process.
 * Processes do **not share memory** by default. Communication between them requires mechanisms like IPC (Inter-Process Communication).
 
-#### 2 Thread
+**2. Thread**
 
 * A **thread** is a smaller unit of execution within a process.
 * Threads in the same process **share memory**, which allows faster communication but requires careful synchronization to avoid conflicts.
 * Each process can have multiple threads. For example, a browser may use threads to render a page, handle network requests, and manage UI simultaneously.
 
-#### 3 Goroutine
+**3. Goroutine**
 
 * A **goroutine** is Go’s lightweight abstraction over threads.
 * They are **cheaper** than threads in terms of memory and startup cost.
@@ -6300,7 +6062,7 @@ Without concurrency:
 * Goroutines are managed by the Go runtime scheduler, which multiplexes many goroutines over a small number of OS threads.
 * Unlike threads, you don’t manage goroutine lifecycle manually.
 
-#### 4 Parallelism vs Concurrency
+**4. Parallelism vs Concurrency**
 
 * **Concurrency**: Multiple tasks making progress at the same time (interleaved execution).
 
@@ -6311,7 +6073,7 @@ Without concurrency:
 
 > Go supports both concurrency and parallelism via goroutines and GOMAXPROCS setting.
 
-#### 5 Multithreading
+**5. Multithreading**
 
 * Traditional multithreading means creating multiple threads manually.
 * Go abstracts this complexity using goroutines and a **scheduler**, so you rarely manage threads directly.
@@ -6323,32 +6085,61 @@ Without concurrency:
 
 A **goroutine** is a lightweight unit of execution managed by the Go runtime.
 
-#### Key Properties
-
-* Much lighter than OS threads
-* Created with the `go` keyword
-* Managed by Go, not the OS
-* Can scale to **thousands or millions**
-
-#### Example
+**Lightweight threads managed by Go runtime:**
 
 ```go
-func sayHello() {
-	fmt.Println("Hello")
+func main() {
+	go sayHello()  // Launches in new goroutine
+	
+	fmt.Println("Main function")
+	time.Sleep(time.Second)  // Wait for goroutine
 }
 
-func main() {
-	go sayHello()
-	fmt.Println("World")
+func sayHello() {
+	fmt.Println("Hello from goroutine")
 }
+
+// Output (order may vary):
+// Main function
+// Hello from goroutine
 ```
 
-Here:
+**Key Characteristics:**
+- **Cheap**: ~2KB stack size (vs ~2MB for OS threads)
+- **Fast**: Creation takes microseconds
+- **Scalable**: Can run millions of goroutines
 
-* `sayHello()` runs concurrently
-* `main()` continues immediately
+**Anonymous goroutines:**
 
-⚠️ The program may exit before the goroutine runs.
+```go
+go func() {
+	fmt.Println("Anonymous goroutine")
+}()
+
+// With parameters
+name := "Alice"
+go func(n string) {
+	fmt.Println("Hello,", n)
+}(name)  // Pass name by value
+```
+
+**⚠️ Common Mistake (closure over loop variable):**
+
+```go
+// Wrong: All goroutines see final value
+for i := 0; i < 5; i++ {
+	go func() {
+		fmt.Println(i)  // May print 5, 5, 5, 5, 5
+	}()
+}
+
+// Correct: Pass as parameter
+for i := 0; i < 5; i++ {
+	go func(n int) {
+		fmt.Println(n)  // Prints 0, 1, 2, 3, 4
+	}(i)
+}
+```
 
 ---
 
@@ -6371,7 +6162,27 @@ We need a way to **wait** for goroutines.
 
 ### WaitGroup (Synchronization)
 
-* Ensures the main function waits for all goroutines to finish.
+**Wait for goroutines to complete:**
+
+```go
+import "sync"
+
+func main() {
+	var wg sync.WaitGroup
+	
+	for i := 0; i < 5; i++ {
+		wg.Add(1)  // Increment counter
+		
+		go func(n int) {
+			defer wg.Done()  // Decrement when done
+			fmt.Println("Worker", n)
+		}(i)
+	}
+	
+	wg.Wait()  // Block until counter is 0
+	fmt.Println("All workers done")
+}
+```
 
 ```go
 package main
@@ -6397,7 +6208,7 @@ func main() {
 }
 ```
 
-#### How It Works
+**How It Works:**
 
 * `Add(n)` → number of goroutines
 * `Done()` → signals completion
@@ -6408,6 +6219,33 @@ Use `WaitGroup` when:
 * You only need to wait
 * No data needs to be passed back
 
+**Real-world example (concurrent API calls):**
+
+```go
+func fetchURLs(urls []string) {
+	var wg sync.WaitGroup
+	
+	for _, url := range urls {
+		wg.Add(1)
+		
+		go func(u string) {
+			defer wg.Done()
+			
+			resp, err := http.Get(u)
+			if err != nil {
+				log.Printf("Error fetching %s: %v", u, err)
+				return
+			}
+			defer resp.Body.Close()
+			
+			fmt.Printf("%s: %s\n", u, resp.Status)
+		}(url)
+	}
+	
+	wg.Wait()
+}
+```
+
 ---
 
 ### Channels – Communication Between Goroutines
@@ -6415,25 +6253,17 @@ Use `WaitGroup` when:
 * **Channels** are Go’s way of communicating safely between goroutines.
 * Think of a channel as a **pipe**: one goroutine sends data in, another receives it.
 
-> Go philosophy:
->
-> **“Do not communicate by sharing memory; share memory by communicating.”**
-
-#### Create a Channel
+**Communication between goroutines:**
 
 ```go
-ch := make(chan string)
-```
+// Create channel
+ch := make(chan int)
 
-#### Send and Receive
+// Send value (blocks until received)
+ch <- 42
 
-```go
-go func() {
-	ch <- "Hello"
-}()
-
-msg := <-ch
-fmt.Println(msg)
+// Receive value (blocks until sent)
+value := <-ch
 ```
 
 Key behavior:
@@ -6442,61 +6272,220 @@ Key behavior:
 * Receiving blocks until sent
 * Prevents data races
 
-#### Example
-
-```go
-package main
-
-import "fmt"
-
-func worker(ch chan string) {
-    ch <- "Work done!" // send message to channel
-}
-
-func main() {
-    messageChannel := make(chan string) // create channel
-
-    go worker(messageChannel) // start goroutine
-
-    msg := <-messageChannel // receive message from channel
-    fmt.Println(msg)
-}
-```
-
-**Key points:**
-
-* `chan string` is a channel that carries strings.
-* `<-` operator is used to send (`ch <- value`) or receive (`value := <-ch`).
-
----
-
-### Buffered vs Unbuffered Channels
-
-#### Unbuffered Channel
+**Unbuffered channels (synchronous):**
 
 * Communication blocks until both sender and receiver are ready.
 
 ```go
-ch := make(chan int) // unbuffered
+func main() {
+	ch := make(chan string)
+	
+	go func() {
+		ch <- "Hello"  // Blocks until received
+	}()
+	
+	msg := <-ch  // Blocks until sent
+	fmt.Println(msg)
+}
 ```
 
 * Sender waits for receiver
 * Strong synchronization
 
-#### Buffered Channel
+**Buffered channels:**
 
 * Allows sending `n` values without waiting for receiver.
 
 ```go
-ch := make(chan int, 2) // buffer of 2
+// Buffer of 3
+ch := make(chan int, 3)
 
-ch <- 1
-ch <- 2 // won't block because buffer is not full yet
+ch <- 1  // Doesn't block
+ch <- 2  // Doesn't block
+ch <- 3  // Doesn't block
+// ch <- 4  // Blocks (buffer full)
+
+fmt.Println(<-ch)  // 1
+fmt.Println(<-ch)  // 2
 ```
 
 * Holds up to 3 values
 * Sender blocks only when buffer is full
 * Useful for worker pools and queues
+
+**Closing channels:**
+
+```go
+ch := make(chan int, 3)
+
+ch <- 1
+ch <- 2
+ch <- 3
+close(ch)  // No more values will be sent
+
+// Receive until closed
+for val := range ch {
+	fmt.Println(val)
+}
+
+// Check if closed
+val, ok := <-ch
+if !ok {
+	fmt.Println("Channel closed")
+}
+```
+
+**⚠️ Important Rules:**
+- **Only sender closes** channels
+- Receiving from closed channel returns zero value
+- Sending to closed channel **panics**
+- Closing nil channel **panics**
+
+---
+
+### Channel Patterns
+
+#### Worker Pool
+
+```go
+func workerPool(jobs <-chan int, results chan<- int, numWorkers int) {
+	var wg sync.WaitGroup
+	
+	for i := 0; i < numWorkers; i++ {
+		wg.Add(1)
+		
+		go func(id int) {
+			defer wg.Done()
+			
+			for job := range jobs {
+				fmt.Printf("Worker %d processing job %d\n", id, job)
+				time.Sleep(time.Second)
+				results <- job * 2
+			}
+		}(i)
+	}
+	
+	wg.Wait()
+	close(results)
+}
+
+func main() {
+	jobs := make(chan int, 10)
+	results := make(chan int, 10)
+	
+	// Start worker pool
+	go workerPool(jobs, results, 3)
+	
+	// Send jobs
+	for i := 1; i <= 5; i++ {
+		jobs <- i
+	}
+	close(jobs)
+	
+	// Collect results
+	for result := range results {
+		fmt.Println("Result:", result)
+	}
+}
+```
+
+#### Fan-Out, Fan-In
+
+**Fan-Out (distribute work):**
+
+```go
+func fanOut(input <-chan int, workers int) []<-chan int {
+	outputs := make([]<-chan int, workers)
+	
+	for i := 0; i < workers; i++ {
+		out := make(chan int)
+		outputs[i] = out
+		
+		go func() {
+			defer close(out)
+			for val := range input {
+				out <- val * 2
+			}
+		}()
+	}
+	
+	return outputs
+}
+```
+
+**Fan-In (merge results):**
+
+```go
+func fanIn(channels ...<-chan int) <-chan int {
+	out := make(chan int)
+	var wg sync.WaitGroup
+	
+	for _, ch := range channels {
+		wg.Add(1)
+		
+		go func(c <-chan int) {
+			defer wg.Done()
+			for val := range c {
+				out <- val
+			}
+		}(ch)
+	}
+	
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	
+	return out
+}
+```
+
+#### Pipeline
+
+```go
+// Stage 1: Generate numbers
+func generator(nums ...int) <-chan int {
+	out := make(chan int)
+	
+	go func() {
+		defer close(out)
+		for _, n := range nums {
+			out <- n
+		}
+	}()
+	
+	return out
+}
+
+// Stage 2: Square numbers
+func square(in <-chan int) <-chan int {
+	out := make(chan int)
+	
+	go func() {
+		defer close(out)
+		for n := range in {
+			out <- n * n
+		}
+	}()
+	
+	return out
+}
+
+// Stage 3: Sum numbers
+func sum(in <-chan int) int {
+	total := 0
+	for n := range in {
+		total += n
+	}
+	return total
+}
+
+// Usage
+nums := generator(1, 2, 3, 4, 5)
+squared := square(nums)
+result := sum(squared)
+fmt.Println(result)  // 55
+```
 
 ---
 
@@ -6504,41 +6493,83 @@ ch <- 2 // won't block because buffer is not full yet
 
 * `select` allows goroutines to wait on multiple channels simultaneously.
 
+**Multiplex channel operations:**
+
 ```go
-package main
+ch1 := make(chan string)
+ch2 := make(chan string)
 
-import "fmt"
+go func() { ch1 <- "Message from ch1" }()
+go func() { ch2 <- "Message from ch2" }()
 
-func main() {
-    ch1 := make(chan string)
-    ch2 := make(chan string)
-
-    go func() { ch1 <- "Message from ch1" }()
-    go func() { ch2 <- "Message from ch2" }()
-
-    select {
-    case msg1 := <-ch1:
-        fmt.Println(msg1)
-    case msg2 := <-ch2:
-        fmt.Println(msg2)
-    }
+select {
+case msg := <-ch1:
+	fmt.Println("Received from ch1:", msg)
+case msg := <-ch2:
+	fmt.Println("Received from ch2:", msg)
+case ch3 <- "hello":
+	fmt.Println("Sent to ch3")
+default:
+	fmt.Println("No channel ready")
 }
 ```
 
-**Explanation:**
+**Timeout pattern:**
 
-* Only one of the channels will proceed randomly if both are ready.
-* Useful for timeouts and handling multiple sources of data.
+```go
+import "time"
 
-Why `select` matters:
+select {
+case result := <-ch:
+	fmt.Println("Received:", result)
+case <-time.After(time.Second):
+	fmt.Println("Timeout!")
+}
+```
 
-* Handles multiple concurrent inputs
-* Avoids blocking
-* Core for advanced concurrency patterns
+**Non-blocking receive:**
+
+```go
+select {
+case msg := <-ch:
+	fmt.Println("Received:", msg)
+default:
+	fmt.Println("No message available")
+}
+```
+
+**Real-world example (context cancellation):**
+
+```go
+import "context"
+
+func worker(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("Worker cancelled")
+			return
+		default:
+			// Do work
+			time.Sleep(100 * time.Millisecond)
+			fmt.Println("Working...")
+		}
+	}
+}
+
+func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	
+	go worker(ctx)
+	
+	time.Sleep(3 * time.Second)
+}
+```
 
 ---
 
-### Mutex – Safe Access to Shared Memory
+### Mutex (Safe Access to Shared Memory)
 
 In Go, **goroutines can share memory**, but **concurrent access to shared data** can cause **race conditions**.  
 A **mutex (mutual exclusion lock)** ensures that **only one goroutine** can access a critical section of code at a time.
@@ -6621,1214 +6652,347 @@ Goroutine B: write 1
 
 This is called a **race condition**.
 
-> The result depends on timing, which is unpredictable.
-
-#### Real-World Analogy: Bank Account
-
-Imagine a shared bank account:
-
-* Balance = ₹1000
-* Two ATMs withdraw ₹100 at the same time
-
-**Without a lock:**
-
-* ATM A reads balance → 1000
-* ATM B reads balance → 1000
-* Both write back → 900
-
-💥 Lost ₹100
-
-**With a lock (mutex):**
-
-* ATM A locks the account
-* ATM B waits
-* ATM A updates balance → 900
-* ATM A unlocks
-* ATM B updates balance → 800
-
-✅ Correct result
-
-A mutex acts like a **lock on the bank account**.
-
----
-
-#### ❌ Broken Version (No Mutex)
-
-```go
-package main
-
-import (
-	"fmt"
-	"sync"
-)
-
-var balance = 1000
-
-func withdraw(wg *sync.WaitGroup) {
-	defer wg.Done()
-	balance = balance - 100
-}
-
-func main() {
-	var wg sync.WaitGroup
-
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go withdraw(&wg)
-	}
-
-	wg.Wait()
-	fmt.Println("Final Balance:", balance)
-}
-```
-
-Expected:
-
-```
-1000 - (10 × 100) = 0
-```
-
-Actual (varies):
-
-```
-Final Balance: 300
-Final Balance: 500
-Final Balance: 100
-```
-
-⚠️ **Unpredictable = race condition**
-
-#### ✅ Correct Version (With Mutex)
-
-```go
-package main
-
-import (
-	"fmt"
-	"sync"
-)
-
-var balance = 1000
-var mu sync.Mutex
-
-func withdraw(wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	mu.Lock()
-	balance = balance - 100
-	mu.Unlock()
-}
-
-func main() {
-	var wg sync.WaitGroup
-
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go withdraw(&wg)
-	}
-
-	wg.Wait()
-	fmt.Println("Final Balance:", balance)
-}
-```
-
-Output:
-
-```
-Final Balance: 0
-```
-
-- Correct
-- Deterministic
-- Safe shared memory access
-
----
-
-#### Why Mutex Works (Mental Model)
-
-Think of a mutex as:
-
-* 🚪 **One key**
-* 🧍 **Only one goroutine can enter**
-* ⏳ Others must wait
-* 🔓 When unlocked, next goroutine enters
-
-In Go:
-
-```go
-mu.Lock()   // enter critical section
-// shared memory access
-mu.Unlock() // exit
-```
-
-The protected code is called a **critical section**.
-
-#### How Professionals Decide to Use Mutex
-
-Use a mutex when:
-
-* Multiple goroutines
-* Writing OR reading shared data
-* Data must stay consistent
-
-Avoid mutex when:
-
-* Data is immutable
-* Each goroutine has its own data
-* Channels can model the problem better
-
----
-
-#### Common Problems with Mutexes
-
-* Easy to forget `Unlock()`
-* Can cause **deadlocks** if locks are mismanaged
-* Harder to reason about in large codebases
-* Can reduce performance due to blocking
-
-Always prefer:
-
-```go
-defer mutex.Unlock()
-```
-
-right after `Lock()` to avoid mistakes.
-
----
-
-#### Best Practices
-
-* Use mutexes only to protect **small critical sections**
-* Keep locked code minimal
-* Avoid nested locks
-* Use `sync.RWMutex` when reads are frequent and writes are rare
-
----
-
-#### When to Avoid Mutexes
-
-* When data can be **owned by a single goroutine**
-* When communication patterns fit better
-* When order of operations matters more than shared state
-
-➡️ **Prefer channels when possible**
-
-Go philosophy:
-
-> “Don’t communicate by sharing memory; share memory by communicating.”
-
----
-
-#### Debugging Tip
-
-Use the race detector to catch race conditions:
-
-```bash
-go run -race main.go
-```
-
-This tool helps identify unsafe concurrent memory access during development.
-
-### Data Races
-
-A **data race** occurs when:
-
-* Two goroutines access the same variable
-* At least one writes
-* No synchronization exists
-
-#### Detect Races
-
-```bash
-go test -race
-```
-
-Go’s race detector is one of the best in any language.
-
----
-
-### Common Patterns in Go Concurrency
-
-1. **Worker Pool**
-
-   * Manage a pool of goroutines to process tasks.
-   * Fixed number of goroutines
-   * Jobs sent through a channel
-   * Results collected via another channel
-
-2. **Fan-Out / Fan-In**
-
-   * Multiple goroutines send data into a channel; main goroutine aggregates results.
-   * Fan-out: distribute work to many goroutines
-   * Fan-in: collect results into one channel
-
-3. **Pipeline**
-
-   * Data passes through multiple stages, each stage a goroutine.
-   * Each stage runs in its own goroutine
-   * Output of one stage feeds the next
-
----
-
-### When to Use Concurrency
-
-Use concurrency when:
-
-* Tasks are independent
-* Program waits on I/O
-* Handling many users or requests
-
-Avoid concurrency when:
-
-* Code becomes harder to understand
-* Performance gain is minimal
-
-> **Concurrency is a tool, not a requirement.**
-
----
-
-### Summary Table of Concepts
-
-| Concept        | Definition                       | Go Feature/Example          |
-| -------------- | -------------------------------- | --------------------------- |
-| Process        | Program in execution             | `go run main.go`            |
-| Thread         | Unit inside a process            | Managed by OS               |
-| Goroutine      | Lightweight thread               | `go f()`                    |
-| Concurrency    | Tasks making progress together   | Multiple goroutines         |
-| Parallelism    | Tasks running simultaneously     | Multiple CPU cores          |
-| Multithreading | Using multiple threads           | Managed automatically by Go |
-| Channel        | Communication between goroutines | `chan`                      |
-| Mutex          | Lock to protect shared memory    | `sync.Mutex`                |
-| WaitGroup      | Wait for multiple goroutines     | `sync.WaitGroup`            |
-
----
-
-### Tips for Learning Go Concurrency
-
-1. Think in **goroutines and channels**, not threads.
-2. Avoid sharing memory when possible; prefer **channel communication**.
-3. Understand difference between **concurrency** and **parallelism**.
-4. Practice small programs: worker pools, pipelines, fan-in/fan-out.
-5. Always check for **race conditions** using `go run -race`.
-
-### Example (Concurrent URL Crawler)
-
-<details>
-<summary>View contents</summary>
-
-### What this crawler will do
-
-* Take a list of URLs
-* Fetch them concurrently
-* Limit concurrency (so we don’t overload)
-* Collect results safely
-* Stop cleanly
-
----
-
-## Stage 0: Sequential version (baseline)
-
-```go
-package main
-
-import (
-	"fmt"
-	"net/http"
-)
-
-func fetch(url string) error {
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
-	fmt.Println(url, "->", resp.Status)
-	return nil
-}
-
-func main() {
-	urls := []string{
-		"https://example.com",
-		"https://golang.org",
-		"https://httpbin.org/get",
-	}
-
-	for _, url := range urls {
-		if err := fetch(url); err != nil {
-			fmt.Println("error:", err)
-		}
-	}
-}
-```
-
-### What you learn
-
-* One URL at a time
-* Slow, but predictable
-
----
-
-## Stage 1: Goroutines (naive concurrency)
-
-Now let’s make it concurrent **the wrong way** (on purpose).
-
-```go
-for _, url := range urls {
-	go fetch(url)
-}
-```
-
-Run it — **nothing prints or prints randomly**.
-
-### Why?
-
-* `main()` exits before goroutines finish
-* Goroutines are cheap, but not magical
-
----
-
-## Stage 2: WaitGroup (basic coordination)
-
-We need to **wait** for all goroutines.
+**Protect shared state:**
 
 ```go
 import "sync"
 
-var wg sync.WaitGroup
-
-for _, url := range urls {
-	wg.Add(1)
-	go func(u string) {
-		defer wg.Done()
-		fetch(u)
-	}(url)
+type SafeCounter struct {
+	mu    sync.Mutex
+	count int
 }
 
-wg.Wait()
-```
-
-### Key concepts
-
-* `WaitGroup` = “don’t exit yet”
-* Always pass loop variables explicitly (`u string`)
-
-✅ Now all URLs fetch concurrently
-❌ But still **unlimited concurrency**
-
----
-
-## Stage 3: Worker Pool (real-world concurrency control)
-
-This is where Go starts to shine.
-
-### Idea
-
-* Fixed number of workers
-* URLs go into a channel
-* Workers pull from the channel
-
-### Architecture
-
-```
-URLs → jobs channel → workers → results
-```
-
----
-
-### Step 1: Jobs channel
-
-```go
-jobs := make(chan string)
-```
-
----
-
-### Step 2: Worker function
-
-```go
-func worker(id int, jobs <-chan string, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	for url := range jobs {
-		fmt.Printf("Worker %d fetching %s\n", id, url)
-		fetch(url)
-	}
-}
-```
-
----
-
-### Step 3: Start workers
-
-```go
-numWorkers := 3
-var wg sync.WaitGroup
-
-for i := 1; i <= numWorkers; i++ {
-	wg.Add(1)
-	go worker(i, jobs, &wg)
-}
-```
-
----
-
-### Step 4: Send jobs
-
-```go
-for _, url := range urls {
-	jobs <- url
-}
-close(jobs)
-
-wg.Wait()
-```
-
-### What you just learned
-
-* **Channels coordinate work**
-* **Workers limit concurrency**
-* This is how production crawlers work
-
----
-
-## Stage 4: Results channel (no shared state)
-
-Instead of printing inside workers, return data safely.
-
-```go
-type Result struct {
-	URL    string
-	Status string
-	Err    error
-}
-```
-
-### Worker sends results
-
-```go
-func worker(id int, jobs <-chan string, results chan<- Result, wg *sync.WaitGroup) {
-	defer wg.Done()
-
-	for url := range jobs {
-		fmt.Printf("Worker %d fetching %s\n", id, url)
-
-		client := http.Client{
-			Timeout: 5 * time.Second,
-		}
-
-		resp, err := client.Get(url)
-		if err != nil {
-			results <- Result{URL: url, Err: err}
-			continue
-		}
-		resp.Body.Close()
-
-		results <- Result{
-			URL:    url,
-			Status: resp.Status,
-		}
-	}
-}
-```
-
----
-
-### Collect results in main
-
-```go
-results := make(chan Result)
-
-go func() {
-	wg.Wait()
-	close(results)
-}()
-
-for r := range results {
-	if r.Err != nil {
-		fmt.Println("error:", r.URL, r.Err)
-	} else {
-		fmt.Println(r.URL, "->", r.Status)
-	}
-}
-```
-
-### Why this matters
-
-* No mutexes
-* No shared memory
-* **Channels = ownership transfer**
-
----
-
-## Final Project
-
-📁 `main.go`
-
-```go
-package main
-
-import (
-	"fmt"
-	"net/http"
-	"sync"
-	"time"
-)
-
-// Result represents the outcome of fetching a URL
-type Result struct {
-	URL    string
-	Status string
-	Err    error
+func (c *SafeCounter) Increment() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.count++
 }
 
-// worker pulls URLs from jobs channel and sends results
-func worker(
-	id int,
-	jobs <-chan string,
-	results chan<- Result,
-	wg *sync.WaitGroup,
-) {
-	defer wg.Done()
-
-	for url := range jobs {
-		fmt.Printf("Worker %d fetching %s\n", id, url)
-
-		client := http.Client{
-			Timeout: 5 * time.Second,
-		}
-
-		resp, err := client.Get(url)
-		if err != nil {
-			results <- Result{URL: url, Err: err}
-			continue
-		}
-
-		resp.Body.Close()
-
-		results <- Result{
-			URL:    url,
-			Status: resp.Status,
-		}
-	}
+func (c *SafeCounter) Value() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.count
 }
 
 func main() {
-	urls := []string{
-		"https://example.com",
-		"https://golang.org",
-		"https://httpbin.org/get",
-		"https://httpbin.org/status/404",
-		"https://invalid-url",
+	counter := &SafeCounter{}
+	
+	for i := 0; i < 1000; i++ {
+		go counter.Increment()
 	}
-
-	numWorkers := 3
-
-	jobs := make(chan string)
-	results := make(chan Result)
-
-	var wg sync.WaitGroup
-
-	// Start worker pool
-	for i := 1; i <= numWorkers; i++ {
-		wg.Add(1)
-		go worker(i, jobs, results, &wg)
-	}
-
-	// Send jobs
-	go func() {
-		for _, url := range urls {
-			jobs <- url
-		}
-		close(jobs)
-	}()
-
-	// Close results when workers finish
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
-
-	// Collect results
-	for result := range results {
-		if result.Err != nil {
-			fmt.Printf("❌ %s error: %v\n", result.URL, result.Err)
-			continue
-		}
-		fmt.Printf("✅ %s -> %s\n", result.URL, result.Status)
-	}
-
-	fmt.Println("Crawling finished")
+	
+	time.Sleep(time.Second)
+	fmt.Println(counter.Value())  // 1000
 }
 ```
 
----
-
-## Why add `context.Context`?
-
-Right now:
-
-* If one URL hangs → it waits until timeout
-* If main decides to stop → workers **keep running**
-* No way to cancel everything at once
-
-`context.Context` gives you:
-
-* Global cancellation signal
-* Timeouts / deadlines
-* Clean shutdown of *all* goroutines
-
-Think of it as a **broadcast “STOP” button**.
-
----
-
-## Step 1: Create a cancellable context in `main`
+**RWMutex (read/write lock):**
 
 ```go
-ctx, cancel := context.WithCancel(context.Background())
-defer cancel()
-```
+type Cache struct {
+	mu    sync.RWMutex
+	data  map[string]string
+}
 
-This creates:
+func (c *Cache) Get(key string) (string, bool) {
+	c.mu.RLock()  // Multiple readers allowed
+	defer c.mu.RUnlock()
+	
+	val, ok := c.data[key]
+	return val, ok
+}
 
-* `ctx` → passed to all workers
-* `cancel()` → stops everything immediately
-
----
-
-## Step 2: Use `http.NewRequestWithContext`
-
-Instead of:
-
-```go
-client.Get(url)
-```
-
-Use:
-
-```go
-req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-resp, err := client.Do(req)
-```
-
-Now:
-
-* If `ctx` is cancelled
-* HTTP request is aborted instantly
-
----
-
-## Step 3: Workers must *listen* for cancellation
-
-Use `select`:
-
-```go
-select {
-case <-ctx.Done():
-	return
-case url := <-jobs:
-	// work
+func (c *Cache) Set(key, value string) {
+	c.mu.Lock()  // Exclusive write access
+	defer c.mu.Unlock()
+	
+	c.data[key] = value
 }
 ```
 
+**Google Style: Prefer channels over mutexes**
+
+```
+Use channels when:
+- Passing ownership of data
+- Distributing work
+- Communicating async results
+
+Use mutexes when:
+- Protecting shared state
+- Performance critical (mutexes are faster)
+- Simple in-memory cache
+```
+
 ---
 
-## Full version: Worker pool with context cancellation
+### Race Detection
+
+**Find data races at runtime:**
+
+```bash
+go test -race ./...
+go run -race main.go
+go build -race
+```
+
+**Example race condition:**
 
 ```go
-package main
+// RACE CONDITION!
+var counter int
 
-import (
-	"context"
-	"fmt"
-	"net/http"
-	"sync"
-	"time"
+func increment() {
+	counter++  // Read-modify-write (not atomic)
+}
+
+func main() {
+	for i := 0; i < 1000; i++ {
+		go increment()
+	}
+	
+	time.Sleep(time.Second)
+	fmt.Println(counter)  // Unpredictable result
+}
+```
+
+**Fix with mutex:**
+
+```go
+var (
+	counter int
+	mu      sync.Mutex
 )
 
-type Result struct {
-	Worker int
-	URL    string
-	Status string
-	Err    error
+func increment() {
+	mu.Lock()
+	defer mu.Unlock()
+	counter++
 }
+```
 
-func fetch(ctx context.Context, client *http.Client, url string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+**Fix with atomic:**
+
+```go
+import "sync/atomic"
+
+var counter int64
+
+func increment() {
+	atomic.AddInt64(&counter, 1)
+}
+```
+
+---
+
+### Context (Cancellation and Deadlines)
+
+**Manage goroutine lifecycles:**
+
+```go
+import "context"
+
+// Create contexts
+ctx := context.Background()  // Root context
+ctx, cancel := context.WithCancel(ctx)  // Cancellable
+ctx, cancel := context.WithTimeout(ctx, 5*time.Second)  // Timeout
+ctx, cancel := context.WithDeadline(ctx, time.Now().Add(5*time.Second))  // Deadline
+ctx = context.WithValue(ctx, "key", "value")  // Carry values
+```
+
+**HTTP request example:**
+
+```go
+func fetchData(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	resp, err := client.Do(req)
+	
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
-
-	return resp, nil
+	
+	return io.ReadAll(resp.Body)
 }
 
-func worker(
-	ctx context.Context,
-	id int,
-	jobs <-chan string,
-	results chan<- Result,
-	client *http.Client,
-	wg *sync.WaitGroup,
-) {
-	defer wg.Done()
+func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	
+	data, err := fetchData(ctx, "https://example.com")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	fmt.Println(string(data))
+}
+```
 
+**Worker with context:**
+
+```go
+func worker(ctx context.Context, id int) {
 	for {
 		select {
 		case <-ctx.Done():
+			fmt.Printf("Worker %d cancelled: %v\n", id, ctx.Err())
 			return
-
-		case url, ok := <-jobs:
-			if !ok {
-				return
-			}
-
-			resp, err := fetch(ctx, client, url)
-			if err != nil {
-				results <- Result{Worker: id, URL: url, Err: err}
-				continue
-			}
-
-			results <- Result{
-				Worker: id,
-				URL:    url,
-				Status: resp.Status,
-			}
+		default:
+			fmt.Printf("Worker %d working...\n", id)
+			time.Sleep(500 * time.Millisecond)
 		}
 	}
 }
 
 func main() {
-	urls := []string{
-		"https://example.com",
-		"https://golang.org",
-		"https://httpbin.org/get",
-		"https://httpbin.org/status/404",
-		"https://invalid-url",
+	ctx, cancel := context.WithCancel(context.Background())
+	
+	for i := 0; i < 3; i++ {
+		go worker(ctx, i)
 	}
-
-	// ctx, cancel := context.WithCancel(context.Background())
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second) // Entire crawl → max 30s
-	defer cancel()
-
-	client := &http.Client{Timeout: 5 * time.Second} // Each request → max 5s
-
-	jobs := make(chan string)
-	results := make(chan Result)
-
-	numWorkers := 3
-	var wg sync.WaitGroup
-
-	// Start worker pool
-	for i := range numWorkers {
-		wg.Add(1)
-		go worker(ctx, i+1, jobs, results, client, &wg)
-	}
-
-	// Send jobs
-	go func() {
-		for _, url := range urls {
-			jobs <- url
-		}
-		close(jobs)
-	}()
-
-	// Close results when workers finish
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
-
-	// Consume results
-	for r := range results {
-		if r.Err != nil {
-			fmt.Printf("❌ Worker %d %s error: %v\n", r.Worker, r.URL, r.Err)
-			// example: cancel on first fatal error
-			// cancel()
-			continue
-		}
-		fmt.Printf("✅ Worker %d %s -> %s\n", r.Worker, r.URL, r.Status)
-	}
-
-	// example: cancel everything after 2 seconds
-	// time.AfterFunc(1*time.Second, cancel)
-
-	fmt.Println("Crawling finished")
+	
+	time.Sleep(2 * time.Second)
+	cancel()  // Cancel all workers
+	
+	time.Sleep(time.Second)
 }
 ```
 
 ---
 
-## Mental model
-
-* `context.Context` = **shared cancellation signal**
-* `cancel()` = press the red button
-* `select` = workers constantly check if they should stop
-* HTTP requests respect context automatically
-
----
-
-## Common mistakes (avoid these)
-
-❌ Creating a new context inside each worker
-❌ Forgetting to pass context to HTTP requests
-❌ Not checking `ctx.Done()` in long loops
-
----
-
-## When to use what
-
-| Tool                  | Purpose                            |
-| --------------------- | ---------------------------------- |
-| `Client.Timeout`      | Max duration of a request          |
-| `context.WithTimeout` | Cancel *everything* after deadline |
-| `context.WithCancel`  | Manual cancellation                |
-
-They **work together**, not instead of each other.
-
----
+**Small Project to Practice Concurrency: [Link](https://github.com/foyez/go/tree/main/codes/concurrency)**
 
 </details>
 
-### Add rate limiting with time.Ticker
+---
+
+### Practice Questions
 
 <details>
-<summary>View contents</summary>
+<summary><strong>View contents</strong></summary>
 
-#### Goal
+**Fill in the Blanks:**
 
-* Limit the number of HTTP requests per second (or per time interval)
-* Keep workers concurrent but **polite** to the server
-* Combine with **context cancellation** and **results channel**
+1. A __________ is a lightweight thread managed by the Go runtime.
+2. Channels can be buffered or __________, affecting their blocking behavior.
+3. The `sync.__________` type is used to wait for goroutines to complete.
+4. The `__________` statement allows waiting on multiple channel operations.
 
----
+**True/False:**
 
-#### Concept: `time.Ticker` as a rate limiter
+1. ⬜ Goroutines are more expensive than OS threads
+2. ⬜ Only the sender should close a channel
+3. ⬜ Mutexes are always better than channels for concurrency
+4. ⬜ The -race flag can detect data races at compile time
 
-```go
-ticker := time.NewTicker(time.Second / 2) // 2 requests per second
-defer ticker.Stop()
-```
+**Multiple Choice:**
 
-* Each tick = permission to send **one request**
-* Workers **wait for a tick** before fetching
+1. What happens if you send to a closed channel?
+   - A) Blocks forever
+   - B) Returns zero value
+   - C) Panic
+   - D) Nothing
 
----
+2. When should you use context?
+   - A) Never
+   - B) For all goroutines
+   - C) For goroutines that need cancellation or deadlines
+   - D) Only in HTTP handlers
 
-#### How to integrate with worker
+**Code Challenge:**
 
-Inside the worker:
-
-```go
-select {
-case <-ctx.Done():
-    return
-case <-ticker.C:
-    // allowed to fetch
-}
-```
-
-This ensures **no more than X requests per second** globally.
+Create a worker pool that processes jobs concurrently with a configurable number of workers, and gracefully shuts down on context cancellation.
 
 ---
 
-#### Full example: Worker pool with context, results, and rate limiting
+### Answers
 
+<details>
+<summary><strong>View answers</strong></summary>
+
+**Fill in the Blanks:**
+1. goroutine
+2. unbuffered
+3. WaitGroup
+4. select
+
+**True/False:**
+1. ❌ False (goroutines are much cheaper)
+2. ✅ True
+3. ❌ False (prefer channels; use mutexes for shared state)
+4. ❌ False (detects at runtime with -race flag)
+
+**Multiple Choice:**
+1. **C** - Panic
+2. **C** - For goroutines that need cancellation or deadlines
+
+**Code Challenge:**
 ```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"net/http"
-	"sync"
-	"time"
-)
-
-type Result struct {
-	Worker int
-	URL    string
-	Status string
-	Err    error
-}
-
-func worker(ctx context.Context, id int, jobs <-chan string, results chan<- Result, client *http.Client, wg *sync.WaitGroup, ticker <-chan time.Time) {
-	defer wg.Done()
-
+func worker(ctx context.Context, id int, jobs <-chan int, results chan<- int) {
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Printf("Worker %d cancelled\n", id)
+			fmt.Printf("Worker %d shutting down\n", id)
 			return
-
-		case url, ok := <-jobs:
+		case job, ok := <-jobs:
 			if !ok {
 				return
 			}
-
-			// Rate limiting: wait for a tick
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker:
-				// allowed to fetch
-			}
-
-			req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-			if err != nil {
-				results <- Result{Worker: id, URL: url, Err: err}
-				continue
-			}
-
-			resp, err := client.Do(req)
-			if err != nil {
-				results <- Result{Worker: id, URL: url, Err: err}
-				continue
-			}
-			resp.Body.Close()
-
-			results <- Result{Worker: id, URL: url, Status: resp.Status}
+			fmt.Printf("Worker %d processing job %d\n", id, job)
+			results <- job * 2
 		}
 	}
 }
 
-func main() {
-	urls := []string{
-		"https://example.com",
-		"https://golang.org",
-		"https://httpbin.org/get",
-	}
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	client := &http.Client{Timeout: 5 * time.Second}
-
-	numWorkers := 3
-	jobs := make(chan string)
-	results := make(chan Result)
-	var wg sync.WaitGroup
-
-	// Rate limiter: 1 request per second
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
-
+func workerPool(ctx context.Context, numWorkers int) {
+	jobs := make(chan int, 10)
+	results := make(chan int, 10)
+	
 	// Start workers
+	var wg sync.WaitGroup
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
-		go worker(ctx, i+1, jobs, results, client, &wg, ticker.C)
+		go func(id int) {
+			defer wg.Done()
+			worker(ctx, id, jobs, results)
+		}(i)
 	}
-
+	
 	// Send jobs
 	go func() {
-		for _, url := range urls {
-			jobs <- url
+		for i := 1; i <= 20; i++ {
+			select {
+			case <-ctx.Done():
+				close(jobs)
+				return
+			case jobs <- i:
+			}
 		}
 		close(jobs)
 	}()
-
-	// Close results when done
+	
+	// Close results after workers done
 	go func() {
 		wg.Wait()
 		close(results)
 	}()
-
+	
 	// Collect results
-	for r := range results {
-		if r.Err != nil {
-			fmt.Printf("❌ Worker %d %s error: %v\n", r.Worker, r.URL, r.Err)
-			continue
-		}
-		fmt.Printf("✅ Worker %d %s -> %s\n", r.Worker, r.URL, r.Status)
-	}
-
-	fmt.Println("All done")
-}
-```
-
----
-
-#### How it works
-
-1. `ticker := time.NewTicker(1 * time.Second)`
-
-   * produces **1 tick per second**
-
-2. Each worker waits on `<-ticker` before sending a request
-
-   * ensures **global request rate**
-   * multiple workers share the same ticker → smooth traffic
-
-3. `ctx.Done()` ensures clean cancellation
-
-4. Results are sent via `results` channel — safe & observable
-
----
-
-#### Mental model
-
-```
-jobs --> worker (waits for tick) --> fetch --> results
-        ↑ ctx controls cancellation
-```
-
-* `ticker` = “permission slip” to fetch
-* `context` = “STOP button”
-* `results` = “what happened”
-
----
-
-</details>
-
-### Retry with exponential backoff
-
-<details>
-<summary>View contents</summary>
-
-#### What is exponential backoff?
-
-Exponential backoff is a retry strategy where:
-
-* The wait time **doubles** after each failure
-* Optional **jitter/randomness** to avoid thundering herd problems
-* Stops after **max retries**
-
-Example sequence:
-
-```
-retry 1 → wait 1s  
-retry 2 → wait 2s  
-retry 3 → wait 4s  
-retry 4 → fail
-```
-
----
-
-#### Implementing a `fetchWithRetry` function
-
-```go
-func fetchWithRetry(ctx context.Context, client *http.Client, url string, maxRetries int) (*http.Response, error) {
-	var resp *http.Response
-	var err error
-	backoff := 1 * time.Second
-
-	for i := 0; i <= maxRetries; i++ {
-		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-		resp, err = client.Do(req)
-		if err == nil {
-			return resp, nil
-		}
-
-		// Retry only if context is not done
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		case <-time.After(backoff):
-			// increase backoff exponentially
-			backoff *= 2
-		}
-	}
-
-	return nil, err
-}
-```
-
-✅ Notes:
-
-* `ctx` ensures **cancellation propagates**
-* `time.After(backoff)` sleeps between retries
-* `backoff *= 2` doubles wait each retry
-* `maxRetries` limits the total attempts
-
----
-
-#### Integrate with worker
-
-```go
-func worker(
-	ctx context.Context,
-	id int,
-	jobs <-chan string,
-	results chan<- Result,
-	client *http.Client,
-	wg *sync.WaitGroup,
-	ticker <-chan time.Time,
-	maxRetries int,
-) {
-	defer wg.Done()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case url, ok := <-jobs:
-			if !ok {
-				return
-			}
-
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker: // rate limiting
-			}
-
-			resp, err := fetchWithRetry(ctx, client, url, maxRetries)
-			if err != nil {
-				results <- Result{Worker: id, URL: url, Err: err}
-				continue
-			}
-			resp.Body.Close()
-
-			results <- Result{Worker: id, URL: url, Status: resp.Status}
-		}
+	for result := range results {
+		fmt.Println("Result:", result)
 	}
 }
-```
 
----
-
-#### Update `main` to pass `maxRetries`
-
-```go
-maxRetries := 3
-
-for i := 0; i < numWorkers; i++ {
-	wg.Add(1)
-	go worker(ctx, i+1, jobs, results, client, &wg, ticker.C, maxRetries)
+func main() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	
+	workerPool(ctx, 3)
 }
 ```
-
----
-
-#### How it works together
-
-```
-jobs -> worker (wait for tick) -> fetchWithRetry -> results
-        ↑ ctx cancels      ↑ maxRetries + backoff
-```
-
-* Workers respect **rate limiting** (`ticker`)
-* Workers respect **cancellation** (`ctx`)
-* Temporary failures are retried **without overwhelming the server**
-* Results channel collects successes/errors
-
----
-
-#### Optional improvement: add jitter
-
-Exponential backoff + jitter prevents **all workers from retrying at the exact same time**:
-
-```go
-backoff := time.Duration(rand.Int63n(int64(base))) + base
-```
-
-* `rand.Int63n(base)` → random 0–base
-* `base` doubles after each retry
 
 ---
 
@@ -7842,7 +7006,7 @@ Go has a **powerful, production-ready HTTP server built into the standard librar
 You do **not** need external frameworks to build fast and scalable web servers.
 
 <details>
-<summary>View contents</summary>
+<summary><strong>View contents</strong></summary>
 
 **[You can find all the code for this section here](https://github.com/foyez/go/tree/main/codes/webServers)**
 
